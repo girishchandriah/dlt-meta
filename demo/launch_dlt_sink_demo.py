@@ -27,7 +27,7 @@ class DLTMETASinkDemo(DLTMETARunner):
         """
         try:
             self.init_dltmeta_runner_conf(runner_conf)
-            self.create_bronze_silver_dlt(runner_conf)
+            self.create_landing_refinery_dlt(runner_conf)
             self.launch_workflow(runner_conf)
         except Exception as e:
             print(e)
@@ -51,7 +51,7 @@ class DLTMETASinkDemo(DLTMETARunner):
             uc_catalog_name=self.args["uc_catalog_name"],
             int_tests_dir="demo",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            bronze_schema=f"dlt_meta_bronze_demo_{run_id}",
+            landing_schema=f"dlt_meta_bronze_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_demo/{run_id}",
             source="kafka",
             kafka_template="demo/conf/kafka-sink-onboarding.template",

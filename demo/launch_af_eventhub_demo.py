@@ -27,7 +27,7 @@ class DLTMETAFEHDemo(DLTMETARunner):
         """
         try:
             self.init_dltmeta_runner_conf(runner_conf)
-            self.create_bronze_silver_dlt(runner_conf)
+            self.create_landing_refinery_dlt(runner_conf)
             self.launch_workflow(runner_conf)
         except Exception as e:
             print(e)
@@ -50,7 +50,7 @@ class DLTMETAFEHDemo(DLTMETARunner):
             username=self.wsi._my_username,
             int_tests_dir="demo",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            bronze_schema=f"dlt_meta_bronze_demo_{run_id}",
+            landing_schema=f"dlt_meta_landing_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_demo/{run_id}",
             source="eventhub",
             eventhub_template="demo/conf/eventhub-onboarding.template",

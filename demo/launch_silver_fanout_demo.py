@@ -46,7 +46,7 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
         """
         try:
             self.init_dltmeta_runner_conf(runner_conf)
-            self.create_bronze_silver_dlt(runner_conf)
+            self.create_landing_refinery_dlt(runner_conf)
             self.launch_workflow(runner_conf)
         except Exception as e:
             print(e)
@@ -69,10 +69,10 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
             username=self.wsi._my_username,
             int_tests_dir="demo",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            bronze_schema=f"dlt_meta_bronze_demo_{run_id}",
-            silver_schema=f"dlt_meta_silver_demo_{run_id}",
+            landing_schema=f"dlt_meta_bronze_demo_{run_id}",
+            refinery_schema=f"dlt_meta_refinery_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_fout_demo/{run_id}",
-            runners_full_local_path="demo/notebooks/silver_fanout_runners",
+            runners_full_local_path="demo/notebooks/refinery_fanout_runners",
             source="cloudfiles",
             # node_type_id=cloud_node_type_id_dict[self.args.__dict__['cloud_provider_name']],
             # dbr_version=self.args.__dict__['dbr_version'],
@@ -110,7 +110,7 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
             )
         ]
         return self.ws.jobs.create(
-            name=f"dlt-silver-fanout-demo-{runner_conf.run_id}",
+            name=f"dlt-refinery-fanout-demo-{runner_conf.run_id}",
             environments=dltmeta_environments,
             tasks=[
                 jobs.Task(
@@ -119,15 +119,15 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
                     environment_key="dl_meta_int_env",
                     timeout_seconds=0,
                     python_wheel_task=jobs.PythonWheelTask(
-                        package_name="dlt_meta",
+                        package_name="dlt_meta_cds",
                         entry_point="run",
                         named_parameters={
-                            "onboard_layer": "bronze_silver",
+                            "onboard_layer": "landing_refinery",
                             "database": f"{runner_conf.uc_catalog_name}.{runner_conf.dlt_meta_schema}",
                             "onboarding_file_path":
                             f"{runner_conf.uc_volume_path}/{runner_conf.onboarding_file_path}",
-                            "silver_dataflowspec_table": "silver_dataflowspec_cdc",
-                            "bronze_dataflowspec_table": "bronze_dataflowspec_cdc",
+                            "refinery_dataflowspec_table": "refinery_dataflowspec_cdc",
+                            "landing_dataflowspec_table": "bronze_dataflowspec_cdc",
                             "import_author": "Ravi",
                             "version": "v1",
                             "overwrite": "True",
@@ -137,20 +137,20 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
                     ),
                 ),
                 jobs.Task(
-                    task_key="onboard_silverfanout_job",
+                    task_key="onboard_refineryfanout_job",
                     description="Sets up metadata tables for DLT-META",
                     depends_on=[jobs.TaskDependency(task_key="onboarding_job")],
                     environment_key="dl_meta_int_env",
                     timeout_seconds=0,
                     python_wheel_task=jobs.PythonWheelTask(
-                        package_name="dlt_meta",
+                        package_name="dlt_meta_cds",
                         entry_point="run",
                         named_parameters={
-                            "onboard_layer": "silver",
+                            "onboard_layer": "refinery",
                             "database": f"{runner_conf.uc_catalog_name}.{runner_conf.dlt_meta_schema}",
                             "onboarding_file_path":
                             f"{runner_conf.uc_volume_path}/{runner_conf.onboarding_fanout_file_path}",
-                            "silver_dataflowspec_table": "silver_dataflowspec_cdc",
+                            "refinery_dataflowspec_table": "refinery_dataflowspec_cdc",
                             "import_author": "Ravi",
                             "version": "v1",
                             "overwrite": "False",
@@ -161,16 +161,16 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
                 ),
                 jobs.Task(
                     task_key="bronze_dlt",
-                    depends_on=[jobs.TaskDependency(task_key="onboard_silverfanout_job")],
+                    depends_on=[jobs.TaskDependency(task_key="onboard_refineryfanout_job")],
                     pipeline_task=jobs.PipelineTask(
-                        pipeline_id=runner_conf.bronze_pipeline_id
+                        pipeline_id=runner_conf.landing_pipeline_id
                     ),
                 ),
                 jobs.Task(
-                    task_key="silver_dlt",
+                    task_key="refinery_dlt",
                     depends_on=[jobs.TaskDependency(task_key="bronze_dlt")],
                     pipeline_task=jobs.PipelineTask(
-                        pipeline_id=runner_conf.silver_pipeline_id
+                        pipeline_id=runner_conf.refinery_pipeline_id
                     )
                 )
             ]

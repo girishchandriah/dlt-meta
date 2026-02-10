@@ -624,26 +624,37 @@
                                            type="text" value="dlt_meta_dataflowspecs_4e6c360d3e5c4b5ca6687fec8ffe2e14">
                                 </div>
                                 <div class="form-group">
-                                    <label>Provide dlt meta bronze layer schema name:</label>
-                                    <input id="bronze_schema" name="bronze_schema"
-                                           placeholder="Enter bronze schema name"
-                                           type="text" value="dltmeta_bronze_9c1aa383b36a49198d3e99d25f7180a4">
+                                    <label>Provide dlt meta landing layer schema name:</label>
+                                    <input id="landing_schema" name="landing_schema"
+                                           placeholder="Enter landing schema name"
+                                           type="text" value="dltmeta_landing_9c1aa383b36a49198d3e99d25f7180a4">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Provide dlt meta silver layer schema name:</label>
-                                    <input id="silver_schema" name="silver_schema"
-                                           placeholder="Enter silver schema name"
-                                           type="text" value="dltmeta_silver_7b4e981029b843c799bf61a0a121b3ca">
+                                    <label>Provide dlt meta refinery layer schema name:</label>
+                                    <input id="refinery_schema" name="refinery_schema"
+                                           placeholder="Enter refinery schema name"
+                                           type="text" value="dltmeta_refinery_7b4e981029b843c799bf61a0a121b3ca">
                                 </div>
+                                <div class="form-group">
+                                    <label>Provide dlt meta treasury layer schema name:</label>
+                                    <input id="treasury_schema" name="treasury_schema"
+                                           placeholder="Enter treasury schema name"
+                                           type="text" value="dltmeta_treasury_8d3e99d25f7180a4">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
                                 <div class="form-group">
                                     <label>Provide dlt meta layer:</label>
                                     <select id="dlt_meta_layer" name="dlt_meta_layer">
-                                        <option value="0">bronze</option>
-                                        <option value="1">bronze_silver</option>
-                                        <option value="2">silver</option>
+                                        <option value="0">landing</option>
+                                        <option value="1">landing_refinery</option>
+                                        <option value="2">refinery</option>
+                                        <option value="3">treasury</option>
+                                        <option value="4">landing_refinery_treasury</option>
                                     </select>
                                 </div>
                             </div>
@@ -651,15 +662,23 @@
                             <!-- Table and Version Settings -->
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Provide bronze dataflow spec table name:</label>
-                                    <input id="bronze_table" name="bronze_table" placeholder="Enter bronze table name"
-                                           type="text" value="bronze_dataflowspec">
+                                    <label>Provide landing dataflow spec table name:</label>
+                                    <input id="landing_table" name="landing_table" placeholder="Enter landing table name"
+                                           type="text" value="landing_dataflowspec">
                                 </div>
                                 <div class="form-group">
-                                    <label>Provide silver dataflow spec table name:</label>
-                                    <input id="silver_table" name="silver_table" placeholder="Enter silver table name"
-                                           type="text" value="silver_dataflowspec">
+                                    <label>Provide refinery dataflow spec table name:</label>
+                                    <input id="refinery_table" name="refinery_table" placeholder="Enter refinery table name"
+                                           type="text" value="refinery_dataflowspec">
                                 </div>
+                                <div class="form-group">
+                                    <label>Provide treasury dataflow spec table name:</label>
+                                    <input id="treasury_table" name="treasury_table" placeholder="Enter treasury table name"
+                                           type="text" value="treasury_dataflowspec">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
                                 <div class="form-group">
                                     <label>Overwrite dataflow spec?</label>
                                     <div class="radio-group">
@@ -781,23 +800,34 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Onboard Bronze Group Name:</label>
-                                    <input id="group_name" name="onboard_bronze_group"
-                                           placeholder="Enter bronze group name"
+                                    <label>Onboard Landing Group Name:</label>
+                                    <input id="landing_group_name" name="onboard_landing_group"
+                                           placeholder="Enter landing group name"
                                            type="text" value="A1">
                                 </div>
                                 <div class="form-group">
-                                    <label>Onboard Silver Group Name:</label>
-                                    <input id="group_name" name="onboard_silver_group"
-                                           placeholder="Enter silver group name"
+                                    <label>Onboard Refinery Group Name:</label>
+                                    <input id="refinery_group_name" name="onboard_refinery_group"
+                                           placeholder="Enter refinery group name"
                                            type="text" value="A1">
                                 </div>
+                                <div class="form-group">
+                                    <label>Onboard Treasury Group Name:</label>
+                                    <input id="treasury_group_name" name="onboard_treasury_group"
+                                           placeholder="Enter treasury group name"
+                                           type="text" value="A1">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
                                 <div class="form-group">
                                     <label>Provide dlt meta layer:</label>
                                     <select id="dlt_meta_layer" name="deploylayer">
-                                        <option value="bronze">bronze</option>
-                                        <option value="bronze_silver">bronze_silver</option>
-                                        <option value="silver">silver</option>
+                                        <option value="landing">landing</option>
+                                        <option value="landing_refinery">landing_refinery</option>
+                                        <option value="refinery">refinery</option>
+                                        <option value="treasury">treasury</option>
+                                        <option value="landing_refinery_treasury">landing_refinery_treasury</option>
                                     </select>
                                 </div>
                             </div>
@@ -805,17 +835,26 @@
                             <!-- Table and Version Settings -->
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label> Dataflow Spec Bronze Table Name:</label>
-                                    <input id="bronze_dataflowspec_table" name="bronze_dataflowspec_table"
-                                           placeholder="Enter bronze spec table name"
+                                    <label> Dataflow Spec Landing Table Name:</label>
+                                    <input id="landing_dataflowspec_table" name="landing_dataflowspec_table"
+                                           placeholder="Enter landing spec table name"
                                            type="text">
                                 </div>
                                 <div class="form-group">
-                                    <label> Dataflow Spec Silver Table Name:</label>
-                                    <input id="silver_dataflowspec_table" name="silver_dataflowspec_table"
-                                           placeholder="Enter silver spec table name"
+                                    <label> Dataflow Spec Refinery Table Name:</label>
+                                    <input id="refinery_dataflowspec_table" name="refinery_dataflowspec_table"
+                                           placeholder="Enter refinery spec table name"
                                            type="text">
                                 </div>
+                                <div class="form-group">
+                                    <label> Dataflow Spec Treasury Table Name:</label>
+                                    <input id="treasury_dataflowspec_table" name="treasury_dataflowspec_table"
+                                           placeholder="Enter treasury spec table name"
+                                           type="text">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
 
                                 <div class="form-group">
                                     <label>Pipeline Name:</label>

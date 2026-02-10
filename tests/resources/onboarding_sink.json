@@ -18,21 +18,21 @@
                 }
             }
         },
-        "bronze_database_dev": "bronze",
-        "bronze_database_staging": "bronze",
-        "bronze_database_prd": "bronze",
-        "bronze_table": "customers_cdc",
-        "bronze_reader_options": {
+        "landing_database_dev": "bronze",
+        "landing_database_staging": "bronze",
+        "landing_database_prd": "bronze",
+        "landing_table": "customers_cdc",
+        "landing_reader_options": {
             "cloudFiles.format": "json",
             "cloudFiles.inferColumnTypes": "true",
             "cloudFiles.rescuedDataColumn": "_rescued_data"
         },
-        "bronze_table_path_dev": "tests/resources/delta/customers",
-        "bronze_table_properties": {
+        "landing_table_path_dev": "tests/resources/delta/customers",
+        "landing_table_properties": {
             "pipelines.autoOptimize.managed": "false",
             "pipelines.reset.allowed": "false"
         },
-        "bronze_sinks":[{
+        "landing_sinks":[{
             "name": "bronze_sink1",
             "format": "delta",
             "options": {
@@ -46,11 +46,11 @@
         }
         }
         ],
-        "silver_database_dev": "silver",
-        "silver_database_staging": "silver",
-        "silver_database_prd": "silver",
-        "silver_table": "customers",
-        "silver_cdc_apply_changes": {
+        "refinery_database_dev": "silver",
+        "refinery_database_staging": "silver",
+        "refinery_database_prd": "silver",
+        "refinery_table": "customers",
+        "refinery_cdc_apply_changes": {
             "keys": [
                 "id"
             ],
@@ -63,15 +63,15 @@
                 "_rescued_data"
             ]
         },
-        "silver_table_path_dev": "tests/resources/data/silver/customers",
-        "silver_table_properties": {
+        "refinery_table_path_dev": "tests/resources/data/silver/customers",
+        "refinery_table_properties": {
             "pipelines.autoOptimize.managed": "false",
             "pipelines.reset.allowed": "false",
             "pipelines.autoOptimize.zOrderCols": "id,email"
         },
-        "silver_transformation_json_dev": "tests/resources/silver_transformations.json",
-        "silver_data_quality_expectations_json_dev": "tests/resources/dqe/customers/silver_data_quality_expectations.json",
-        "silver_sinks":[{
+        "refinery_transformation_json_dev": "tests/resources/silver_transformations.json",
+        "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/silver_data_quality_expectations.json",
+        "refinery_sinks":[{
             "name": "silver_sink",
             "format": "delta",
             "options": {

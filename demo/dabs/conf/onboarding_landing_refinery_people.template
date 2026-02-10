@@ -19,14 +19,14 @@
             }         
         },
         "bronze_catalog_dev": "{uc_catalog_name}",
-        "bronze_database_dev": "{bronze_schema}",
+        "landing_database_dev": "{landing_schema}",
         "bronze_catalog_prod": "{uc_catalog_name}",
-        "bronze_database_prod": "{bronze_schema}",        
-        "bronze_table": "people_bronze",
+        "landing_database_prod": "{landing_schema}",        
+        "landing_table": "people_bronze",
         "bronze_quarantine_table": "people_bronze_quarantine",
         "bronze_cluster_by": ["country"],
 
-        "bronze_table_properties" : {
+        "landing_table_properties" : {
             "pipelines.autoOptimize.managed": "true", 
             "pipelines.reset.allowed": "true",
             "delta.autoOptimize.optimizeWrite": "true",
@@ -44,13 +44,13 @@
             "cloudFiles.rescuedDataColumn": "_rescued_data"
         },
         "silver_catalog_dev": "{uc_catalog_name}",
-        "silver_database_dev": "{silver_schema}",
+        "refinery_database_dev": "{refinery_schema}",
         "silver_catalog_prod": "{uc_catalog_name}",
-        "silver_database_prod": "{silver_schema}",
-        "silver_table": "people_silver",
+        "refinery_database_prod": "{refinery_schema}",
+        "refinery_table": "people_silver",
         "silver_cluster_by": ["country"],
 
-        "silver_table_properties" : {
+        "refinery_table_properties" : {
             "pipelines.autoOptimize.managed": "true", 
             "pipelines.reset.allowed": "true",
             "delta.autoOptimize.optimizeWrite": "true",

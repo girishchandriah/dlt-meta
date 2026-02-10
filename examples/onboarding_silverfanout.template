@@ -2,15 +2,15 @@
     {
         "data_flow_id": "104",
         "data_flow_group": "A1",
-        "bronze_database_dev": "bronze",
-        "bronze_database_staging": "bronze",
-        "bronze_database_prd": "bronze",
-        "bronze_table": "customers",
-        "bronze_table_path_dev": "{dbfs_path}/data/bronze/customers",        
-        "silver_database_dev": "silver",
-        "silver_database_staging": "silver",
-        "silver_database_prd": "silver",
-        "silver_table": "customers_clean",
+        "landing_database_dev": "bronze",
+        "landing_database_staging": "bronze",
+        "landing_database_prd": "bronze",
+        "landing_table": "customers",
+        "landing_table_path_dev": "{dbfs_path}/data/bronze/customers",        
+        "refinery_database_dev": "silver",
+        "refinery_database_staging": "silver",
+        "refinery_database_prd": "silver",
+        "refinery_table": "customers_clean",
         "silver_cdc_apply_changes": {
             "keys": [
                 "id"
@@ -24,8 +24,8 @@
                 "_rescued_data"
             ]
         },
-        "silver_table_path_dev": "{dbfs_path}/data/silver/customers_clean",
-        "silver_table_properties": {
+        "refinery_table_path_dev": "{dbfs_path}/data/silver/customers_clean",
+        "refinery_table_properties": {
             "pipelines.autoOptimize.managed": "false",
             "pipelines.reset.allowed": "false",
             "pipelines.autoOptimize.zOrderCols": "id,email"

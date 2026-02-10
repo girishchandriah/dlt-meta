@@ -10,16 +10,18 @@ draft: false
 ```
 conf/
     onboarding.json
-    silver_transformations.json
+    refinery_transformations.json
+    treasury_transformations.json
     dqe/
-        bronze_data_quality_expectations.json
+        landing_data_quality_expectations.json
 ```
 
 1. Create [onboarding.json](https://github.com/databrickslabs/dlt-meta/blob/main/demo/conf/onboarding.template)
-2. Create [silver_transformations.json](https://github.com/databrickslabs/dlt-meta/blob/main/demo/conf/silver_transformations.json)
-3. Create data quality rules json's for each entity e.g. [Data Quality Rules](https://github.com/databrickslabs/dlt-meta/tree/main/demo/conf/dqe/)
+2. Create [refinery_transformations.json](https://github.com/databrickslabs/dlt-meta/blob/main/demo/conf/refinery_transformations.json) with SQL queries
+3. Create [treasury_transformations.json](https://github.com/databrickslabs/dlt-meta/blob/main/demo/conf/treasury_transformations.json) with SQL queries (optional for gold layer)
+4. Create data quality rules json's for each entity e.g. [Data Quality Rules](https://github.com/databrickslabs/dlt-meta/tree/main/demo/conf/dqe/)
 
-The `onboarding.json` file contains links to [silver_transformations.json](https://github.com/databrickslabs/dlt-meta/blob/3555aaa798881a9cfa65f89599f83d22d245d3c8/demo/conf/onboarding.template#L41C1-L42C1) and data quality expectation files [dqe](https://github.com/databrickslabs/dlt-meta/blob/3555aaa798881a9cfa65f89599f83d22d245d3c8/demo/conf/onboarding.template#L42).
+The `onboarding.json` file contains links to transformation JSON files and data quality expectation files.
 
 ### onboarding.json File structure: Examples( [Autoloader](https://github.com/databrickslabs/dlt-meta/blob/main/examples/cloudfiles-onboarding.template), [Eventhub](https://github.com/databrickslabs/dlt-meta/blob/main/examples/eventhub-onboarding.template), [Kafka](https://github.com/databrickslabs/dlt-meta/blob/main/examples/kafka-onboarding.template) )
 `env` is your environment placeholder e.g `dev`, `prod`, `stag`
@@ -77,10 +79,25 @@ The `onboarding.json` file contains links to [silver_transformations.json](https
 | expect_or_quarantine  | Specify multiple data quality sql for each field when records that fails validation will be dropped from main table and inserted into quarantine table specified in dataflowspec (only applicable for Bronze layer) |
 
 
-### Silver transformation File Structure([Example](https://github.com/databrickslabs/dlt-meta/blob/main/examples/silver_transformations.json))
+### Refinery/Treasury Transformation File Structure([Example](https://github.com/databrickslabs/dlt-meta/blob/main/demo/conf/refinery_transformations.json))
 | Field | Description |
 | :-----------: | :----------- |
-| target_table | Specify target table name : Type String | 
+| target_table | Specify target table name : Type String |
 | target_partition_cols  | Specify partition columns : Type Array |
-| select_exp | Specify SQL expressions : Type Array | 
-| where_clause  | Specify filter conditions if you want to prevent certain records from main input : Type Array |
+| sql_query | Specify full SQL SELECT query including FROM and WHERE clauses : Type String. Supports JOINs, GROUP BY, aggregations, etc. Use temp view name `source_{dataFlowId}` to reference the primary source table. |
+
+**Example Refinery Transformation**:
+```json
+{
+  "target_table": "customers_clean",
+  "sql_query": "SELECT customer_id, UPPER(first_name) as first_name, email FROM source_201 WHERE email IS NOT NULL"
+}
+```
+
+**Example Treasury Transformation with JOIN**:
+```json
+{
+  "target_table": "customer_order_summary",
+  "sql_query": "SELECT c.customer_id, c.name, COUNT(o.order_id) as order_count, SUM(o.amount) as total_revenue FROM refinery_customers c LEFT JOIN refinery_orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name"
+}
+```

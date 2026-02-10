@@ -145,14 +145,17 @@ class WorkspaceConfig(_Config["WorkspaceConfig"]):
     uc_enabled: bool
     uc_catalog_name: str
     dlt_meta_schema: str
-    bronze_dataflow_spec_table: str
-    bronze_dataflow_spec_path: str
-    silver_dataflow_spec_table: str
-    silver_dataflow_spec_path: str
+    landing_dataflow_spec_table: str
+    landing_dataflow_spec_path: str
+    refinery_dataflow_spec_table: str
+    refinery_dataflow_spec_path: str
+    treasury_dataflow_spec_table: str
+    treasury_dataflow_spec_path: str
     overwrite_dataflow_spec: bool
     dataflow_spec_version: str
-    bronze_schema: str
-    silver_schema: str
+    landing_schema: str
+    refinery_schema: str
+    treasury_schema: str
     dlt_meta_layer: str
     dlt_meta_onboard_group: str
     serverless: bool

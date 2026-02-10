@@ -7,13 +7,14 @@ draft: false
 
 **Q. What is DLT-META ?**
 
-DLT-META is a solution/framework using Databricks Lakeflow Declarative Pipelines which helps you automate bronze and silver layer pipelines using CI/CD.
+DLT-META is a solution/framework using Databricks Lakeflow Declarative Pipelines which helps you automate landing, refinery, and treasury layer pipelines using CI/CD.
 
 **Q. What are the benefits of using DLT-META ?**
 
-- With DLT-META customers needs to only maintain metadata like onboarding.json, data quality rules and silver transformations and framework will take care of execution.
-- In case of any input/output or data quality rules or silver transformation logic changes there will be only metadata changes using onboarding interface and no need to re-deploy pipelines.
-- If you have 100s or 1000s of tables then DLT-META speeds up overall turn around time to production as customers needs to just produce metadata
+- With DLT-META customers need to only maintain metadata like onboarding.json, data quality rules, and refinery/treasury transformations and framework will take care of execution.
+- In case of any input/output, data quality rules, or transformation logic changes there will be only metadata changes using onboarding interface and no need to re-deploy pipelines.
+- If you have 100s or 1000s of tables then DLT-META speeds up overall turn around time to production as customers need to just produce metadata
+- Supports complex SQL transformations with JOINs for refinery and treasury layers
 
 **Q. What different types of reader are supported using DLT-META ?**
 
@@ -21,7 +22,7 @@ DLT-META uses Databricks [Auto Loader](https://docs.databricks.com/ingestion/aut
 
 **Q. Can DLT-META support any other readers?**
 
-DLT-META can support any spark streaming reader. You can override ```read_bronze()``` api inside ```DataflowPipeline.py``` to support any reader
+DLT-META can support any spark streaming reader. You can override the reader API inside ```DataflowPipeline.py``` to support any reader
 
 **Q. Who should use this framework ?**
 

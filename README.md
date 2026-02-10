@@ -36,6 +36,7 @@ In practice, a single generic pipeline reads the Dataflowspec and uses it to orc
 - Apply appropriate readers based on input metadata
 - Apply data quality rules with Lakeflow Declarative Pipeline expectations
 - Apply CDC apply changes if specified in metadata
+- Apply SQL transformations with JOIN support for refinery and treasury layers
 - Builds Lakeflow Declarative Pipeline graph based on input/output metadata
 - Launch Lakeflow Declarative pipeline
 
@@ -51,17 +52,18 @@ In practice, a single generic pipeline reads the Dataflowspec and uses it to orc
 | Features  | DLT-META Support |
 | ------------- | ------------- |
 | Input data sources  | Autoloader, Delta, Eventhub, Kafka, snapshot  |
-| Medallion architecture layers | Bronze, Silver  |
-| Custom transformations | Bronze, Silver layer accepts custom functions|
-| Data Quality Expecations Support | Bronze, Silver layer |
-| Quarantine table support | Bronze layer |
-| [create_auto_cdc_flow](https://docs.databricks.com/aws/en/dlt-ref/dlt-python-ref-apply-changes) API support | Bronze, Silver layer | 
-| [create_auto_cdc_from_snapshot_flow](https://docs.databricks.com/aws/en/dlt-ref/dlt-python-ref-apply-changes-from-snapshot) API support | Bronze layer|
-| [append_flow](https://docs.databricks.com/en/delta-live-tables/flows.html#use-append-flow-to-write-to-a-streaming-table-from-multiple-source-streams) API support | Bronze layer|
-| Liquid cluster support | Bronze, Bronze Quarantine, Silver tables|
+| Medallion architecture layers | Landing, Refinery, Treasury  |
+| SQL transformations | Refinery and Treasury layers support full SQL queries with JOINs|
+| Custom transformations | All layers accept custom transform functions|
+| Data Quality Expecations Support | Landing, Refinery, Treasury layers |
+| Quarantine table support | Landing, Refinery layers |
+| [create_auto_cdc_flow](https://docs.databricks.com/aws/en/dlt-ref/dlt-python-ref-apply-changes) API support | Landing, Refinery layers |
+| [create_auto_cdc_from_snapshot_flow](https://docs.databricks.com/aws/en/dlt-ref/dlt-python-ref-apply-changes-from-snapshot) API support | Landing layer|
+| [append_flow](https://docs.databricks.com/en/delta-live-tables/flows.html#use-append-flow-to-write-to-a-streaming-table-from-multiple-source-streams) API support | Landing, Refinery layers|
+| Liquid cluster support | Landing, Landing Quarantine, Refinery, Treasury tables|
 | [DLT-META CLI](https://databrickslabs.github.io/dlt-meta/getting_started/dltmeta_cli/) |  ```databricks labs dlt-meta onboard```, ```databricks labs dlt-meta deploy``` |
-| Bronze and Silver pipeline chaining | Deploy dlt-meta pipeline with ```layer=bronze_silver``` option using default publishing mode |
-| [create_sink](https://docs.databricks.com/aws/en/dlt-ref/dlt-python-ref-sink) API support |Supported formats:```external delta table , kafka``` Bronze, Silver layers|
+| Pipeline chaining | Deploy dlt-meta pipeline with ```layer=landing_refinery```, ```layer=refinery_treasury```, or ```layer=landing_refinery_treasury``` options |
+| [create_sink](https://docs.databricks.com/aws/en/dlt-ref/dlt-python-ref-sink) API support |Supported formats:```external delta table , kafka``` Landing, Refinery, Treasury layers|
 | [Databricks Asset Bundles](https://docs.databricks.com/aws/en/dev-tools/bundles/) | Supported
 | [DLT-META UI](https://github.com/databrickslabs/dlt-meta/tree/main/lakehouse_app#dlt-meta-lakehouse-app-setup) | Uses Databricks Lakehouse DLT-META App
 

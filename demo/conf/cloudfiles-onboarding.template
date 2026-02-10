@@ -19,20 +19,20 @@
       "source_schema_path": "{uc_volume_path}/demo/resources/data/afam/ddl/customers.ddl"
    },
    "bronze_catalog_demo": "{uc_catalog_name}",
-   "bronze_database_demo": "{uc_catalog_name}.{bronze_schema}",
-   "bronze_table": "customers",
+   "landing_database_demo": "{uc_catalog_name}.{landing_schema}",
+   "landing_table": "customers",
    "bronze_reader_options": {
       "cloudFiles.format": "json",
       "cloudFiles.inferColumnTypes": "true",
       "cloudFiles.rescuedDataColumn": "_rescued_data"
    },
-   "bronze_table_properties": {
+   "landing_table_properties": {
          "pipelines.autoOptimize.managed": "true"
    },
-   "bronze_table_cluster_by":["id", "email"],   
+   "landing_table_cluster_by":["id", "email"],   
    "bronze_data_quality_expectations_json_demo": "{uc_volume_path}/demo/conf/dqe/customers/bronze_data_quality_expectations.json",
    "bronze_catalog_quarantine_demo": "{uc_catalog_name}",
-   "bronze_database_quarantine_demo": "{bronze_schema}",
+   "landing_database_quarantine_demo": "{landing_schema}",
    "bronze_quarantine_table": "customers_quarantine",
    "bronze_quarantine_table_properties": {
          "pipelines.reset.allowed": "false"
@@ -56,10 +56,10 @@
       }
    ],
    "silver_catalog_demo": "{uc_catalog_name}",
-   "silver_database_demo": "{silver_schema}",
-   "silver_table": "customers",
+   "refinery_database_demo": "{refinery_schema}",
+   "refinery_table": "customers",
    "silver_transformation_json_demo": "{uc_volume_path}/demo/conf/afam_silver_transformations.json",
-   "silver_table_properties": {
+   "refinery_table_properties": {
          "pipelines.reset.allowed": "false",
          "pipelines.autoOptimize.zOrderCols": "id, email"         
    },
@@ -70,7 +70,7 @@
             "create_streaming_table": false,
             "source_format": "delta",
             "source_details": {
-               "source_database": "{uc_catalog_name}.{bronze_schema}", "source_table": "customers_delta"
+               "source_database": "{uc_catalog_name}.{landing_schema}", "source_table": "customers_delta"
             },
             "reader_options": {},
             "once": false
@@ -96,20 +96,20 @@
       "source_schema_path": "{uc_volume_path}/demo/resources/data/afam/ddl/transactions.ddl"
    },
    "bronze_catalog_demo": "{uc_catalog_name}",   
-   "bronze_database_demo": "{bronze_schema}",
-   "bronze_table": "transactions",
+   "landing_database_demo": "{landing_schema}",
+   "landing_table": "transactions",
    "bronze_reader_options": {
       "cloudFiles.format": "json",
       "cloudFiles.inferColumnTypes": "true",
       "cloudFiles.rescuedDataColumn": "_rescued_data"
    },
-   "bronze_table_properties": {
+   "landing_table_properties": {
          "pipelines.reset.allowed": "true"
    },
-   "bronze_table_cluster_by":["id", "customer_id"],   
+   "landing_table_cluster_by":["id", "customer_id"],   
    "bronze_data_quality_expectations_json_demo": "{uc_volume_path}/demo/conf/dqe/transactions/bronze_data_quality_expectations.json",
    "bronze_catalog_quarantine_demo": "{uc_catalog_name}",
-   "bronze_database_quarantine_demo": "{bronze_schema}",
+   "landing_database_quarantine_demo": "{landing_schema}",
    "bronze_quarantine_table": "transactions_quarantine",
    "bronze_quarantine_table_properties": {
          "pipelines.reset.allowed": "true",
@@ -134,8 +134,8 @@
       }
    ],
    "silver_catalog_demo": "{uc_catalog_name}",
-   "silver_database_demo": "{silver_schema}",
-   "silver_table": "transactions",
+   "refinery_database_demo": "{refinery_schema}",
+   "refinery_table": "transactions",
    "silver_cdc_apply_changes": {
       "keys": [
          "id"
@@ -152,7 +152,7 @@
    },
    "silver_transformation_json_demo": "{uc_volume_path}/demo/conf/afam_silver_transformations.json",
    "silver_data_quality_expectations_json_demo": "{uc_volume_path}/demo/conf/dqe/transactions/silver_data_quality_expectations.json",
-   "silver_table_properties": {
+   "refinery_table_properties": {
          "pipelines.reset.allowed": "false",
          "pipelines.autoOptimize.zOrderCols": "id, customer_id"         
    }

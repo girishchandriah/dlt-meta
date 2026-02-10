@@ -12,50 +12,50 @@ class CliTests(unittest.TestCase):
     onboard_cmd_with_uc = OnboardCommand(
         onboarding_file_path=onboarding_file_path,
         onboarding_files_dir_path="tests/resources/",
-        onboard_layer="bronze",
+        onboard_layer="landing",
         env="dev",
         import_author="John Doe",
         version="1.0",
         cloud="aws",
         dlt_meta_schema="dlt_meta",
-        bronze_dataflowspec_path="tests/resources/bronze_dataflowspec",
-        silver_dataflowspec_path="tests/resources/silver_dataflowspec",
+        landing_dataflowspec_path="tests/resources/bronze_dataflowspec",
+        refinery_dataflowspec_path="tests/resources/silver_dataflowspec",
         uc_enabled=True,
         uc_catalog_name="uc_catalog",
         uc_volume_path="uc_catalog/dlt_meta/files",
         overwrite=True,
-        bronze_dataflowspec_table="bronze_dataflowspec",
-        silver_dataflowspec_table="silver_dataflowspec",
+        landing_dataflowspec_table="bronze_dataflowspec",
+        refinery_dataflowspec_table="silver_dataflowspec",
         update_paths=True,
     )
 
     onboard_cmd_without_uc = OnboardCommand(
         onboarding_file_path=onboarding_file_path,
         onboarding_files_dir_path="tests/resources/",
-        onboard_layer="bronze",
+        onboard_layer="landing",
         env="dev",
         import_author="John Doe",
         version="1.0",
         cloud="aws",
         dlt_meta_schema="dlt_meta",
-        bronze_dataflowspec_path="tests/resources/bronze_dataflowspec",
-        silver_dataflowspec_path="tests/resources/silver_dataflowspec",
+        landing_dataflowspec_path="tests/resources/bronze_dataflowspec",
+        refinery_dataflowspec_path="tests/resources/silver_dataflowspec",
         uc_enabled=False,
         dbfs_path="/dbfs",
         overwrite=True,
-        bronze_dataflowspec_table="bronze_dataflowspec",
-        silver_dataflowspec_table="silver_dataflowspec",
+        landing_dataflowspec_table="bronze_dataflowspec",
+        refinery_dataflowspec_table="silver_dataflowspec",
         update_paths=True,
     )
 
     deploy_cmd = DeployCommand(
-        layer="bronze_silver",
-        onboard_bronze_group="A1",
-        onboard_silver_group="A1",
-        dlt_meta_bronze_schema="dlt_bronze_schema",
-        dlt_meta_silver_schema="dlt_silver_schema",
-        dataflowspec_bronze_table="bronze_dataflowspec_table",
-        dataflowspec_silver_table="silver_dataflowspec_table",
+        layer="landing_refinery",
+        onboard_landing_group="A1",
+        onboard_refinery_group="A1",
+        dlt_meta_landing_schema="dlt_landing_schema",
+        dlt_meta_refinery_schema="dlt_refinery_schema",
+        dataflowspec_landing_table="landing_dataflowspec_table",
+        dataflowspec_refinery_table="refinery_dataflowspec_table",
         num_workers=1,
         uc_catalog_name="uc_catalog",
         pipeline_name="unittest_dlt_pipeline",
@@ -186,19 +186,19 @@ class CliTests(unittest.TestCase):
         cmd = OnboardCommand(
             onboarding_file_path="tests/resources/onboarding.json",
             onboarding_files_dir_path="tests/resources/",
-            onboard_layer="bronze_silver",
+            onboard_layer="landing_refinery",
             env="dev",
             import_author="Ravi Gawai",
             version="1.0",
             dlt_meta_schema="dlt_meta",
-            bronze_dataflowspec_path="tests/resources/bronze_dataflowspec",
-            silver_dataflowspec_path="tests/resources/silver_dataflowspec",
+            landing_dataflowspec_path="tests/resources/bronze_dataflowspec",
+            refinery_dataflowspec_path="tests/resources/silver_dataflowspec",
             uc_enabled=True,
             uc_catalog_name="uc_catalog",
             uc_volume_path="uc_catalog/dlt_meta/files",
             overwrite=True,
-            bronze_dataflowspec_table="bronze_dataflowspec",
-            silver_dataflowspec_table="silver_dataflowspec",
+            landing_dataflowspec_table="bronze_dataflowspec",
+            refinery_dataflowspec_table="silver_dataflowspec",
             update_paths=True,
         )
         dltmeta = DLTMeta(None)
@@ -206,7 +206,7 @@ class CliTests(unittest.TestCase):
             cmd
         )
         expected_named_parameters = {
-            "onboard_layer": "bronze_silver",
+            "onboard_layer": "landing_refinery",
             "database": "uc_catalog.dlt_meta" if cmd.uc_enabled else "dlt_meta",
             "onboarding_file_path": "uc_catalog/dlt_meta/files/dltmeta_conf/tests/resources/onboarding.json",
             "import_author": "Ravi Gawai",
@@ -214,8 +214,8 @@ class CliTests(unittest.TestCase):
             "overwrite": "True",
             "env": "dev",
             "uc_enabled": "True",
-            "bronze_dataflowspec_table": "bronze_dataflowspec",
-            "silver_dataflowspec_table": "silver_dataflowspec",
+            "landing_dataflowspec_table": "bronze_dataflowspec",
+            "refinery_dataflowspec_table": "silver_dataflowspec",
         }
         self.assertEqual(named_parameters, expected_named_parameters)
 
@@ -289,15 +289,15 @@ class CliTests(unittest.TestCase):
         dltmeta._create_dlt_meta_pipeline = MagicMock(return_value="pipeline_id")
 
         deploy_cmd = DeployCommand(
-            layer="bronze",
-            onboard_bronze_group="A1",
-            dlt_meta_bronze_schema="dlt_meta",
+            layer="landing",
+            onboard_landing_group="A1",
+            dlt_meta_landing_schema="dlt_meta",
             pipeline_name="unittest_dlt_pipeline",
-            dataflowspec_bronze_table="dataflowspec_table",
+            dataflowspec_landing_table="dataflowspec_table",
             dlt_target_schema="dlt_target_schema",
             num_workers=1,
             uc_catalog_name="uc_catalog",
-            dataflowspec_bronze_path="tests/resources/dataflowspec",
+            dataflowspec_landing_path="tests/resources/dataflowspec",
             uc_enabled=True,
             serverless=False,
             dbfs_path="/dbfs",
@@ -312,7 +312,7 @@ class CliTests(unittest.TestCase):
     @patch("src.cli.WorkspaceClient")
     def test_load_onboard_config(self, mock_workspace_client, mock_workspace_installer):
         mock_ws_installer = mock_workspace_installer.return_value
-        mock_ws_installer._choice.side_effect = ['True', 'True', 'bronze_silver', 'False', 'True', 'False']
+        mock_ws_installer._choice.side_effect = ['True', 'True', 'landing_refinery', 'False', 'True', 'False']
         mock_ws_installer._question.side_effect = [
             "uc_catalog", "demo/conf/onboarding.template",
             "file:/demo/", "dlt_meta_dataflowspecs", "dltmeta_bronze", "dltmeta_silver",
@@ -327,13 +327,13 @@ class CliTests(unittest.TestCase):
         self.assertEqual(cmd.onboarding_file_path, "demo/conf/onboarding.template")
         self.assertEqual(cmd.onboarding_files_dir_path, "file:/file:/demo/")
         self.assertEqual(cmd.dlt_meta_schema, "dlt_meta_dataflowspecs")
-        self.assertEqual(cmd.bronze_schema, "dltmeta_bronze")
-        self.assertEqual(cmd.silver_schema, "dltmeta_silver")
-        self.assertEqual(cmd.onboard_layer, "bronze_silver")
-        self.assertEqual(cmd.bronze_dataflowspec_table, "bronze_dataflowspec")
-        self.assertEqual(cmd.bronze_dataflowspec_path, None)
-        self.assertEqual(cmd.silver_dataflowspec_table, "silver_dataflowspec")
-        self.assertEqual(cmd.silver_dataflowspec_path, None)
+        self.assertEqual(cmd.landing_schema, "dltmeta_bronze")
+        self.assertEqual(cmd.refinery_schema, "dltmeta_silver")
+        self.assertEqual(cmd.onboard_layer, "landing_refinery")
+        self.assertEqual(cmd.landing_dataflowspec_table, "bronze_dataflowspec")
+        self.assertEqual(cmd.landing_dataflowspec_path, None)
+        self.assertEqual(cmd.refinery_dataflowspec_table, "silver_dataflowspec")
+        self.assertEqual(cmd.refinery_dataflowspec_path, None)
         self.assertEqual(cmd.version, "v1")
         self.assertEqual(cmd.env, "prod")
         self.assertEqual(cmd.import_author, "author")
@@ -344,13 +344,13 @@ class CliTests(unittest.TestCase):
     def test_load_onboard_config_without_uc(self, mock_workspace_client, mock_workspace_installer):
         mock_ws_installer = mock_workspace_installer.return_value
         mock_ws_installer._choice.side_effect = ['False', 'False', 'aws',
-                                                 'bronze_silver', 'False', 'True', 'False']
+                                                 'landing_refinery', 'False', 'True', 'False']
         mock_ws_installer._question.side_effect = [
             'dbfs_path', "dbrx", "demo/conf/onboarding.template",
             "file:/demo/", "dlt_meta_dataflowspecs", "dltmeta_bronze",
-            "dltmeta_silver", "bronze_dataflowspec_table",
-            "bronze_dataflowspec_path", "silver_dataflowspec_table",
-            "silver_dataflowspec_path", "v1", "prod", "author", "True"
+            "dltmeta_silver", "landing_dataflowspec_table",
+            "landing_dataflowspec_path", "refinery_dataflowspec_table",
+            "refinery_dataflowspec_path", "v1", "prod", "author", "True"
         ]
         dltmeta = DLTMeta(mock_workspace_client)
         cmd = dltmeta._load_onboard_config()
@@ -361,13 +361,13 @@ class CliTests(unittest.TestCase):
         self.assertEqual(cmd.onboarding_file_path, "demo/conf/onboarding.template")
         self.assertEqual(cmd.onboarding_files_dir_path, "file:/file:/demo/")
         self.assertEqual(cmd.dlt_meta_schema, "dlt_meta_dataflowspecs")
-        self.assertEqual(cmd.bronze_schema, "dltmeta_bronze")
-        self.assertEqual(cmd.silver_schema, "dltmeta_silver")
-        self.assertEqual(cmd.onboard_layer, "bronze_silver")
-        self.assertEqual(cmd.bronze_dataflowspec_table, "bronze_dataflowspec_table")
-        self.assertEqual(cmd.silver_dataflowspec_table, "silver_dataflowspec_table")
-        self.assertEqual(cmd.bronze_dataflowspec_path, "bronze_dataflowspec_path")
-        self.assertEqual(cmd.silver_dataflowspec_path, "silver_dataflowspec_path")
+        self.assertEqual(cmd.landing_schema, "dltmeta_bronze")
+        self.assertEqual(cmd.refinery_schema, "dltmeta_silver")
+        self.assertEqual(cmd.onboard_layer, "landing_refinery")
+        self.assertEqual(cmd.landing_dataflowspec_table, "landing_dataflowspec_table")
+        self.assertEqual(cmd.refinery_dataflowspec_table, "refinery_dataflowspec_table")
+        self.assertEqual(cmd.landing_dataflowspec_path, "landing_dataflowspec_path")
+        self.assertEqual(cmd.refinery_dataflowspec_path, "refinery_dataflowspec_path")
         self.assertEqual(cmd.version, "v1")
         self.assertEqual(cmd.env, "prod")
         self.assertEqual(cmd.import_author, "author")
@@ -376,7 +376,7 @@ class CliTests(unittest.TestCase):
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
     def test_load_deploy_config_with_uc_enabled(self, mock_workspace_client, mock_workspace_installer):
-        mock_workspace_installer._choice.side_effect = ["No", "True", "True", "bronze_silver"]
+        mock_workspace_installer._choice.side_effect = ["No", "True", "True", "landing_refinery"]
         mock_workspace_installer._question.side_effect = [
             "uc_catalog", "group", "dlt_meta_schema", "bronze_dataflowspec",
             "group", "dlt_meta_schema", "silver_dataflowspec",
@@ -389,12 +389,12 @@ class CliTests(unittest.TestCase):
         self.assertTrue(deploy_cmd.uc_enabled)
         self.assertTrue(deploy_cmd.serverless)
         self.assertEqual(deploy_cmd.uc_catalog_name, "uc_catalog")
-        self.assertEqual(deploy_cmd.layer, "bronze_silver")
-        self.assertEqual(deploy_cmd.onboard_bronze_group, "group")
-        self.assertEqual(deploy_cmd.dlt_meta_bronze_schema, "dlt_meta_schema")
-        self.assertEqual(deploy_cmd.dataflowspec_bronze_table, "bronze_dataflowspec")
-        self.assertEqual(deploy_cmd.dlt_meta_silver_schema, "dlt_meta_schema")
-        self.assertEqual(deploy_cmd.dataflowspec_silver_table, "silver_dataflowspec")
+        self.assertEqual(deploy_cmd.layer, "landing_refinery")
+        self.assertEqual(deploy_cmd.onboard_landing_group, "group")
+        self.assertEqual(deploy_cmd.dlt_meta_landing_schema, "dlt_meta_schema")
+        self.assertEqual(deploy_cmd.dataflowspec_landing_table, "bronze_dataflowspec")
+        self.assertEqual(deploy_cmd.dlt_meta_refinery_schema, "dlt_meta_schema")
+        self.assertEqual(deploy_cmd.dataflowspec_refinery_table, "silver_dataflowspec")
         self.assertEqual(deploy_cmd.num_workers, None)
         self.assertEqual(deploy_cmd.pipeline_name, "pipeline_name")
         self.assertEqual(deploy_cmd.dlt_target_schema, "dlt_target_schema")
@@ -402,7 +402,7 @@ class CliTests(unittest.TestCase):
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
     def test_load_deploy_config_without_uc_enabled(self, mock_workspace_client, mock_workspace_installer):
-        mock_workspace_installer._choice.side_effect = ["No", "False", "bronze"]
+        mock_workspace_installer._choice.side_effect = ["No", "False", "landing"]
         mock_workspace_installer._question.side_effect = [
             "group", "dlt_meta_schema", "bronze_dataflowspec",
             "dataflowspec_path", 4, "pipeline_name", "dlt_target_schema"
@@ -414,11 +414,11 @@ class CliTests(unittest.TestCase):
 
         self.assertFalse(deploy_cmd.uc_enabled)
         self.assertFalse(deploy_cmd.serverless)
-        self.assertEqual(deploy_cmd.layer, "bronze")
-        self.assertEqual(deploy_cmd.onboard_bronze_group, "group")
-        self.assertEqual(deploy_cmd.dlt_meta_bronze_schema, "dlt_meta_schema")
-        self.assertEqual(deploy_cmd.dataflowspec_bronze_table, "bronze_dataflowspec")
-        self.assertEqual(deploy_cmd.dataflowspec_bronze_path, "dataflowspec_path")
+        self.assertEqual(deploy_cmd.layer, "landing")
+        self.assertEqual(deploy_cmd.onboard_landing_group, "group")
+        self.assertEqual(deploy_cmd.dlt_meta_landing_schema, "dlt_meta_schema")
+        self.assertEqual(deploy_cmd.dataflowspec_landing_table, "bronze_dataflowspec")
+        self.assertEqual(deploy_cmd.dataflowspec_landing_path, "dataflowspec_path")
         self.assertEqual(deploy_cmd.num_workers, 4)
         self.assertEqual(deploy_cmd.pipeline_name, "pipeline_name")
         self.assertEqual(deploy_cmd.dlt_target_schema, "dlt_target_schema")
@@ -482,7 +482,7 @@ class CliTests(unittest.TestCase):
         cmd = OnboardCommand(
             onboarding_file_path="tests/resources/template/onboarding.template",
             onboarding_files_dir_path="tests/resources/",
-            onboard_layer="bronze",
+            onboard_layer="landing",
             env="dev",
             import_author="John Doe",
             version="1.0",
@@ -492,8 +492,8 @@ class CliTests(unittest.TestCase):
             uc_catalog_name="uc_catalog",
             uc_volume_path="uc_catalog/dlt_meta/files",
             overwrite=True,
-            bronze_dataflowspec_table="bronze_dataflowspec",
-            silver_dataflowspec_table="silver_dataflowspec",
+            landing_dataflowspec_table="bronze_dataflowspec",
+            refinery_dataflowspec_table="silver_dataflowspec",
             update_paths=True,
         )
         dltmeta = DLTMeta(mock_workspace_client)
@@ -517,7 +517,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -530,7 +530,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -569,7 +569,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -583,7 +583,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -599,15 +599,15 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze_silver",
+                onboard_layer="landing_refinery",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
                 dlt_meta_schema="dlt_meta",
                 dbfs_path="/dbfs",
                 uc_enabled=False,
-                bronze_dataflowspec_path=None,
-                silver_dataflowspec_path=None,
+                landing_dataflowspec_path=None,
+                refinery_dataflowspec_path=None,
                 overwrite=True,
             )
 
@@ -615,14 +615,14 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="silver",
+                onboard_layer="refinery",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
                 dlt_meta_schema="dlt_meta",
                 dbfs_path="/dbfs",
                 uc_enabled=False,
-                silver_dataflowspec_path=None,
+                refinery_dataflowspec_path=None,
                 overwrite=True,
             )
 
@@ -630,7 +630,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -643,7 +643,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -656,7 +656,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author=None,
                 version="1.0",
@@ -669,7 +669,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env=None,
                 import_author="John Doe",
                 version="1.0",
@@ -682,7 +682,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -697,7 +697,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -711,7 +711,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -726,7 +726,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze_silver",
+                onboard_layer="landing_refinery",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -743,7 +743,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze_silver",
+                onboard_layer="landing_refinery",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -754,14 +754,14 @@ class CliTests(unittest.TestCase):
                 cloud="aws",
                 dbr_version="7.3",
                 uc_enabled=False,
-                bronze_dataflowspec_path="tests/resources/bronze_dataflowspec"
+                landing_dataflowspec_path="tests/resources/bronze_dataflowspec"
             )
 
         with self.assertRaises(ValueError):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze_silver",
+                onboard_layer="landing_refinery",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -772,13 +772,13 @@ class CliTests(unittest.TestCase):
                 cloud="aws",
                 dbr_version="7.3",
                 uc_enabled=False,
-                silver_dataflowspec_path="tests/resources/silver_dataflowspec"
+                refinery_dataflowspec_path="tests/resources/silver_dataflowspec"
             )
         with self.assertRaises(ValueError):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="silver",
+                onboard_layer="refinery",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -795,7 +795,7 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="silver",
+                onboard_layer="refinery",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
@@ -806,14 +806,14 @@ class CliTests(unittest.TestCase):
                 cloud="aws",
                 dbr_version="7.3",
                 uc_enabled=False,
-                silver_dataflowspec_table="silver_dataflowspec"
+                refinery_dataflowspec_table="silver_dataflowspec"
             )
 
         with self.assertRaises(ValueError):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="silver",
+                onboard_layer="refinery",
                 dlt_meta_schema=None,
                 env="dev",
                 import_author="John Doe",
@@ -821,14 +821,14 @@ class CliTests(unittest.TestCase):
                 overwrite=True,
                 serverless=True,
                 uc_enabled=True,
-                silver_dataflowspec_table="silver_dataflowspec"
+                refinery_dataflowspec_table="silver_dataflowspec"
             )
 
         with self.assertRaises(ValueError):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="silver",
+                onboard_layer="refinery",
                 dlt_meta_schema="dlt_meta",
                 env="dev",
                 import_author=None,
@@ -836,14 +836,14 @@ class CliTests(unittest.TestCase):
                 overwrite=True,
                 serverless=True,
                 uc_enabled=True,
-                silver_dataflowspec_table="silver_dataflowspec"
+                refinery_dataflowspec_table="silver_dataflowspec"
             )
 
         with self.assertRaises(ValueError):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="silver",
+                onboard_layer="refinery",
                 dlt_meta_schema="dlt_meta",
                 env=None,
                 import_author="author",
@@ -851,16 +851,16 @@ class CliTests(unittest.TestCase):
                 overwrite=True,
                 serverless=True,
                 uc_enabled=True,
-                silver_dataflowspec_table="silver_dataflowspec"
+                refinery_dataflowspec_table="silver_dataflowspec"
             )
 
     def test_deploy_command_post_init(self):
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema="dlt_target_schema",
                 uc_enabled=True,
@@ -869,10 +869,10 @@ class CliTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema="dlt_target_schema",
                 serverless=False,
@@ -882,49 +882,49 @@ class CliTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             DeployCommand(
                 layer=None,
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema="dlt_target_schema",
             )
 
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group=None,
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                layer="landing",
+                onboard_landing_group=None,
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema="dlt_target_schema",
             )
 
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table=None,
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table=None,
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema="dlt_target_schema",
             )
 
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name=None,
                 dlt_target_schema="dlt_target_schema",
             )
 
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema=None,
             )
@@ -933,9 +933,9 @@ class CliTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             DeployCommand(
                 layer="",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema="dlt_target_schema",
                 num_workers=1,
@@ -943,10 +943,10 @@ class CliTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                layer="landing",
+                onboard_landing_group="",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema="dlt_target_schema",
                 num_workers=1,
@@ -954,10 +954,10 @@ class CliTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="",
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="",
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema="dlt_target_schema",
                 num_workers=1,
@@ -965,10 +965,10 @@ class CliTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name="",
                 dlt_target_schema="dlt_target_schema",
                 num_workers=1,
@@ -976,10 +976,10 @@ class CliTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="dlt_meta",
-                dataflowspec_bronze_table="dataflowspec_table",
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="dlt_meta",
+                dataflowspec_landing_table="dataflowspec_table",
                 pipeline_name="unittest_dlt_pipeline",
                 dlt_target_schema="",
                 num_workers=1,
@@ -991,10 +991,10 @@ class CliTests(unittest.TestCase):
         dltmeta = DLTMeta(mock_workspace_client)
         dltmeta.version = "1.2.3"
         cmd = DeployCommand(
-            layer="bronze",
-            onboard_bronze_group="groupA",
-            dlt_meta_bronze_schema="schemaA",
-            dataflowspec_bronze_table="tableA",
+            layer="landing",
+            onboard_landing_group="groupA",
+            dlt_meta_landing_schema="schemaA",
+            dataflowspec_landing_table="tableA",
             pipeline_name="my_pipeline",
             dlt_target_schema="my_dlt_schema",
             uc_enabled=True,
@@ -1016,13 +1016,13 @@ class CliTests(unittest.TestCase):
         dltmeta = DLTMeta(mock_workspace_client)
         dltmeta.version = "0.9.1"
         cmd = DeployCommand(
-            layer="silver",
-            onboard_silver_group="groupB",
-            dlt_meta_silver_schema="schemaB",
-            dataflowspec_silver_table="tableB",
+            layer="refinery",
+            onboard_refinery_group="groupB",
+            dlt_meta_refinery_schema="schemaB",
+            dataflowspec_refinery_table="tableB",
             pipeline_name="silver_pipeline",
             dlt_target_schema="silver_target_schema",
-            dataflowspec_silver_path="tests/resources/silver_dataflowspec",
+            dataflowspec_refinery_path="tests/resources/silver_dataflowspec",
             uc_enabled=False,
             uc_catalog_name=None,
             serverless=False,
@@ -1045,9 +1045,9 @@ class CliTests(unittest.TestCase):
         cmd = DeployCommand(
             layer="invalid",
             serverless=True,
-            onboard_bronze_group="group",
-            dlt_meta_bronze_schema="schema",
-            dataflowspec_bronze_table="table",
+            onboard_landing_group="group",
+            dlt_meta_landing_schema="schema",
+            dataflowspec_landing_table="table",
             pipeline_name="test_pipeline",
             dlt_target_schema="target_schema",
         )
@@ -1059,13 +1059,13 @@ class CliTests(unittest.TestCase):
     def test_create_dlt_meta_pipeline_raise_exception_on_no_creation(self, mock_workspace_client, mock_install_folder):
         dltmeta = DLTMeta(mock_workspace_client)
         cmd = DeployCommand(
-            layer="bronze",
+            layer="landing",
             serverless=True,
             uc_enabled=True,
             uc_catalog_name="catalog",
-            onboard_bronze_group="group",
-            dlt_meta_bronze_schema="schema",
-            dataflowspec_bronze_table="table",
+            onboard_landing_group="group",
+            dlt_meta_landing_schema="schema",
+            dataflowspec_landing_table="table",
             pipeline_name="test_pipeline",
             dlt_target_schema="target_schema",
         )
@@ -1076,14 +1076,14 @@ class CliTests(unittest.TestCase):
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
     def test_load_deploy_config_with_json(self, mock_workspace_client, mock_workspace_installer):
-        mock_workspace_installer._choice.side_effect = ["Yes", "True", "True", "bronze"]
+        mock_workspace_installer._choice.side_effect = ["Yes", "True", "True", "landing"]
         mock_workspace_installer._question.side_effect = [
             "uc_catalog", "group", "pipeline_name", "dlt_target_schema"
         ]
         oc_job_details_json = {
             "dlt_meta_schema": "dlt_meta_schema",
-            "bronze_dataflowspec_table": "bronze_dataflowspec_table",
-            "bronze_dataflowspec_path": "bronze_dataflowspec_path"
+            "landing_dataflowspec_table": "landing_dataflowspec_table",
+            "landing_dataflowspec_path": "landing_dataflowspec_path"
         }
         with patch("builtins.open", mock_open(read_data=json.dumps(oc_job_details_json))):
             dltmeta = DLTMeta(mock_workspace_client)
@@ -1092,25 +1092,25 @@ class CliTests(unittest.TestCase):
         self.assertTrue(deploy_cmd.uc_enabled)
         self.assertTrue(deploy_cmd.serverless)
         self.assertEqual(deploy_cmd.uc_catalog_name, "uc_catalog")
-        self.assertEqual(deploy_cmd.layer, "bronze")
-        self.assertEqual(deploy_cmd.onboard_bronze_group, "group")
-        self.assertEqual(deploy_cmd.dlt_meta_bronze_schema, "dlt_meta_schema")
-        self.assertEqual(deploy_cmd.dataflowspec_bronze_table, "bronze_dataflowspec_table")
+        self.assertEqual(deploy_cmd.layer, "landing")
+        self.assertEqual(deploy_cmd.onboard_landing_group, "group")
+        self.assertEqual(deploy_cmd.dlt_meta_landing_schema, "dlt_meta_schema")
+        self.assertEqual(deploy_cmd.dataflowspec_landing_table, "landing_dataflowspec_table")
         self.assertEqual(deploy_cmd.pipeline_name, "pipeline_name")
         self.assertEqual(deploy_cmd.dlt_target_schema, "dlt_target_schema")
 
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
     def test_load_deploy_config_nouc_json(self, mock_workspace_client, mock_workspace_installer):
-        mock_workspace_installer._choice.side_effect = ["Yes", "False", "bronze_silver"]
+        mock_workspace_installer._choice.side_effect = ["Yes", "False", "landing_refinery"]
         mock_workspace_installer._question.side_effect = [
             "bronze_group", "silver_group", "4", "pipeline_name",
             "dlt_target_schema"
         ]
         oc_job_details_json = {
             "dlt_meta_schema": "dlt_meta_schema",
-            "bronze_dataflowspec_path": "bronze_dataflowspec_path",
-            "silver_dataflowspec_path": "silver_dataflowspec_path"
+            "landing_dataflowspec_path": "landing_dataflowspec_path",
+            "refinery_dataflowspec_path": "refinery_dataflowspec_path"
         }
         with patch("builtins.open", mock_open(read_data=json.dumps(oc_job_details_json))):
             dltmeta = DLTMeta(mock_workspace_client)
@@ -1118,18 +1118,18 @@ class CliTests(unittest.TestCase):
             deploy_cmd = dltmeta._load_deploy_config()
         self.assertFalse(deploy_cmd.uc_enabled)
         self.assertFalse(deploy_cmd.serverless)
-        self.assertEqual(deploy_cmd.layer, "bronze_silver")
-        self.assertEqual(deploy_cmd.onboard_bronze_group, "bronze_group")
-        self.assertEqual(deploy_cmd.dataflowspec_bronze_path, "bronze_dataflowspec_path")
-        self.assertEqual(deploy_cmd.dataflowspec_silver_path, "silver_dataflowspec_path")
-        self.assertEqual(deploy_cmd.onboard_silver_group, "silver_group")
+        self.assertEqual(deploy_cmd.layer, "landing_refinery")
+        self.assertEqual(deploy_cmd.onboard_landing_group, "bronze_group")
+        self.assertEqual(deploy_cmd.dataflowspec_landing_path, "landing_dataflowspec_path")
+        self.assertEqual(deploy_cmd.dataflowspec_refinery_path, "refinery_dataflowspec_path")
+        self.assertEqual(deploy_cmd.onboard_refinery_group, "silver_group")
         self.assertEqual(deploy_cmd.pipeline_name, "pipeline_name")
         self.assertEqual(deploy_cmd.dlt_target_schema, "dlt_target_schema")
 
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
     def test_load_deploy_config_without_json(self, mock_workspace_client, mock_workspace_installer):
-        mock_workspace_installer._choice.side_effect = ["No", "True", "True", "bronze"]
+        mock_workspace_installer._choice.side_effect = ["No", "True", "True", "landing"]
         mock_workspace_installer._question.side_effect = [
             "uc_catalog", "group", "dlt_meta_schema", "bronze_dataflowspec",
             "pipeline_name", "dlt_target_schema"
@@ -1141,17 +1141,17 @@ class CliTests(unittest.TestCase):
         self.assertTrue(deploy_cmd.uc_enabled)
         self.assertTrue(deploy_cmd.serverless)
         self.assertEqual(deploy_cmd.uc_catalog_name, "uc_catalog")
-        self.assertEqual(deploy_cmd.layer, "bronze")
-        self.assertEqual(deploy_cmd.onboard_bronze_group, "group")
-        self.assertEqual(deploy_cmd.dlt_meta_bronze_schema, "dlt_meta_schema")
-        self.assertEqual(deploy_cmd.dataflowspec_bronze_table, "bronze_dataflowspec")
+        self.assertEqual(deploy_cmd.layer, "landing")
+        self.assertEqual(deploy_cmd.onboard_landing_group, "group")
+        self.assertEqual(deploy_cmd.dlt_meta_landing_schema, "dlt_meta_schema")
+        self.assertEqual(deploy_cmd.dataflowspec_landing_table, "bronze_dataflowspec")
         self.assertEqual(deploy_cmd.pipeline_name, "pipeline_name")
         self.assertEqual(deploy_cmd.dlt_target_schema, "dlt_target_schema")
 
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
     def test_load_deploy_config_with_silver_layer(self, mock_workspace_client, mock_workspace_installer):
-        mock_workspace_installer._choice.side_effect = ["No", "True", "True", "silver"]
+        mock_workspace_installer._choice.side_effect = ["No", "True", "True", "refinery"]
         mock_workspace_installer._question.side_effect = [
             "uc_catalog", "group", "dlt_meta_schema", "silver_dataflowspec",
             "pipeline_name", "dlt_target_schema"
@@ -1163,20 +1163,20 @@ class CliTests(unittest.TestCase):
         self.assertTrue(deploy_cmd.uc_enabled)
         self.assertTrue(deploy_cmd.serverless)
         self.assertEqual(deploy_cmd.uc_catalog_name, "uc_catalog")
-        self.assertEqual(deploy_cmd.layer, "silver")
-        self.assertEqual(deploy_cmd.onboard_silver_group, "group")
-        self.assertEqual(deploy_cmd.dlt_meta_silver_schema, "dlt_meta_schema")
-        self.assertEqual(deploy_cmd.dataflowspec_silver_table, "silver_dataflowspec")
+        self.assertEqual(deploy_cmd.layer, "refinery")
+        self.assertEqual(deploy_cmd.onboard_refinery_group, "group")
+        self.assertEqual(deploy_cmd.dlt_meta_refinery_schema, "dlt_meta_schema")
+        self.assertEqual(deploy_cmd.dataflowspec_refinery_table, "silver_dataflowspec")
         self.assertEqual(deploy_cmd.pipeline_name, "pipeline_name")
         self.assertEqual(deploy_cmd.dlt_target_schema, "dlt_target_schema")
 
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
     def test_load_deploy_config_with_bronze_silver_layer(self, mock_workspace_client, mock_workspace_installer):
-        mock_workspace_installer._choice.side_effect = ["No", "True", "True", "bronze_silver"]
+        mock_workspace_installer._choice.side_effect = ["No", "True", "True", "landing_refinery"]
         mock_workspace_installer._question.side_effect = [
-            "uc_catalog", "bronze_group", "dlt_meta_bronze_schema", "bronze_dataflowspec",
-            "silver_group", "dlt_meta_silver_schema", "silver_dataflowspec",
+            "uc_catalog", "bronze_group", "dlt_meta_landing_schema", "bronze_dataflowspec",
+            "silver_group", "dlt_meta_refinery_schema", "silver_dataflowspec",
             "pipeline_name", "dlt_target_schema"
         ]
         dltmeta = DLTMeta(mock_workspace_client)
@@ -1186,20 +1186,20 @@ class CliTests(unittest.TestCase):
         self.assertTrue(deploy_cmd.uc_enabled)
         self.assertTrue(deploy_cmd.serverless)
         self.assertEqual(deploy_cmd.uc_catalog_name, "uc_catalog")
-        self.assertEqual(deploy_cmd.layer, "bronze_silver")
-        self.assertEqual(deploy_cmd.onboard_bronze_group, "bronze_group")
-        self.assertEqual(deploy_cmd.dlt_meta_bronze_schema, "dlt_meta_bronze_schema")
-        self.assertEqual(deploy_cmd.dataflowspec_bronze_table, "bronze_dataflowspec")
-        self.assertEqual(deploy_cmd.onboard_silver_group, "silver_group")
-        self.assertEqual(deploy_cmd.dlt_meta_silver_schema, "dlt_meta_silver_schema")
-        self.assertEqual(deploy_cmd.dataflowspec_silver_table, "silver_dataflowspec")
+        self.assertEqual(deploy_cmd.layer, "landing_refinery")
+        self.assertEqual(deploy_cmd.onboard_landing_group, "bronze_group")
+        self.assertEqual(deploy_cmd.dlt_meta_landing_schema, "dlt_meta_landing_schema")
+        self.assertEqual(deploy_cmd.dataflowspec_landing_table, "bronze_dataflowspec")
+        self.assertEqual(deploy_cmd.onboard_refinery_group, "silver_group")
+        self.assertEqual(deploy_cmd.dlt_meta_refinery_schema, "dlt_meta_refinery_schema")
+        self.assertEqual(deploy_cmd.dataflowspec_refinery_table, "silver_dataflowspec")
         self.assertEqual(deploy_cmd.pipeline_name, "pipeline_name")
         self.assertEqual(deploy_cmd.dlt_target_schema, "dlt_target_schema")
 
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
     def test_load_deploy_config_from_json_file(self, mock_workspace_client, mock_workspace_installer):
-        mock_workspace_installer._choice.side_effect = ["Yes", "True", "True", "bronze_silver"]
+        mock_workspace_installer._choice.side_effect = ["Yes", "True", "True", "landing_refinery"]
         oc_job_details_json = "tests/resources/onboarding_job_details.json"
         import shutil
         shutil.copyfile(oc_job_details_json, "onboarding_job_details.json")
@@ -1213,13 +1213,13 @@ class CliTests(unittest.TestCase):
         self.assertTrue(deploy_cmd.uc_enabled)
         self.assertTrue(deploy_cmd.serverless)
         self.assertEqual(deploy_cmd.uc_catalog_name, "uc_catalog")
-        self.assertEqual(deploy_cmd.layer, "bronze_silver")
-        self.assertEqual(deploy_cmd.onboard_bronze_group, "bronze_group")
-        self.assertEqual(deploy_cmd.onboard_silver_group, "silver_group")
-        self.assertEqual(deploy_cmd.dlt_meta_bronze_schema, "dlt_meta_dataflowspecs")
-        self.assertEqual(deploy_cmd.dataflowspec_bronze_table, "bronze_dataflowspec")
-        self.assertEqual(deploy_cmd.dlt_meta_silver_schema, "dlt_meta_dataflowspecs")
-        self.assertEqual(deploy_cmd.dataflowspec_silver_table, "silver_dataflowspec")
+        self.assertEqual(deploy_cmd.layer, "landing_refinery")
+        self.assertEqual(deploy_cmd.onboard_landing_group, "bronze_group")
+        self.assertEqual(deploy_cmd.onboard_refinery_group, "silver_group")
+        self.assertEqual(deploy_cmd.dlt_meta_landing_schema, "dlt_meta_dataflowspecs")
+        self.assertEqual(deploy_cmd.dataflowspec_landing_table, "bronze_dataflowspec")
+        self.assertEqual(deploy_cmd.dlt_meta_refinery_schema, "dlt_meta_dataflowspecs")
+        self.assertEqual(deploy_cmd.dataflowspec_refinery_table, "silver_dataflowspec")
         self.assertEqual(deploy_cmd.pipeline_name, "pipeline_name")
         self.assertEqual(deploy_cmd.dlt_target_schema, "dlt_target_schema")
 
@@ -1249,41 +1249,41 @@ class CliTests(unittest.TestCase):
 
     def test_onboard_command_silver_layer_validation(self):
         """Test validation for silver layer specific cases."""
-        # Test silver layer without silver_dataflowspec_table (line 91)
+        # Test silver layer without refinery_dataflowspec_table (line 91)
         with self.assertRaises(ValueError) as context:
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="silver",
+                onboard_layer="refinery",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
                 dlt_meta_schema="dlt_meta",
                 dbfs_path="/dbfs",
                 uc_enabled=False,
-                silver_dataflowspec_table=None,
-                silver_dataflowspec_path="/path/to/silver",
+                refinery_dataflowspec_table=None,
+                refinery_dataflowspec_path="/path/to/silver",
                 overwrite=True,
             )
-        self.assertIn("silver_dataflowspec_table is required", str(context.exception))
+        self.assertIn("refinery_dataflowspec_table is required", str(context.exception))
 
-        # Test silver layer without silver_dataflowspec_path when uc_enabled=False (line 94)
+        # Test silver layer without refinery_dataflowspec_path when uc_enabled=False (line 94)
         with self.assertRaises(ValueError) as context:
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="silver",
+                onboard_layer="refinery",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
                 dlt_meta_schema="dlt_meta",
                 dbfs_path="/dbfs",
                 uc_enabled=False,
-                silver_dataflowspec_table="silver_table",
-                silver_dataflowspec_path=None,
+                refinery_dataflowspec_table="silver_table",
+                refinery_dataflowspec_path=None,
                 overwrite=True,
             )
-        self.assertIn("silver_dataflowspec_path is required", str(context.exception))
+        self.assertIn("refinery_dataflowspec_path is required", str(context.exception))
 
     def test_onboard_command_version_validation(self):
         """Test version validation (line 100)."""
@@ -1291,87 +1291,87 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version=None,
                 dlt_meta_schema="dlt_meta",
                 dbfs_path="/dbfs",
                 uc_enabled=False,
-                bronze_dataflowspec_path="/path/to/bronze",
+                landing_dataflowspec_path="/path/to/bronze",
                 overwrite=True,
             )
         self.assertIn("version is required", str(context.exception))
 
     def test_deploy_command_validation_cases(self):
         """Test DeployCommand validation cases for missing coverage."""
-        # Test bronze layer without dataflowspec_bronze_table when uc_enabled=True (line 136)
+        # Test bronze layer without dataflowspec_landing_table when uc_enabled=True (line 136)
         with self.assertRaises(ValueError) as context:
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="bronze_schema",
-                dataflowspec_bronze_table=None,
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="landing_schema",
+                dataflowspec_landing_table=None,
                 pipeline_name="test_pipeline",
                 dlt_target_schema="target_schema",
                 uc_enabled=True,
                 uc_catalog_name="test_catalog",  # Need this to pass earlier validation
                 serverless=True,
             )
-        self.assertIn("dataflowspec_bronze_table is required", str(context.exception))
+        self.assertIn("dataflowspec_landing_table is required", str(context.exception))
 
-        # Test silver layer without onboard_silver_group (line 141)
+        # Test silver layer without onboard_refinery_group (line 141)
         with self.assertRaises(ValueError) as context:
             DeployCommand(
-                layer="silver",
-                onboard_silver_group=None,
-                dlt_meta_silver_schema="silver_schema",
-                dataflowspec_silver_table="silver_table",
+                layer="refinery",
+                onboard_refinery_group=None,
+                dlt_meta_refinery_schema="refinery_schema",
+                dataflowspec_refinery_table="silver_table",
                 pipeline_name="test_pipeline",
                 dlt_target_schema="target_schema",
                 uc_enabled=True,
                 uc_catalog_name="test_catalog",
                 serverless=True,
             )
-        self.assertIn("onboard_silver_group is required", str(context.exception))
+        self.assertIn("onboard_refinery_group is required", str(context.exception))
 
-        # Test silver layer without dataflowspec_silver_table when uc_enabled=True (line 143)
+        # Test silver layer without dataflowspec_refinery_table when uc_enabled=True (line 143)
         with self.assertRaises(ValueError) as context:
             DeployCommand(
-                layer="silver",
-                onboard_silver_group="A1",
-                dlt_meta_silver_schema="silver_schema",
-                dataflowspec_silver_table=None,
+                layer="refinery",
+                onboard_refinery_group="A1",
+                dlt_meta_refinery_schema="refinery_schema",
+                dataflowspec_refinery_table=None,
                 pipeline_name="test_pipeline",
                 dlt_target_schema="target_schema",
                 uc_enabled=True,
                 uc_catalog_name="test_catalog",
                 serverless=True,
             )
-        self.assertIn("dataflowspec_silver_table is required", str(context.exception))
+        self.assertIn("dataflowspec_refinery_table is required", str(context.exception))
 
-        # Test silver layer without dataflowspec_silver_path when uc_enabled=False (line 145)
+        # Test silver layer without dataflowspec_refinery_path when uc_enabled=False (line 145)
         with self.assertRaises(ValueError) as context:
             DeployCommand(
-                layer="silver",
-                onboard_silver_group="A1",
-                dlt_meta_silver_schema="silver_schema",
-                dataflowspec_silver_table="silver_table",
-                dataflowspec_silver_path=None,
+                layer="refinery",
+                onboard_refinery_group="A1",
+                dlt_meta_refinery_schema="refinery_schema",
+                dataflowspec_refinery_table="silver_table",
+                dataflowspec_refinery_path=None,
                 pipeline_name="test_pipeline",
                 dlt_target_schema="target_schema",
                 uc_enabled=False,
                 serverless=True,
             )
-        self.assertIn("dataflowspec_silver_path is required", str(context.exception))
+        self.assertIn("dataflowspec_refinery_path is required", str(context.exception))
 
         # Test without pipeline_name (line 147)
         with self.assertRaises(ValueError) as context:
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="bronze_schema",
-                dataflowspec_bronze_table="bronze_table",
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="landing_schema",
+                dataflowspec_landing_table="bronze_table",
                 pipeline_name=None,
                 dlt_target_schema="target_schema",
                 uc_enabled=True,
@@ -1383,10 +1383,10 @@ class CliTests(unittest.TestCase):
         # Test without dlt_target_schema (line 149)
         with self.assertRaises(ValueError) as context:
             DeployCommand(
-                layer="bronze",
-                onboard_bronze_group="A1",
-                dlt_meta_bronze_schema="bronze_schema",
-                dataflowspec_bronze_table="bronze_table",
+                layer="landing",
+                onboard_landing_group="A1",
+                dlt_meta_landing_schema="landing_schema",
+                dataflowspec_landing_table="bronze_table",
                 pipeline_name="test_pipeline",
                 dlt_target_schema=None,
                 uc_enabled=True,
@@ -1432,10 +1432,10 @@ class CliTests(unittest.TestCase):
             'onboarding_file_path': 'custom/path/onboarding.json',
             'local_directory': '/custom/dir/',
             'dlt_meta_schema': 'custom_schema',
-            'bronze_schema': 'custom_bronze',
-            'silver_schema': 'custom_silver',
-            'dlt_meta_layer': "1",  # bronze_silver
-            'bronze_table': 'custom_bronze_table',
+            'landing_schema': 'custom_bronze',
+            'refinery_schema': 'custom_silver',
+            'dlt_meta_layer': "1",  # landing_refinery
+            'landing_table': 'custom_bronze_table',
             'overwrite': "1",
             'version': 'v2',
             'environment': 'dev',
@@ -1456,8 +1456,8 @@ class CliTests(unittest.TestCase):
         self.assertIsNone(result.dbr_version)
 
         # Verify other settings
-        self.assertEqual(result.onboard_layer, "bronze_silver")
-        self.assertEqual(result.bronze_dataflowspec_table, "custom_bronze_table")
+        self.assertEqual(result.onboard_layer, "landing_refinery")
+        self.assertEqual(result.landing_dataflowspec_table, "custom_bronze_table")
         self.assertTrue(result.overwrite)
         self.assertEqual(result.version, "v2")
         self.assertEqual(result.env, "dev")
@@ -1493,7 +1493,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.dbr_version, "14.3.x-scala2.12")
 
         # Verify layer settings
-        self.assertEqual(result.onboard_layer, "bronze")
+        self.assertEqual(result.onboard_layer, "landing")
 
     @patch("src.cli.uuid.uuid4")
     @patch("builtins.open", new_callable=mock_open)
@@ -1515,8 +1515,8 @@ class CliTests(unittest.TestCase):
         result = dltmeta._load_onboard_config_ui(form_data)
 
         # Verify layer settings
-        self.assertEqual(result.onboard_layer, "silver")
-        self.assertEqual(result.silver_dataflowspec_table, "silver_dataflowspec")
+        self.assertEqual(result.onboard_layer, "refinery")
+        self.assertEqual(result.refinery_dataflowspec_table, "refinery_dataflowspec")
 
     @patch("os.path.isfile")
     @patch("builtins.open", new_callable=mock_open)
@@ -1525,10 +1525,10 @@ class CliTests(unittest.TestCase):
         mock_isfile.return_value = True
         onboarding_data = {
             "dlt_meta_schema": "test_schema",
-            "bronze_dataflowspec_table": "bronze_table",
-            "silver_dataflowspec_table": "silver_table",
-            "bronze_dataflowspec_path": "/bronze/path",
-            "silver_dataflowspec_path": "/silver/path"
+            "landing_dataflowspec_table": "bronze_table",
+            "refinery_dataflowspec_table": "silver_table",
+            "landing_dataflowspec_path": "/bronze/path",
+            "refinery_dataflowspec_path": "/silver/path"
         }
         mock_open_file.return_value.read.return_value = json.dumps(onboarding_data)
 
@@ -1540,9 +1540,9 @@ class CliTests(unittest.TestCase):
             "uc_enabled": True,
             "uc_catalog_name": "test_catalog",
             "serverless": True,
-            "layer": "bronze_silver",
-            "onboard_bronze_group": "B1",
-            "onboard_silver_group": "S1",
+            "layer": "landing_refinery",
+            "onboard_landing_group": "B1",
+            "onboard_refinery_group": "S1",
             "pipeline_name": "test_pipeline",
             "dlt_target_schema": "target_schema"
         }
@@ -1553,11 +1553,11 @@ class CliTests(unittest.TestCase):
         self.assertTrue(result.uc_enabled)
         self.assertEqual(result.uc_catalog_name, "test_catalog")
         self.assertTrue(result.serverless)
-        self.assertEqual(result.layer, "bronze_silver")
-        self.assertEqual(result.dlt_meta_bronze_schema, "test_schema")
-        self.assertEqual(result.dataflowspec_bronze_table, "bronze_table")
-        self.assertEqual(result.dlt_meta_silver_schema, "test_schema")
-        self.assertEqual(result.dataflowspec_silver_table, "silver_table")
+        self.assertEqual(result.layer, "landing_refinery")
+        self.assertEqual(result.dlt_meta_landing_schema, "test_schema")
+        self.assertEqual(result.dataflowspec_landing_table, "bronze_table")
+        self.assertEqual(result.dlt_meta_refinery_schema, "test_schema")
+        self.assertEqual(result.dataflowspec_refinery_table, "silver_table")
 
     @patch("os.path.isfile")
     def test_load_deploy_config_ui_without_onboarding_json(self, mock_isfile):
@@ -1570,11 +1570,11 @@ class CliTests(unittest.TestCase):
         input_params = {
             "load_from_ojd_json": False,
             "uc_enabled": False,
-            "layer": "bronze",
-            "onboard_bronze_group": "B1",
-            "dlt_meta_bronze_schema": "bronze_schema",
-            "dataflowspec_bronze_table": "bronze_table",
-            "dataflowspec_bronze_path": "/bronze/path",
+            "layer": "landing",
+            "onboard_landing_group": "B1",
+            "dlt_meta_landing_schema": "landing_schema",
+            "dataflowspec_landing_table": "bronze_table",
+            "dataflowspec_landing_path": "/bronze/path",
             "num_workers": 8,
             "pipeline_name": "test_pipeline",
             "dlt_target_schema": "target_schema"
@@ -1585,11 +1585,11 @@ class CliTests(unittest.TestCase):
         # Verify settings
         self.assertFalse(result.uc_enabled)
         self.assertFalse(result.serverless)
-        self.assertEqual(result.layer, "bronze")
-        self.assertEqual(result.onboard_bronze_group, "B1")
-        self.assertEqual(result.dlt_meta_bronze_schema, "bronze_schema")
-        self.assertEqual(result.dataflowspec_bronze_table, "bronze_table")
-        self.assertEqual(result.dataflowspec_bronze_path, "/bronze/path")
+        self.assertEqual(result.layer, "landing")
+        self.assertEqual(result.onboard_landing_group, "B1")
+        self.assertEqual(result.dlt_meta_landing_schema, "landing_schema")
+        self.assertEqual(result.dataflowspec_landing_table, "bronze_table")
+        self.assertEqual(result.dataflowspec_landing_path, "/bronze/path")
         self.assertEqual(result.num_workers, 8)
 
     @patch("os.path.isfile")
@@ -1599,7 +1599,7 @@ class CliTests(unittest.TestCase):
         mock_isfile.return_value = True
         onboarding_data = {
             "dlt_meta_schema": "test_schema",
-            "silver_dataflowspec_path": "/test/path/silver"
+            "refinery_dataflowspec_path": "/test/path/silver"
         }
         mock_open_file.return_value.read.return_value = json.dumps(onboarding_data)
 
@@ -1610,8 +1610,8 @@ class CliTests(unittest.TestCase):
             "load_from_ojd_json": True,
             "uc_enabled": False,
             "serverless": False,
-            "layer": "silver",
-            "onboard_silver_group": "S1",
+            "layer": "refinery",
+            "onboard_refinery_group": "S1",
             "num_workers": 6,
             "pipeline_name": "test_pipeline",
             "dlt_target_schema": "target_schema"
@@ -1733,14 +1733,14 @@ class CliTests(unittest.TestCase):
             OnboardCommand(
                 onboarding_file_path="tests/resources/onboarding.json",
                 onboarding_files_dir_path="tests/resources/",
-                onboard_layer="bronze",
+                onboard_layer="landing",
                 env="dev",
                 import_author="John Doe",
                 version="1.0",
                 dlt_meta_schema="dlt_meta",
                 uc_enabled=False,
                 dbfs_path="/dbfs",
-                bronze_dataflowspec_path=None,  # This should trigger the error
+                landing_dataflowspec_path=None,  # This should trigger the error
                 overwrite=True,
             )
-        self.assertIn("bronze_dataflowspec_path is required", str(context.exception))
+        self.assertIn("landing_dataflowspec_path is required", str(context.exception))

@@ -15,8 +15,8 @@ logger.setLevel(logging.INFO)
 
 
 @dataclass
-class BronzeDataflowSpec:
-    """A schema to hold a dataflow spec used for writing to the bronze layer."""
+class LandingDataflowSpec:
+    """A schema to hold a dataflow spec used for writing to the landing layer."""
 
     dataFlowId: str
     dataFlowGroup: str
@@ -45,8 +45,8 @@ class BronzeDataflowSpec:
 
 
 @dataclass
-class SilverDataflowSpec:
-    """A schema to hold a dataflow spec used for writing to the silver layer."""
+class RefineryDataflowSpec:
+    """A schema to hold a dataflow spec used for writing to the refinery layer."""
 
     dataFlowId: str
     dataFlowGroup: str
@@ -56,8 +56,7 @@ class SilverDataflowSpec:
     targetFormat: str
     targetDetails: map
     tableProperties: map
-    selectExp: list
-    whereClause: list
+    sqlQuery: str
     partitionColumns: list
     cdcApplyChanges: str
     applyChangesFromSnapshot: str
@@ -66,6 +65,31 @@ class SilverDataflowSpec:
     quarantineTableProperties: map
     appendFlows: str
     appendFlowsSchemas: map
+    version: str
+    createDate: datetime
+    createdBy: str
+    updateDate: datetime
+    updatedBy: str
+    clusterBy: list
+    sinks: str
+
+
+@dataclass
+class TreasuryDataflowSpec:
+    """A schema to hold a dataflow spec used for writing to the treasury (gold) layer."""
+
+    dataFlowId: str
+    dataFlowGroup: str
+    sourceFormat: str
+    sourceDetails: map
+    readerConfigOptions: map
+    targetFormat: str
+    targetDetails: map
+    tableProperties: map
+    sqlQuery: str
+    partitionColumns: list
+    cdcApplyChanges: str
+    dataQualityExpectations: str
     version: str
     createDate: datetime
     createdBy: str
@@ -181,20 +205,25 @@ class DataflowSpecUtils:
         "where_clause": None
     }
 
-    additional_bronze_df_columns = [
+    additional_landing_df_columns = [
         "appendFlows",
         "appendFlowsSchemas",
         "applyChangesFromSnapshot",
         "clusterBy",
         "sinks"
     ]
-    additional_silver_df_columns = [
+    additional_refinery_df_columns = [
         "dataQualityExpectations",
         "quarantineTargetDetails",
         "quarantineTableProperties",
         "appendFlows",
         "appendFlowsSchemas",
         "applyChangesFromSnapshot",
+        "clusterBy",
+        "sinks"
+    ]
+    additional_treasury_df_columns = [
+        "dataQualityExpectations",
         "clusterBy",
         "sinks"
     ]
@@ -250,19 +279,19 @@ class DataflowSpecUtils:
         return dataflow_spec_df
 
     @staticmethod
-    def get_bronze_dataflow_spec(spark) -> List[BronzeDataflowSpec]:
-        """Get bronze dataflow spec."""
-        DataflowSpecUtils.check_spark_dataflowpipeline_conf_params(spark, "bronze")
-        dataflow_spec_rows = DataflowSpecUtils._get_dataflow_spec(spark, "bronze").collect()
-        bronze_dataflow_spec_list: list[BronzeDataflowSpec] = []
+    def get_landing_dataflow_spec(spark) -> List[LandingDataflowSpec]:
+        """Get landing dataflow spec."""
+        DataflowSpecUtils.check_spark_dataflowpipeline_conf_params(spark, "landing")
+        dataflow_spec_rows = DataflowSpecUtils._get_dataflow_spec(spark, "landing").collect()
+        landing_dataflow_spec_list: list[LandingDataflowSpec] = []
         for row in dataflow_spec_rows:
             target_row = DataflowSpecUtils.populate_additional_df_cols(
                 row.asDict(),
-                DataflowSpecUtils.additional_bronze_df_columns
+                DataflowSpecUtils.additional_landing_df_columns
             )
-            bronze_dataflow_spec_list.append(BronzeDataflowSpec(**target_row))
-        logger.info(f"bronze_dataflow_spec_list={bronze_dataflow_spec_list}")
-        return bronze_dataflow_spec_list
+            landing_dataflow_spec_list.append(LandingDataflowSpec(**target_row))
+        logger.info(f"landing_dataflow_spec_list={landing_dataflow_spec_list}")
+        return landing_dataflow_spec_list
 
     @staticmethod
     def populate_additional_df_cols(onboarding_row_dict, additional_columns):
@@ -272,19 +301,34 @@ class DataflowSpecUtils:
         return onboarding_row_dict
 
     @staticmethod
-    def get_silver_dataflow_spec(spark) -> List[SilverDataflowSpec]:
-        """Get silver dataflow spec list."""
-        DataflowSpecUtils.check_spark_dataflowpipeline_conf_params(spark, "silver")
+    def get_refinery_dataflow_spec(spark) -> List[RefineryDataflowSpec]:
+        """Get refinery dataflow spec list."""
+        DataflowSpecUtils.check_spark_dataflowpipeline_conf_params(spark, "refinery")
 
-        dataflow_spec_rows = DataflowSpecUtils._get_dataflow_spec(spark, "silver").collect()
-        silver_dataflow_spec_list: list[SilverDataflowSpec] = []
+        dataflow_spec_rows = DataflowSpecUtils._get_dataflow_spec(spark, "refinery").collect()
+        refinery_dataflow_spec_list: list[RefineryDataflowSpec] = []
         for row in dataflow_spec_rows:
             target_row = DataflowSpecUtils.populate_additional_df_cols(
                 row.asDict(),
-                DataflowSpecUtils.additional_silver_df_columns
+                DataflowSpecUtils.additional_refinery_df_columns
             )
-            silver_dataflow_spec_list.append(SilverDataflowSpec(**target_row))
-        return silver_dataflow_spec_list
+            refinery_dataflow_spec_list.append(RefineryDataflowSpec(**target_row))
+        return refinery_dataflow_spec_list
+
+    @staticmethod
+    def get_treasury_dataflow_spec(spark) -> List[TreasuryDataflowSpec]:
+        """Get treasury dataflow spec list."""
+        DataflowSpecUtils.check_spark_dataflowpipeline_conf_params(spark, "treasury")
+
+        dataflow_spec_rows = DataflowSpecUtils._get_dataflow_spec(spark, "treasury").collect()
+        treasury_dataflow_spec_list: list[TreasuryDataflowSpec] = []
+        for row in dataflow_spec_rows:
+            target_row = DataflowSpecUtils.populate_additional_df_cols(
+                row.asDict(),
+                DataflowSpecUtils.additional_treasury_df_columns
+            )
+            treasury_dataflow_spec_list.append(TreasuryDataflowSpec(**target_row))
+        return treasury_dataflow_spec_list
 
     @staticmethod
     def check_spark_dataflowpipeline_conf_params(spark, layer_arg):

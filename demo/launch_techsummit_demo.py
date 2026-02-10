@@ -79,8 +79,8 @@ class DLTMETATechSummitDemo(DLTMETARunner):
             run_id=run_id,
             username=self._my_username(self.ws),
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            bronze_schema=f"dlt_meta_bronze_demo_{run_id}",
-            silver_schema=f"dlt_meta_silver_demo_{run_id}",
+            landing_schema=f"dlt_meta_landing_demo_{run_id}",
+            refinery_schema=f"dlt_meta_refinery_demo_{run_id}",
             runners_full_local_path='demo/notebooks/techsummit_runners',
             runners_nb_path=f"/Users/{self._my_username(self.ws)}/dlt_meta_techsummit_demo/{run_id}",
             int_tests_dir="demo",
@@ -105,20 +105,20 @@ class DLTMETATechSummitDemo(DLTMETARunner):
             runner_conf.uc_volume_name = f"{self.args['uc_catalog_name']}_volume_{run_id}"
         return runner_conf
 
-    def create_bronze_silver_dlt(self, runner_conf: DLTMetaRunnerConf):
-        runner_conf.bronze_pipeline_id = self.create_dlt_meta_pipeline(
-            f"dlt-meta-bronze-{runner_conf.run_id}",
-            "bronze",
+    def create_landing_refinery_dlt(self, runner_conf: DLTMetaRunnerConf):
+        runner_conf.landing_pipeline_id = self.create_dlt_meta_pipeline(
+            f"dlt-meta-landing-{runner_conf.run_id}",
+            "landing",
             "A1",
-            runner_conf.bronze_schema,
+            runner_conf.landing_schema,
             runner_conf,
         )
 
-        runner_conf.silver_pipeline_id = self.create_dlt_meta_pipeline(
-            f"dlt-meta-silver-{runner_conf.run_id}",
-            "silver",
+        runner_conf.refinery_pipeline_id = self.create_dlt_meta_pipeline(
+            f"dlt-meta-refinery-{runner_conf.run_id}",
+            "refinery",
             "A1",
-            runner_conf.silver_schema,
+            runner_conf.refinery_schema,
             runner_conf,
         )
 
@@ -131,7 +131,7 @@ class DLTMETATechSummitDemo(DLTMETARunner):
         """
         try:
             self.init_dltmeta_runner_conf(runner_conf)
-            self.create_bronze_silver_dlt(runner_conf)
+            self.create_landing_refinery_dlt(runner_conf)
             self.launch_workflow(runner_conf)
         except Exception as e:
             print(e)
@@ -185,8 +185,8 @@ class DLTMETATechSummitDemo(DLTMETARunner):
                             "table_data_rows_count": runner_conf.table_data_rows_count,
                             "uc_catalog_name": runner_conf.uc_catalog_name,
                             "dlt_meta_schema": runner_conf.dlt_meta_schema,
-                            "bronze_schema": runner_conf.bronze_schema,
-                            "silver_schema": runner_conf.silver_schema,
+                            "landing_schema": runner_conf.landing_schema,
+                            "refinery_schema": runner_conf.refinery_schema,
                         }
                     )
 
@@ -198,19 +198,19 @@ class DLTMETATechSummitDemo(DLTMETARunner):
                     environment_key="dl_meta_int_env",
                     timeout_seconds=0,
                     python_wheel_task=jobs.PythonWheelTask(
-                        package_name="dlt_meta",
+                        package_name="dlt_meta_cds",
                         entry_point="run",
                         named_parameters={
-                            "onboard_layer": "bronze_silver",
+                            "onboard_layer": "landing_refinery",
                             "database": f"{runner_conf.uc_catalog_name}.{runner_conf.dlt_meta_schema}",
                             "onboarding_file_path":
                             f"{runner_conf.uc_volume_path}/conf/onboarding.json",
-                            "silver_dataflowspec_table": "silver_dataflowspec_cdc",
-                            "silver_dataflowspec_path": f"{runner_conf.uc_volume_path}/data/dlt_spec/silver",
-                            "bronze_dataflowspec_table": "bronze_dataflowspec_cdc",
+                            "refinery_dataflowspec_table": "refinery_dataflowspec_cdc",
+                            "refinery_dataflowspec_path": f"{runner_conf.uc_volume_path}/data/dlt_spec/refinery",
+                            "landing_dataflowspec_table": "landing_dataflowspec_cdc",
                             "import_author": "Ravi",
                             "version": "v1",
-                            "bronze_dataflowspec_path": f"{runner_conf.uc_volume_path}/data/dlt_spec/bronze",
+                            "landing_dataflowspec_path": f"{runner_conf.uc_volume_path}/data/dlt_spec/landing",
                             "overwrite": "True",
                             "env": runner_conf.env,
                             "uc_enabled": "True" if runner_conf.uc_catalog_name else "False"
@@ -218,17 +218,17 @@ class DLTMETATechSummitDemo(DLTMETARunner):
                     )
                 ),
                 jobs.Task(
-                    task_key="bronze_dlt",
+                    task_key="landing_dlt",
                     depends_on=[jobs.TaskDependency(task_key="onboarding_job")],
                     pipeline_task=jobs.PipelineTask(
-                        pipeline_id=runner_conf.bronze_pipeline_id
+                        pipeline_id=runner_conf.landing_pipeline_id
                     )
                 ),
                 jobs.Task(
-                    task_key="silver_dlt",
-                    depends_on=[jobs.TaskDependency(task_key="bronze_dlt")],
+                    task_key="refinery_dlt",
+                    depends_on=[jobs.TaskDependency(task_key="landing_dlt")],
                     pipeline_task=jobs.PipelineTask(
-                        pipeline_id=runner_conf.silver_pipeline_id
+                        pipeline_id=runner_conf.refinery_pipeline_id
                     )
                 )
             ]

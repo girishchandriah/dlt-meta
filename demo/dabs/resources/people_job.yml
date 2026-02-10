@@ -10,7 +10,7 @@ resources:
       tasks:
         - task_key: onboard_bronze_silver_tables
           python_wheel_task:
-            package_name: dlt_meta
+            package_name: dlt_meta_cds
             entry_point: run
             named_parameters:
               database: ${var.${bundle.target}_catalog_name}.${var.dlt_meta_schema}
@@ -29,7 +29,7 @@ resources:
 
         - task_key: onboard_silver_fanout_tables
           python_wheel_task:
-            package_name: dlt_meta
+            package_name: dlt_meta_cds
             entry_point: run
             named_parameters:
               database: ${var.${bundle.target}_catalog_name}.${var.dlt_meta_schema}

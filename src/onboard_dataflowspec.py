@@ -1,4 +1,4 @@
-"""OnboardDataflowSpec class provides bronze/silver onboarding features."""
+"""OnboardDataflowSpec class provides landing/refinery/treasury onboarding features."""
 
 import copy
 import dataclasses
@@ -11,7 +11,7 @@ import pyspark.sql.types as T
 from pyspark.sql import functions as f
 from pyspark.sql.types import ArrayType, MapType, StringType, StructField, StructType
 
-from src.dataflow_spec import BronzeDataflowSpec, DataflowSpecUtils, SilverDataflowSpec
+from src.dataflow_spec import LandingDataflowSpec, RefineryDataflowSpec, TreasuryDataflowSpec, DataflowSpecUtils
 from src.metastore_ops import DeltaPipelinesInternalTableOps, DeltaPipelinesMetaStoreOps
 
 logger = logging.getLogger("databricks.labs.dltmeta")
@@ -19,36 +19,37 @@ logger.setLevel(logging.INFO)
 
 
 class OnboardDataflowspec:
-    """OnboardDataflowSpec class provides bronze/silver onboarding features."""
+    """OnboardDataflowSpec class provides landing/refinery/treasury onboarding features."""
 
-    def __init__(self, spark, dict_obj, bronze_schema_mapper=None, uc_enabled=False):
+    def __init__(self, spark, dict_obj, landing_schema_mapper=None, uc_enabled=False):
         """Onboard Dataflowspec Constructor."""
         self.spark = spark
         self.dict_obj = dict_obj
-        self.bronze_dict_obj = copy.deepcopy(dict_obj)
-        self.silver_dict_obj = copy.deepcopy(dict_obj)
+        self.landing_dict_obj = copy.deepcopy(dict_obj)
+        self.refinery_dict_obj = copy.deepcopy(dict_obj)
+        self.treasury_dict_obj = copy.deepcopy(dict_obj)
         self.uc_enabled = uc_enabled
         self.__initialize_paths(uc_enabled)
-        self.bronze_schema_mapper = bronze_schema_mapper
+        self.landing_schema_mapper = landing_schema_mapper
         self.deltaPipelinesMetaStoreOps = DeltaPipelinesMetaStoreOps(self.spark)
         self.deltaPipelinesInternalTableOps = DeltaPipelinesInternalTableOps(self.spark)
         self.onboard_file_type = None
 
     def __initialize_paths(self, uc_enabled):
-        if "silver_dataflowspec_table" in self.bronze_dict_obj:
-            del self.bronze_dict_obj["silver_dataflowspec_table"]
-        if "silver_dataflowspec_path" in self.bronze_dict_obj:
-            del self.bronze_dict_obj["silver_dataflowspec_path"]
+        if "refinery_dataflowspec_table" in self.landing_dict_obj:
+            del self.landing_dict_obj["refinery_dataflowspec_table"]
+        if "refinery_dataflowspec_path" in self.landing_dict_obj:
+            del self.landing_dict_obj["refinery_dataflowspec_path"]
 
-        if "bronze_dataflowspec_table" in self.silver_dict_obj:
-            del self.silver_dict_obj["bronze_dataflowspec_table"]
-        if "bronze_dataflowspec_path" in self.silver_dict_obj:
-            del self.silver_dict_obj["bronze_dataflowspec_path"]
+        if "landing_dataflowspec_table" in self.refinery_dict_obj:
+            del self.refinery_dict_obj["landing_dataflowspec_table"]
+        if "landing_dataflowspec_path" in self.refinery_dict_obj:
+            del self.refinery_dict_obj["landing_dataflowspec_path"]
         if uc_enabled:
-            if "bronze_dataflowspec_path" in self.bronze_dict_obj:
-                del self.bronze_dict_obj["bronze_dataflowspec_path"]
-            if "silver_dataflowspec_path" in self.silver_dict_obj:
-                del self.silver_dict_obj["silver_dataflowspec_path"]
+            if "landing_dataflowspec_path" in self.landing_dict_obj:
+                del self.landing_dict_obj["landing_dataflowspec_path"]
+            if "refinery_dataflowspec_path" in self.refinery_dict_obj:
+                del self.refinery_dict_obj["refinery_dataflowspec_path"]
 
     @staticmethod
     def __validate_dict_attributes(attributes, dict_obj):
@@ -82,17 +83,17 @@ class OnboardDataflowspec:
         - onboarding_file_path: The path to the onboarding file.
         - database: The name of the database to onboard the dataflow specs to.
         - env: The environment to onboard the dataflow specs to.
-        - bronze_dataflowspec_table: The name of the bronze dataflow specs table.
-        - bronze_dataflowspec_path: The path to the bronze dataflow specs.
-        - silver_dataflowspec_table: The name of the silver dataflow specs table.
-        - silver_dataflowspec_path: The path to the silver dataflow specs.
+        - landing_dataflowspec_table: The name of the bronze dataflow specs table.
+        - landing_dataflowspec_path: The path to the bronze dataflow specs.
+        - refinery_dataflowspec_table: The name of the silver dataflow specs table.
+        - refinery_dataflowspec_path: The path to the silver dataflow specs.
         - import_author: The author of the import.
         - version: The version of the import.
         - overwrite: Whether to overwrite existing dataflow specs or not.
 
         If the `uc_enabled` flag is set to True, the dictionary object must contain all the attributes listed above.
         If the `uc_enabled` flag is set to False, the dictionary object must contain all the attributes listed above
-        except for `bronze_dataflowspec_path` and `silver_dataflowspec_path`.
+        except for `landing_dataflowspec_path` and `refinery_dataflowspec_path`.
 
         This method calls the `onboard_bronze_dataflow_spec` and `onboard_silver_dataflow_spec` methods to onboard
         the bronze and silver dataflow specs respectively.
@@ -101,60 +102,60 @@ class OnboardDataflowspec:
             "onboarding_file_path",
             "database",
             "env",
-            "bronze_dataflowspec_table",
-            "silver_dataflowspec_table",
+            "landing_dataflowspec_table",
+            "refinery_dataflowspec_table",
             "import_author",
             "version",
             "overwrite",
         ]
         if self.uc_enabled:
-            if "bronze_dataflowspec_path" in self.dict_obj:
-                del self.dict_obj["bronze_dataflowspec_path"]
-            if "silver_dataflowspec_path" in self.dict_obj:
-                del self.dict_obj["silver_dataflowspec_path"]
+            if "landing_dataflowspec_path" in self.dict_obj:
+                del self.dict_obj["landing_dataflowspec_path"]
+            if "refinery_dataflowspec_path" in self.dict_obj:
+                del self.dict_obj["refinery_dataflowspec_path"]
             self.__validate_dict_attributes(attributes, self.dict_obj)
         else:
-            attributes.append("bronze_dataflowspec_path")
-            attributes.append("silver_dataflowspec_path")
+            attributes.append("landing_dataflowspec_path")
+            attributes.append("refinery_dataflowspec_path")
             self.__validate_dict_attributes(attributes, self.dict_obj)
-        self.onboard_bronze_dataflow_spec()
-        self.onboard_silver_dataflow_spec()
+        self.onboard_landing_dataflow_spec()
+        self.onboard_refinery_dataflow_spec()
 
-    def register_bronze_dataflow_spec_tables(self):
+    def register_landing_dataflow_spec_tables(self):
         """Register bronze/silver dataflow specs tables."""
         self.deltaPipelinesMetaStoreOps.create_database(
             self.dict_obj["database"], "dlt-meta database"
         )
         self.deltaPipelinesMetaStoreOps.register_table_in_metastore(
             self.dict_obj["database"],
-            self.dict_obj["bronze_dataflowspec_table"],
-            self.dict_obj["bronze_dataflowspec_path"],
+            self.dict_obj["landing_dataflowspec_table"],
+            self.dict_obj["landing_dataflowspec_path"],
         )
         logger.info(
-            f"""onboarded bronze table={self.dict_obj["database"]}.{self.dict_obj["bronze_dataflowspec_table"]}"""
+            f"""onboarded bronze table={self.dict_obj["database"]}.{self.dict_obj["landing_dataflowspec_table"]}"""
         )
         self.spark.read.table(
-            f"""{self.dict_obj["database"]}.{self.dict_obj["bronze_dataflowspec_table"]}"""
+            f"""{self.dict_obj["database"]}.{self.dict_obj["landing_dataflowspec_table"]}"""
         ).show()
 
-    def register_silver_dataflow_spec_tables(self):
+    def register_refinery_dataflow_spec_tables(self):
         """Register bronze dataflow specs tables."""
         self.deltaPipelinesMetaStoreOps.create_database(
             self.dict_obj["database"], "dlt-meta database"
         )
         self.deltaPipelinesMetaStoreOps.register_table_in_metastore(
             self.dict_obj["database"],
-            self.dict_obj["silver_dataflowspec_table"],
-            self.dict_obj["silver_dataflowspec_path"],
+            self.dict_obj["refinery_dataflowspec_table"],
+            self.dict_obj["refinery_dataflowspec_path"],
         )
         logger.info(
-            f"""onboarded silver table={self.dict_obj["database"]}.{self.dict_obj["silver_dataflowspec_table"]}"""
+            f"""onboarded silver table={self.dict_obj["database"]}.{self.dict_obj["refinery_dataflowspec_table"]}"""
         )
         self.spark.read.table(
-            f"""{self.dict_obj["database"]}.{self.dict_obj["silver_dataflowspec_table"]}"""
+            f"""{self.dict_obj["database"]}.{self.dict_obj["refinery_dataflowspec_table"]}"""
         ).show()
 
-    def onboard_silver_dataflow_spec(self):
+    def onboard_refinery_dataflow_spec(self):
         """
         Onboard silver dataflow spec.
 
@@ -165,8 +166,8 @@ class OnboardDataflowspec:
                     - onboarding_file_path (str): Path of the onboarding file.
                     - database (str): Name of the database.
                     - env (str): Environment name.
-                    - silver_dataflowspec_table (str): Name of the silver dataflow spec table.
-                    - silver_dataflowspec_path (str): Path of the silver dataflow spec file. if uc_enabled is False
+                    - refinery_dataflowspec_table (str): Name of the silver dataflow spec table.
+                    - refinery_dataflowspec_path (str): Path of the silver dataflow spec file. if uc_enabled is False
                     - import_author (str): Name of the import author.
                     - version (str): Version of the dataflow spec.
                     - overwrite (str): Whether to overwrite the existing dataflow spec table/file or not.
@@ -175,91 +176,89 @@ class OnboardDataflowspec:
             "onboarding_file_path",
             "database",
             "env",
-            "silver_dataflowspec_table",
+            "refinery_dataflowspec_table",
             "import_author",
             "version",
             "overwrite",
         ]
-        dict_obj = self.silver_dict_obj
+        dict_obj = self.refinery_dict_obj
         if self.uc_enabled:
             self.__validate_dict_attributes(attributes, dict_obj)
         else:
-            attributes.append("silver_dataflowspec_path")
+            attributes.append("refinery_dataflowspec_path")
             self.__validate_dict_attributes(attributes, dict_obj)
 
         onboarding_df = self.__get_onboarding_file_dataframe(
             dict_obj["onboarding_file_path"]
         )
-        silver_data_flow_spec_df = self.__get_silver_dataflow_spec_dataframe(
+        refinery_data_flow_spec_df = self.__get_refinery_dataflow_spec_dataframe(
             onboarding_df, dict_obj["env"]
         )
         columns = StructType(
             [
-                StructField("select_exp", ArrayType(StringType(), True), True),
+                StructField("sql_query", StringType(), True),
                 StructField(
                     "target_partition_cols", ArrayType(StringType(), True), True
                 ),
                 StructField("target_table", StringType(), True),
-                StructField("where_clause", ArrayType(StringType(), True), True),
             ]
         )
 
         emp_rdd = []
         env = dict_obj["env"]
-        silver_transformation_json_df = self.spark.createDataFrame(
+        refinery_transformation_json_df = self.spark.createDataFrame(
             data=emp_rdd, schema=columns
         )
-        silver_transformation_json_file = onboarding_df.select(
-            f"silver_transformation_json_{env}"
+        refinery_transformation_json_file = onboarding_df.select(
+            f"refinery_transformation_json_{env}"
         ).dropDuplicates()
 
-        silver_transformation_json_files = silver_transformation_json_file.collect()
-        for row in silver_transformation_json_files:
-            silver_transformation_json_df = silver_transformation_json_df.union(
+        refinery_transformation_json_files = refinery_transformation_json_file.collect()
+        for row in refinery_transformation_json_files:
+            refinery_transformation_json_df = refinery_transformation_json_df.union(
                 self.spark.read.option("multiline", "true")
                 .schema(columns)
-                .json(row[f"silver_transformation_json_{env}"])
+                .json(row[f"refinery_transformation_json_{env}"])
             )
 
-        logger.info(silver_transformation_json_file)
+        logger.info(refinery_transformation_json_file)
 
-        silver_data_flow_spec_df = silver_transformation_json_df.join(
-            silver_data_flow_spec_df,
-            silver_transformation_json_df.target_table
-            == silver_data_flow_spec_df.targetDetails["table"],
+        refinery_data_flow_spec_df = refinery_transformation_json_df.join(
+            refinery_data_flow_spec_df,
+            refinery_transformation_json_df.target_table
+            == refinery_data_flow_spec_df.targetDetails["table"],
         )
-        silver_dataflow_spec_df = (
-            silver_data_flow_spec_df.drop("target_table")  # .drop("path")
+        refinery_dataflow_spec_df = (
+            refinery_data_flow_spec_df.drop("target_table")
             .drop("target_partition_cols")
-            .withColumnRenamed("select_exp", "selectExp")
-            .withColumnRenamed("where_clause", "whereClause")
+            .withColumnRenamed("sql_query", "sqlQuery")
         )
 
-        silver_dataflow_spec_df = self.__add_audit_columns(
-            silver_dataflow_spec_df,
+        refinery_dataflow_spec_df = self.__add_audit_columns(
+            refinery_dataflow_spec_df,
             {
                 "import_author": dict_obj["import_author"],
                 "version": dict_obj["version"],
             },
         )
 
-        silver_fields = [field.name for field in dataclasses.fields(SilverDataflowSpec)]
-        silver_dataflow_spec_df = silver_dataflow_spec_df.select(silver_fields)
+        refinery_fields = [field.name for field in dataclasses.fields(RefineryDataflowSpec)]
+        refinery_dataflow_spec_df = refinery_dataflow_spec_df.select(refinery_fields)
         database = dict_obj["database"]
-        table = dict_obj["silver_dataflowspec_table"]
+        table = dict_obj["refinery_dataflowspec_table"]
 
         if dict_obj["overwrite"] == "True":
             if self.uc_enabled:
                 (
-                    silver_dataflow_spec_df.write.format("delta")
+                    refinery_dataflow_spec_df.write.format("delta")
                     .mode("overwrite")
                     .option("mergeSchema", "true")
                     .saveAsTable(f"{database}.{table}")
                 )
             else:
-                silver_dataflow_spec_df.write.mode("overwrite").format("delta").option(
+                refinery_dataflow_spec_df.write.mode("overwrite").format("delta").option(
                     "mergeSchema", "true"
-                ).save(dict_obj["silver_dataflowspec_path"])
+                ).save(dict_obj["refinery_dataflowspec_path"])
         else:
             if self.uc_enabled:
                 original_dataflow_df = self.spark.read.format("delta").table(
@@ -267,22 +266,22 @@ class OnboardDataflowspec:
                 )
             else:
                 self.deltaPipelinesMetaStoreOps.register_table_in_metastore(
-                    database, table, dict_obj["silver_dataflowspec_path"]
+                    database, table, dict_obj["refinery_dataflowspec_path"]
                 )
                 original_dataflow_df = self.spark.read.format("delta").load(
-                    dict_obj["silver_dataflowspec_path"]
+                    dict_obj["refinery_dataflowspec_path"]
                 )
             logger.info("In Merge block for Silver")
             self.deltaPipelinesInternalTableOps.merge(
-                silver_dataflow_spec_df,
+                refinery_dataflow_spec_df,
                 f"{database}.{table}",
                 ["dataFlowId"],
                 original_dataflow_df.columns,
             )
         if not self.uc_enabled:
-            self.register_silver_dataflow_spec_tables()
+            self.register_refinery_dataflow_spec_tables()
 
-    def onboard_bronze_dataflow_spec(self):
+    def onboard_landing_dataflow_spec(self):
         """
         Onboard bronze dataflow spec.
 
@@ -294,8 +293,8 @@ class OnboardDataflowspec:
                 - onboarding_file_path (str): Path of the onboarding file.
                 - database (str): Name of the database.
                 - env (str): Environment name.
-                - bronze_dataflowspec_table (str): Name of the bronze dataflow spec table.
-                - bronze_dataflowspec_path (str): Path of the bronze dataflow spec file. if uc_enabled is False
+                - landing_dataflowspec_table (str): Name of the bronze dataflow spec table.
+                - landing_dataflowspec_path (str): Path of the bronze dataflow spec file. if uc_enabled is False
                 - import_author (str): Name of the import author.
                 - version (str): Version of the dataflow spec.
                 - overwrite (str): Whether to overwrite the existing dataflow spec table/file or not.
@@ -310,51 +309,51 @@ class OnboardDataflowspec:
             "onboarding_file_path",
             "database",
             "env",
-            "bronze_dataflowspec_table",
+            "landing_dataflowspec_table",
             "import_author",
             "version",
             "overwrite",
         ]
-        dict_obj = self.bronze_dict_obj
+        dict_obj = self.landing_dict_obj
         if self.uc_enabled:
             self.__validate_dict_attributes(attributes, dict_obj)
         else:
-            attributes.append("bronze_dataflowspec_path")
+            attributes.append("landing_dataflowspec_path")
             self.__validate_dict_attributes(attributes, dict_obj)
 
         onboarding_df = self.__get_onboarding_file_dataframe(
             dict_obj["onboarding_file_path"]
         )
 
-        bronze_dataflow_spec_df = self.__get_bronze_dataflow_spec_dataframe(
+        landing_dataflow_spec_df = self.__get_landing_dataflow_spec_dataframe(
             onboarding_df, dict_obj["env"]
         )
 
-        bronze_dataflow_spec_df = self.__add_audit_columns(
-            bronze_dataflow_spec_df,
+        landing_dataflow_spec_df = self.__add_audit_columns(
+            landing_dataflow_spec_df,
             {
                 "import_author": dict_obj["import_author"],
                 "version": dict_obj["version"],
             },
         )
-        bronze_fields = [field.name for field in dataclasses.fields(BronzeDataflowSpec)]
-        bronze_dataflow_spec_df = bronze_dataflow_spec_df.select(bronze_fields)
+        landing_fields = [field.name for field in dataclasses.fields(LandingDataflowSpec)]
+        landing_dataflow_spec_df = landing_dataflow_spec_df.select(landing_fields)
         database = dict_obj["database"]
-        table = dict_obj["bronze_dataflowspec_table"]
+        table = dict_obj["landing_dataflowspec_table"]
         if dict_obj["overwrite"] == "True":
             if self.uc_enabled:
                 (
-                    bronze_dataflow_spec_df.write.format("delta")
+                    landing_dataflow_spec_df.write.format("delta")
                     .mode("overwrite")
                     .option("mergeSchema", "true")
                     .saveAsTable(f"{database}.{table}")
                 )
             else:
                 (
-                    bronze_dataflow_spec_df.write.mode("overwrite")
+                    landing_dataflow_spec_df.write.mode("overwrite")
                     .format("delta")
                     .option("mergeSchema", "true")
-                    .save(path=dict_obj["bronze_dataflowspec_path"])
+                    .save(path=dict_obj["landing_dataflowspec_path"])
                 )
         else:
             if self.uc_enabled:
@@ -363,21 +362,21 @@ class OnboardDataflowspec:
                 )
             else:
                 self.deltaPipelinesMetaStoreOps.register_table_in_metastore(
-                    database, table, dict_obj["bronze_dataflowspec_path"]
+                    database, table, dict_obj["landing_dataflowspec_path"]
                 )
                 original_dataflow_df = self.spark.read.format("delta").load(
-                    dict_obj["bronze_dataflowspec_path"]
+                    dict_obj["landing_dataflowspec_path"]
                 )
 
             logger.info("In Merge block for Bronze")
             self.deltaPipelinesInternalTableOps.merge(
-                bronze_dataflow_spec_df,
+                landing_dataflow_spec_df,
                 f"{database}.{table}",
                 ["dataFlowId"],
                 original_dataflow_df.columns,
             )
         if not self.uc_enabled:
-            self.register_bronze_dataflow_spec_tables()
+            self.register_landing_dataflow_spec_tables()
 
     def __delete_none(self, _dict):
         """Delete None values recursively from all of the dictionaries"""
@@ -451,7 +450,7 @@ class OnboardDataflowspec:
         )
         return df
 
-    def __get_bronze_schema(self, metadata_file):
+    def __get_landing_schema(self, metadata_file):
         """Get schema from metadafile in json format.
 
         Args:
@@ -470,7 +469,7 @@ class OnboardDataflowspec:
             if not onboarding_row[field]:
                 raise Exception(f"Missing field={field} in onboarding_row")
 
-    def __get_bronze_dataflow_spec_dataframe(self, onboarding_df, env):
+    def __get_landing_dataflow_spec_dataframe(self, onboarding_df, env):
         """Get bronze dataflow spec method will convert onboarding dataframe to Bronze Dataflowspec dataframe.
 
         Args:
@@ -548,15 +547,15 @@ class OnboardDataflowspec:
             "data_flow_id",
             "data_flow_group",
             "source_details",
-            f"bronze_database_{env}",
-            "bronze_table"
-            # "bronze_reader_options",
-        ]  # , f"bronze_table_path_{env}"
+            f"landing_database_{env}",
+            "landing_table"
+            # "landing_reader_options",
+        ]  # , f"landing_table_path_{env}"
         for onboarding_row in onboarding_rows:
             try:
                 self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
             except ValueError:
-                mandatory_fields.append(f"bronze_table_path_{env}")
+                mandatory_fields.append(f"landing_table_path_{env}")
                 self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
             bronze_data_flow_spec_id = onboarding_row["data_flow_id"]
             bronze_data_flow_spec_group = onboarding_row["data_flow_group"]
@@ -574,87 +573,87 @@ class OnboardDataflowspec:
                 raise Exception(
                     f"Source format {source_format} not supported in DLT-META! row={onboarding_row}"
                 )
-            source_details, bronze_reader_config_options, schema = (
-                self.get_bronze_source_details_reader_options_schema(
+            source_details, landing_reader_config_options, schema = (
+                self.get_landing_source_details_reader_options_schema(
                     onboarding_row, env
                 )
             )
-            bronze_target_format = "delta"
-            bronze_target_details = {
-                "database": onboarding_row["bronze_database_{}".format(env)],
-                "table": onboarding_row["bronze_table"],
+            landing_target_format = "delta"
+            landing_target_details = {
+                "database": onboarding_row["landing_database_{}".format(env)],
+                "table": onboarding_row["landing_table"],
             }
-            bronze_cl = (
-                onboarding_row["bronze_catalog_{}".format(env)]
-                if "bronze_catalog_{}".format(env) in onboarding_row
+            landing_cl = (
+                onboarding_row["landing_catalog_{}".format(env)]
+                if "landing_catalog_{}".format(env) in onboarding_row
                 else None
             )
-            if "bronze_table_comment" in onboarding_row:
-                bronze_target_details["comment"] = onboarding_row["bronze_table_comment"]
+            if "landing_table_comment" in onboarding_row:
+                landing_target_details["comment"] = onboarding_row["landing_table_comment"]
 
-            if bronze_cl:
-                bronze_target_details["catalog"] = bronze_cl
+            if landing_cl:
+                landing_target_details["catalog"] = landing_cl
             if not self.uc_enabled:
-                if f"bronze_table_path_{env}" in onboarding_row:
-                    bronze_target_details["path"] = onboarding_row[f"bronze_table_path_{env}"]
+                if f"landing_table_path_{env}" in onboarding_row:
+                    landing_target_details["path"] = onboarding_row[f"landing_table_path_{env}"]
                 else:
-                    raise Exception(f"bronze_table_path_{env} not provided in onboarding_row={onboarding_row}")
-            bronze_table_properties = {}
+                    raise Exception(f"landing_table_path_{env} not provided in onboarding_row={onboarding_row}")
+            landing_table_properties = {}
             if (
-                "bronze_table_properties" in onboarding_row
-                and onboarding_row["bronze_table_properties"]
+                "landing_table_properties" in onboarding_row
+                and onboarding_row["landing_table_properties"]
             ):
-                bronze_table_properties = self.__delete_none(
-                    onboarding_row["bronze_table_properties"].asDict()
+                landing_table_properties = self.__delete_none(
+                    onboarding_row["landing_table_properties"].asDict()
                 )
 
             partition_columns = [""]
             if (
-                "bronze_partition_columns" in onboarding_row
-                and onboarding_row["bronze_partition_columns"]
+                "landing_partition_columns" in onboarding_row
+                and onboarding_row["landing_partition_columns"]
             ):
                 # Split if this is a list separated by commas
-                if "," in onboarding_row["bronze_partition_columns"]:
-                    partition_columns = onboarding_row["bronze_partition_columns"].split(",")
+                if "," in onboarding_row["landing_partition_columns"]:
+                    partition_columns = onboarding_row["landing_partition_columns"].split(",")
                 else:
-                    partition_columns = [onboarding_row["bronze_partition_columns"]]
+                    partition_columns = [onboarding_row["landing_partition_columns"]]
 
             dlt_sinks = None
-            if "bronze_sinks" in onboarding_row and onboarding_row["bronze_sinks"]:
-                dlt_sinks = self.get_sink_details(onboarding_row, "bronze")
-            cluster_by = self.__get_cluster_by_properties(onboarding_row, bronze_table_properties,
-                                                          "bronze_cluster_by")
+            if "landing_sinks" in onboarding_row and onboarding_row["landing_sinks"]:
+                dlt_sinks = self.get_sink_details(onboarding_row, "landing")
+            cluster_by = self.__get_cluster_by_properties(onboarding_row, landing_table_properties,
+                                                          "landing_cluster_by")
 
             cdc_apply_changes = None
             if (
-                "bronze_cdc_apply_changes" in onboarding_row
-                and onboarding_row["bronze_cdc_apply_changes"]
+                "landing_cdc_apply_changes" in onboarding_row
+                and onboarding_row["landing_cdc_apply_changes"]
             ):
-                self.__validate_apply_changes(onboarding_row, "bronze")
+                self.__validate_apply_changes(onboarding_row, "landing")
                 cdc_apply_changes = json.dumps(
                     self.__delete_none(
-                        onboarding_row["bronze_cdc_apply_changes"].asDict()
+                        onboarding_row["landing_cdc_apply_changes"].asDict()
                     )
                 )
             apply_changes_from_snapshot = None
-            if ("bronze_apply_changes_from_snapshot" in onboarding_row
-                    and onboarding_row["bronze_apply_changes_from_snapshot"]):
-                self.__validate_apply_changes_from_snapshot(onboarding_row, "bronze")
+            if ("landing_apply_changes_from_snapshot" in onboarding_row
+                    and onboarding_row["landing_apply_changes_from_snapshot"]):
+                self.__validate_apply_changes_from_snapshot(onboarding_row, "landing")
                 apply_changes_from_snapshot = json.dumps(
-                    self.__delete_none(onboarding_row["bronze_apply_changes_from_snapshot"].asDict())
+                    self.__delete_none(onboarding_row["landing_apply_changes_from_snapshot"].asDict())
                 )
             data_quality_expectations = None
             quarantine_target_details = {}
             quarantine_table_properties = {}
-            if f"bronze_data_quality_expectations_json_{env}" in onboarding_row:
-                bronze_data_quality_expectations_json = onboarding_row[
-                    f"bronze_data_quality_expectations_json_{env}"
+            if f"landing_data_quality_expectations_json_{env}" in onboarding_row:
+                landing_data_quality_expectations_json = onboarding_row[
+                    f"landing_data_quality_expectations_json_{env}"
                 ]
-                if bronze_data_quality_expectations_json:
+                if landing_data_quality_expectations_json:
                     data_quality_expectations = self.__get_data_quality_expecations(
-                        bronze_data_quality_expectations_json
+                        landing_data_quality_expectations_json
                     )
-                    if onboarding_row["bronze_quarantine_table"]:
+                    if onboarding_row["landing_quarantine_table"]:
                         quarantine_target_details, quarantine_table_properties = self.__get_quarantine_details(
                             env, "bronze", onboarding_row
                         )
@@ -667,10 +666,10 @@ class OnboardDataflowspec:
                 bronze_data_flow_spec_group,
                 source_format,
                 source_details,
-                bronze_reader_config_options,
-                bronze_target_format,
-                bronze_target_details,
-                bronze_table_properties,
+                landing_reader_config_options,
+                landing_target_format,
+                landing_target_details,
+                landing_table_properties,
                 schema,
                 partition_columns,
                 cdc_apply_changes,
@@ -829,7 +828,7 @@ class OnboardDataflowspec:
                             elif "source_schema_path" == ff:
                                 source_schema_path = json_append_flow[key][f"{ff}"]
                                 if source_schema_path:
-                                    schema = self.__get_bronze_schema(
+                                    schema = self.__get_landing_schema(
                                         source_schema_path
                                     )
                                     append_flows_schema[json_append_flow["name"]] = (
@@ -940,8 +939,8 @@ class OnboardDataflowspec:
                  {DataflowSpecUtils.apply_changes_from_snapshot_api_mandatory_attributes} exists"""
             )
 
-    def get_bronze_source_details_reader_options_schema(self, onboarding_row, env):
-        """Get bronze source reader options.
+    def get_landing_source_details_reader_options_schema(self, onboarding_row, env):
+        """Get landing source reader options.
 
         Args:
             onboarding_row ([type]): [description]
@@ -950,17 +949,17 @@ class OnboardDataflowspec:
             [type]: [description]
         """
         source_details = {}
-        bronze_reader_config_options = {}
+        landing_reader_config_options = {}
         schema = None
         source_format = onboarding_row["source_format"]
-        bronze_reader_options_json = (
-            onboarding_row["bronze_reader_options"]
-            if "bronze_reader_options" in onboarding_row
+        landing_reader_options_json = (
+            onboarding_row["landing_reader_options"]
+            if "landing_reader_options" in onboarding_row
             else {}
         )
-        if bronze_reader_options_json:
-            bronze_reader_config_options = self.__delete_none(
-                bronze_reader_options_json.asDict()
+        if landing_reader_options_json:
+            landing_reader_config_options = self.__delete_none(
+                landing_reader_options_json.asDict()
             )
         source_details_json = onboarding_row["source_details"]
         if source_details_json:
@@ -1011,17 +1010,17 @@ class OnboardDataflowspec:
             if "source_schema_path" in source_details_file:
                 source_schema_path = source_details_file["source_schema_path"]
                 if source_schema_path:
-                    if self.bronze_schema_mapper is not None:
-                        schema = self.bronze_schema_mapper(
+                    if self.landing_schema_mapper is not None:
+                        schema = self.landing_schema_mapper(
                             source_schema_path, self.spark
                         )
                     else:
-                        schema = self.__get_bronze_schema(source_schema_path)
+                        schema = self.__get_landing_schema(source_schema_path)
                 else:
                     logger.info(f"no input schema provided for row={onboarding_row}")
                 logger.info("spark_schema={}".format(schema))
 
-        return source_details, bronze_reader_config_options, schema
+        return source_details, landing_reader_config_options, schema
 
     def __validate_append_flow(self, onboarding_row, layer):
         append_flows = onboarding_row[f"{layer}_append_flows"]
@@ -1067,7 +1066,7 @@ class OnboardDataflowspec:
                 json_string = expectations_df.collect()[0]["value"]
         return json_string
 
-    def __get_silver_dataflow_spec_dataframe(self, onboarding_df, env):
+    def __get_refinery_dataflow_spec_dataframe(self, onboarding_df, env):
         """Get silver_dataflow_spec method transform onboarding dataframe to silver dataflowSpec dataframe.
 
         Args:
@@ -1137,153 +1136,153 @@ class OnboardDataflowspec:
         mandatory_fields = [
             "data_flow_id",
             "data_flow_group",
-            f"silver_database_{env}",
-            "silver_table",
-            f"silver_transformation_json_{env}",
-        ]  # f"silver_table_path_{env}",
+            f"refinery_database_{env}",
+            "refinery_table",
+            f"refinery_transformation_json_{env}",
+        ]  # f"refinery_table_path_{env}",
 
         for onboarding_row in onboarding_rows:
             try:
                 self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
             except ValueError:
-                mandatory_fields.append(f"silver_table_path_{env}")
+                mandatory_fields.append(f"refinery_table_path_{env}")
                 self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
             silver_data_flow_spec_id = onboarding_row["data_flow_id"]
             silver_data_flow_spec_group = onboarding_row["data_flow_group"]
             silver_reader_config_options = {}
 
-            silver_target_format = "delta"
+            refinery_target_format = "delta"
 
-            bronze_target_details = {
-                "database": onboarding_row["bronze_database_{}".format(env)],
-                "table": onboarding_row["bronze_table"],
+            landing_target_details = {
+                "database": onboarding_row["landing_database_{}".format(env)],
+                "table": onboarding_row["landing_table"],
             }
-            bronze_cl = (
-                onboarding_row["bronze_catalog_{}".format(env)]
-                if "bronze_catalog_{}".format(env) in onboarding_row
+            landing_cl = (
+                onboarding_row["landing_catalog_{}".format(env)]
+                if "landing_catalog_{}".format(env) in onboarding_row
                 else None
             )
-            if bronze_cl:
-                bronze_target_details["catalog"] = bronze_cl
-            silver_target_details = {
-                "database": onboarding_row["silver_database_{}".format(env)],
-                "table": onboarding_row["silver_table"],
+            if landing_cl:
+                landing_target_details["catalog"] = landing_cl
+            refinery_target_details = {
+                "database": onboarding_row["refinery_database_{}".format(env)],
+                "table": onboarding_row["refinery_table"],
             }
-            silver_cl = (
-                onboarding_row["silver_catalog_{}".format(env)]
-                if "silver_catalog_{}".format(env) in onboarding_row
+            refinery_cl = (
+                onboarding_row["refinery_catalog_{}".format(env)]
+                if "refinery_catalog_{}".format(env) in onboarding_row
                 else None
             )
-            if "silver_table_comment" in onboarding_row:
-                silver_target_details["comment"] = onboarding_row["silver_table_comment"]
-            if silver_cl:
-                silver_target_details["catalog"] = silver_cl
+            if "refinery_table_comment" in onboarding_row:
+                refinery_target_details["comment"] = onboarding_row["refinery_table_comment"]
+            if refinery_cl:
+                refinery_target_details["catalog"] = refinery_cl
             if not self.uc_enabled:
-                bronze_target_details["path"] = onboarding_row[
-                    f"bronze_table_path_{env}"
+                landing_target_details["path"] = onboarding_row[
+                    f"landing_table_path_{env}"
                 ]
-                silver_target_details["path"] = onboarding_row[
-                    f"silver_table_path_{env}"
+                refinery_target_details["path"] = onboarding_row[
+                    f"refinery_table_path_{env}"
                 ]
-            silver_reader_options_json = (
+            refinery_reader_options_json = (
                 onboarding_row["silver_reader_options"]
                 if "silver_reader_options" in onboarding_row
                 else {}
             )
-            if silver_reader_options_json:
+            if refinery_reader_options_json:
                 silver_reader_config_options = self.__delete_none(
-                    silver_reader_options_json.asDict()
+                    refinery_reader_options_json.asDict()
                 )
-            silver_table_properties = {}
+            refinery_table_properties = {}
             if (
-                "silver_table_properties" in onboarding_row
-                and onboarding_row["silver_table_properties"]
+                "refinery_table_properties" in onboarding_row
+                and onboarding_row["refinery_table_properties"]
             ):
-                silver_table_properties = self.__delete_none(
-                    onboarding_row["silver_table_properties"].asDict()
+                refinery_table_properties = self.__delete_none(
+                    onboarding_row["refinery_table_properties"].asDict()
                 )
 
-            silver_parition_columns = [""]
+            refinery_partition_columns_var = [""]
             if (
-                "silver_partition_columns" in onboarding_row
-                and onboarding_row["silver_partition_columns"]
+                "refinery_partition_columns" in onboarding_row
+                and onboarding_row["refinery_partition_columns"]
             ):
                 # Split if this is a list separated by commas
-                if "," in onboarding_row["silver_partition_columns"]:
-                    silver_parition_columns = onboarding_row["silver_partition_columns"].split(",")
+                if "," in onboarding_row["refinery_partition_columns"]:
+                    refinery_partition_columns_var = onboarding_row["refinery_partition_columns"].split(",")
                 else:
-                    silver_parition_columns = [onboarding_row["silver_partition_columns"]]
+                    refinery_partition_columns_var = [onboarding_row["refinery_partition_columns"]]
 
             dlt_sinks = None
-            if "silver_sinks" in onboarding_row and onboarding_row["silver_sinks"]:
-                dlt_sinks = self.get_sink_details(onboarding_row, "silver")
-            silver_cluster_by = self.__get_cluster_by_properties(onboarding_row, silver_table_properties,
-                                                                 "silver_cluster_by")
+            if "refinery_sinks" in onboarding_row and onboarding_row["refinery_sinks"]:
+                dlt_sinks = self.get_sink_details(onboarding_row, "refinery")
+            refinery_cluster_by = self.__get_cluster_by_properties(onboarding_row, refinery_table_properties,
+                                                                 "refinery_cluster_by")
 
-            silver_cdc_apply_changes = None
+            refinery_cdc_apply_changes = None
             if (
-                "silver_cdc_apply_changes" in onboarding_row
-                and onboarding_row["silver_cdc_apply_changes"]
+                "refinery_cdc_apply_changes" in onboarding_row
+                and onboarding_row["refinery_cdc_apply_changes"]
             ):
-                self.__validate_apply_changes(onboarding_row, "silver")
-                silver_cdc_apply_changes_row = onboarding_row[
-                    "silver_cdc_apply_changes"
+                self.__validate_apply_changes(onboarding_row, "refinery")
+                refinery_cdc_apply_changes_row = onboarding_row[
+                    "refinery_cdc_apply_changes"
                 ]
                 if self.onboard_file_type == "json":
-                    silver_cdc_apply_changes = json.dumps(
-                        self.__delete_none(silver_cdc_apply_changes_row.asDict())
+                    refinery_cdc_apply_changes = json.dumps(
+                        self.__delete_none(refinery_cdc_apply_changes_row.asDict())
                     )
             data_quality_expectations = None
-            silver_quarantine_target_details = None
-            silver_quarantine_table_properties = None
-            silver_quarantine_cluster_by = None
-            if f"silver_data_quality_expectations_json_{env}" in onboarding_row:
-                silver_data_quality_expectations_json = onboarding_row[
-                    f"silver_data_quality_expectations_json_{env}"
+            refinery_quarantine_target_details = None
+            refinery_quarantine_table_properties = None
+            refinery_quarantine_cluster_by = None
+            if f"refinery_data_quality_expectations_json_{env}" in onboarding_row:
+                refinery_data_quality_expectations_json = onboarding_row[
+                    f"refinery_data_quality_expectations_json_{env}"
                 ]
-                if silver_data_quality_expectations_json:
+                if refinery_data_quality_expectations_json:
                     data_quality_expectations = self.__get_data_quality_expecations(
-                        silver_data_quality_expectations_json
+                        refinery_data_quality_expectations_json
                     )
-                silver_quarantine_target_details, silver_quarantine_table_properties = self.__get_quarantine_details(
+                refinery_quarantine_target_details, refinery_quarantine_table_properties = self.__get_quarantine_details(
                     env, "silver", onboarding_row
                 )
-                silver_quarantine_cluster_by = self.__get_cluster_by_properties(
+                refinery_quarantine_cluster_by = self.__get_cluster_by_properties(
                     onboarding_row,
-                    silver_quarantine_table_properties,
-                    "silver_quarantine_cluster_by"
+                    refinery_quarantine_table_properties,
+                    "refinery_quarantine_cluster_by"
                 )
             append_flows, append_flow_schemas = self.get_append_flows_json(
                 onboarding_row, layer="silver", env=env
             )
             apply_changes_from_snapshot = None
             source_format = "delta"
-            if ("silver_apply_changes_from_snapshot" in onboarding_row
-                    and onboarding_row["silver_apply_changes_from_snapshot"]):
-                self.__validate_apply_changes_from_snapshot(onboarding_row, "silver")
+            if ("refinery_apply_changes_from_snapshot" in onboarding_row
+                    and onboarding_row["refinery_apply_changes_from_snapshot"]):
+                self.__validate_apply_changes_from_snapshot(onboarding_row, "refinery")
                 apply_changes_from_snapshot = json.dumps(
-                    self.__delete_none(onboarding_row["silver_apply_changes_from_snapshot"].asDict())
+                    self.__delete_none(onboarding_row["refinery_apply_changes_from_snapshot"].asDict())
                 )
                 source_format = "snapshot"
             silver_row = (
                 silver_data_flow_spec_id,
                 silver_data_flow_spec_group,
                 source_format,
-                bronze_target_details,
+                landing_target_details,
                 silver_reader_config_options,
-                silver_target_format,
-                silver_target_details,
-                silver_table_properties,
-                silver_parition_columns,
-                silver_cdc_apply_changes,
+                refinery_target_format,
+                refinery_target_details,
+                refinery_table_properties,
+                refinery_partition_columns_var,
+                refinery_cdc_apply_changes,
                 apply_changes_from_snapshot,
                 data_quality_expectations,
-                silver_quarantine_target_details,
-                silver_quarantine_table_properties,
-                silver_quarantine_cluster_by,
+                refinery_quarantine_target_details,
+                refinery_quarantine_table_properties,
+                refinery_quarantine_cluster_by,
                 append_flows,
                 append_flow_schemas,
-                silver_cluster_by,
+                refinery_cluster_by,
                 dlt_sinks
             )
             data.append(silver_row)

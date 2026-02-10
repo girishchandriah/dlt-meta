@@ -19,21 +19,21 @@
       "source_schema_path": "{dbfs_path}/dlt-meta/resources/customers.ddl"
    },
    "bronze_catalog_it": "{uc_catalog_name}",
-   "bronze_database_it": "{bronze_schema}",
-   "bronze_table": "customers",
+   "landing_database_it": "{landing_schema}",
+   "landing_table": "customers",
    "bronze_reader_options": {
       "cloudFiles.format": "json",
       "cloudFiles.inferColumnTypes": "true",
       "cloudFiles.rescuedDataColumn": "_rescued_data"
    },
-   "bronze_table_path_it": "{dbfs_path}/data/bronze/customers",
-   "bronze_table_properties": {
+   "landing_table_path_it": "{dbfs_path}/data/bronze/customers",
+   "landing_table_properties": {
          "pipelines.autoOptimize.managed": "true",
          "pipelines.autoOptimize.zOrderCols": "id, email"
    },    
    "bronze_data_quality_expectations_json_it": "{dbfs_path}/dlt-meta/conf/dqe/customers/bronze_data_quality_expectations.json",
    "bronze_catalog_quarantine_it": "{uc_catalog_name}",
-   "bronze_database_quarantine_it": "{bronze_schema}",
+   "landing_database_quarantine_it": "{landing_schema}",
    "bronze_quarantine_table": "customers_quarantine",
    "bronze_quarantine_table_path_it": "{dbfs_path}/data/bronze/customers_quarantine",  
    "bronze_quarantine_table_properties": {
@@ -58,8 +58,8 @@
       }
    ],
    "silver_catalog_it": "{uc_catalog_name}",
-   "silver_database_it": "{uc_catalog_name}.{silver_schema}",
-   "silver_table": "customers",
+   "refinery_database_it": "{uc_catalog_name}.{refinery_schema}",
+   "refinery_table": "customers",
    "silver_cdc_apply_changes": {
       "keys": [
          "id"
@@ -74,9 +74,9 @@
       ],
       "flow_name":"silver_customers_cdc_applychanges_flow"
    },
-   "silver_table_path_it": "{dbfs_path}/data/silver/customers",
+   "refinery_table_path_it": "{dbfs_path}/data/silver/customers",
    "silver_transformation_json_it": "{dbfs_path}/dlt-meta/conf/silver_transformations.json",
-   "silver_table_properties": {
+   "refinery_table_properties": {
          "pipelines.reset.allowed": "false",
          "pipelines.autoOptimize.zOrderCols": "id, email"         
    },
@@ -97,21 +97,21 @@
       "source_schema_path": "{dbfs_path}/dlt-meta/resources/transactions.ddl"
    },
    "bronze_catalog_it": "{uc_catalog_name}",   
-   "bronze_database_it": "{bronze_schema}",
-   "bronze_table": "transactions",
+   "landing_database_it": "{landing_schema}",
+   "landing_table": "transactions",
    "bronze_reader_options": {
       "cloudFiles.format": "json",
       "cloudFiles.inferColumnTypes": "true",
       "cloudFiles.rescuedDataColumn": "_rescued_data"
    },
-   "bronze_table_path_it": "{dbfs_path}/data/bronze/transactions",
-   "bronze_table_properties": {
+   "landing_table_path_it": "{dbfs_path}/data/bronze/transactions",
+   "landing_table_properties": {
          "pipelines.reset.allowed": "true",
          "pipelines.autoOptimize.zOrderCols": "id, customer_id"    
    },
    "bronze_data_quality_expectations_json_it": "{dbfs_path}/dlt-meta/conf/dqe/transactions/bronze_data_quality_expectations.json",
    "bronze_catalog_quarantine_it": "{uc_catalog_name}",
-   "bronze_database_quarantine_it": "{bronze_schema}",
+   "landing_database_quarantine_it": "{landing_schema}",
    "bronze_quarantine_table": "transactions_quarantine",
    "bronze_quarantine_table_path_it": "{dbfs_path}/data/bronze/transactions_quarantine",
    "bronze_quarantine_table_properties": {
@@ -137,8 +137,8 @@
       }
    ],
    "silver_catalog_it": "{uc_catalog_name}",
-   "silver_database_it": "{silver_schema}",
-   "silver_table": "transactions",
+   "refinery_database_it": "{refinery_schema}",
+   "refinery_table": "transactions",
    "silver_cdc_apply_changes": {
       "keys": [
          "id"
@@ -153,10 +153,10 @@
       ],
       "flow_name":"silver_transactions_cdc_applychanges_flow"
    },
-   "silver_table_path_it": "{dbfs_path}/data/silver/transactions",
+   "refinery_table_path_it": "{dbfs_path}/data/silver/transactions",
    "silver_transformation_json_it": "{dbfs_path}/dlt-meta/conf/silver_transformations.json",
    "silver_data_quality_expectations_json_it": "{dbfs_path}/dlt-meta/conf/dqe/transactions/silver_data_quality_expectations.json",
-   "silver_table_properties": {
+   "refinery_table_properties": {
          "pipelines.reset.allowed": "false",
          "pipelines.autoOptimize.zOrderCols": "id, customer_id"         
    }

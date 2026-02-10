@@ -305,7 +305,42 @@ def cleanup():
 def handle_onboard_form():
 
     print(f"onboard details: {request.form}")
-    current_directory = os.environ['PYTHONPATH']  # os.getcwd()
+
+    # Get source directory - try multiple locations
+    current_directory = os.environ.get('PYTHONPATH')
+
+    if not current_directory:
+        # Try common locations where dlt-meta might be installed
+        possible_paths = [
+            '/app/python/source_code',  # Databricks App: dlt-meta root
+            os.getcwd(),  # Current working directory might be dlt-meta root
+            '/app/python/dlt-meta',
+            '/app/python/source_code/dlt-meta',
+            os.path.join(os.getcwd(), 'dlt-meta'),
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ]
+
+        print(f"PYTHONPATH not set. Searching for dlt-meta in: {possible_paths}")
+
+        for path in possible_paths:
+            cli_path = os.path.join(path, 'src', 'cli.py')
+            print(f"Checking: {cli_path} - exists: {os.path.exists(cli_path)}")
+            if os.path.exists(cli_path):
+                current_directory = path
+                break
+
+        if not current_directory:
+            return jsonify({
+                'modal_content': None,
+                'stdout': '',
+                'stderr': f"Could not find dlt-meta installation. Checked: {possible_paths}. Current working directory: {os.getcwd()}",
+                'returncode': 1
+            })
+
+    # Ensure no trailing slash
+    current_directory = current_directory.rstrip('/')
+
+    print(f"Using dlt-meta directory: {current_directory}")
 
     # Create JSON object from form data
     json_data = {
@@ -316,11 +351,13 @@ def handle_onboard_form():
         "local_directory": request.form.get('local_directory', '/app/python/source_code/dlt-meta/demo/'),
         "dlt_meta_schema": request.form.get('dlt_meta_schema',
                                             'dlt_meta_dataflowspecs_4e6c360d3e5c4b5ca6687fec8ffe2e14'),
-        "bronze_schema": request.form.get('bronze_schema', 'dltmeta_bronze_9c1aa383b36a49198d3e99d25f7180a4'),
-        "silver_schema": request.form.get('silver_schema', 'dltmeta_silver_7b4e981029b843c799bf61a0a121b3ca'),
+        "landing_schema": request.form.get('landing_schema', 'dltmeta_landing_9c1aa383b36a49198d3e99d25f7180a4'),
+        "refinery_schema": request.form.get('refinery_schema', 'dltmeta_refinery_7b4e981029b843c799bf61a0a121b3ca'),
+        "treasury_schema": request.form.get('treasury_schema', 'dltmeta_treasury_8d3e99d25f7180a4'),
         "dlt_meta_layer": request.form.get('dlt_meta_layer', '1'),
-        "bronze_table": request.form.get('bronze_table', 'bronze_dataflowspec'),
-        "silver_table": request.form.get('silver_table', 'silver_dataflowspec'),
+        "landing_table": request.form.get('landing_table', 'landing_dataflowspec'),
+        "refinery_table": request.form.get('refinery_table', 'refinery_dataflowspec'),
+        "treasury_table": request.form.get('treasury_table', 'treasury_dataflowspec'),
         "overwrite": "1" if request.form.get('overwrite') == "1" else "0",
         "version": request.form.get('version', 'v1'),
         "environment": request.form.get('environment', 'prod'),
@@ -328,37 +365,6 @@ def handle_onboard_form():
         "update_paths": "1" if request.form.get('update_paths') == "1" else "0",
         "command": "onboard_ui",
         "flags": {"log_level": "info"},
-    }
-
-    json_string = json.dumps(json_data)
-    result = subprocess.run(f"python {current_directory}src/cli.py '{json_string}'",
-                            shell=True,
-                            capture_output=True,
-                            text=True
-                            )
-    return extract_command_output(result)
-
-
-@app.route('/deploy', methods=['POST'])
-def handle_deploy_form():
-    # Create JSON object from form data
-    print(f"deploy details: {request.form}")
-    current_directory = os.environ['PYTHONPATH']  # os.getcwd()
-
-    json_data = {
-        "uc_enabled": "1" if request.form.get('uc_enabled') == "1" else "0",
-        "uc_catalog_name": request.form.get('uc_catalog_name', ''),
-        "serverless": "1" if request.form.get('serverless') == "1" else "0",
-        "layer": request.form.get('deploylayer', 'bronze'),
-        "pipeline_name": request.form.get('pipeline_name', 'dlt_meta_pipeline'),
-        "dlt_target_schema": request.form.get("dlt_target_schema"),
-        "command": "deploy_ui",
-        "flags": {"log_level": "info"},
-        "onboard_bronze_group": request.form.get("onboard_bronze_group"),
-        "onboard_silver_group": request.form.get("onboard_silver_group"),
-        "dlt_meta_schema": request.form.get("spc_schema_name"),
-        "bronze_dataflowspec_table": request.form.get("bronze_dataflowspec_table"),
-        "dataflowspec_silver_table": request.form.get("silver_dataflowspec_table"),
     }
 
     json_string = json.dumps(json_data)
@@ -370,11 +376,122 @@ def handle_deploy_form():
     return extract_command_output(result)
 
 
+@app.route('/deploy', methods=['POST'])
+def handle_deploy_form():
+    try:
+        # Create JSON object from form data
+        print(f"deploy details: {request.form}")
+
+        # Get source directory - try multiple locations
+        current_directory = os.environ.get('PYTHONPATH')
+
+        if not current_directory:
+            # Try common locations where dlt-meta might be installed
+            possible_paths = [
+                '/app/python/source_code',  # Databricks App: dlt-meta root
+                os.getcwd(),  # Current working directory might be dlt-meta root
+                '/app/python/dlt-meta',
+                '/app/python/source_code/dlt-meta',
+                os.path.join(os.getcwd(), 'dlt-meta'),
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            ]
+
+            print(f"PYTHONPATH not set. Searching for dlt-meta in: {possible_paths}")
+
+            for path in possible_paths:
+                cli_path = os.path.join(path, 'src', 'cli.py')
+                print(f"Checking: {cli_path} - exists: {os.path.exists(cli_path)}")
+                if os.path.exists(cli_path):
+                    current_directory = path
+                    break
+
+            if not current_directory:
+                raise FileNotFoundError(
+                    f"Could not find dlt-meta installation. Checked: {possible_paths}. "
+                    f"Current working directory: {os.getcwd()}"
+                )
+
+        # Ensure no trailing slash
+        current_directory = current_directory.rstrip('/')
+
+        print(f"Using dlt-meta directory: {current_directory}")
+        print(f"CLI path: {current_directory}/src/cli.py")
+        print(f"CLI exists: {os.path.exists(current_directory + '/src/cli.py')}")
+
+        json_data = {
+            "uc_enabled": "1" if request.form.get('uc_enabled') == "1" else "0",
+            "uc_catalog_name": request.form.get('uc_catalog_name', ''),
+            "serverless": "1" if request.form.get('serverless') == "1" else "0",
+            "layer": request.form.get('deploylayer', 'landing'),
+            "pipeline_name": request.form.get('pipeline_name', 'dlt_meta_pipeline'),
+            "dlt_target_schema": request.form.get("dlt_target_schema"),
+            "command": "deploy_ui",
+            "flags": {"log_level": "info"},
+            "onboard_landing_group": request.form.get("onboard_landing_group"),
+            "onboard_refinery_group": request.form.get("onboard_refinery_group"),
+            "onboard_treasury_group": request.form.get("onboard_treasury_group"),
+            "dlt_meta_landing_schema": request.form.get("spc_schema_name"),
+            "dlt_meta_refinery_schema": request.form.get("spc_schema_name"),
+            "dlt_meta_treasury_schema": request.form.get("spc_schema_name"),
+            "dataflowspec_landing_table": request.form.get("landing_dataflowspec_table"),
+            "dataflowspec_refinery_table": request.form.get("refinery_dataflowspec_table"),
+            "dataflowspec_treasury_table": request.form.get("treasury_dataflowspec_table"),
+        }
+
+        json_string = json.dumps(json_data)
+        result = subprocess.run(f"python {current_directory}/src/cli.py '{json_string}'",
+                                shell=True,
+                                capture_output=True,
+                                text=True
+                                )
+        return extract_command_output(result)
+    except Exception as e:
+        print(f"Error in handle_deploy_form: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'modal_content': None,
+            'stdout': '',
+            'stderr': f"Application error: {str(e)}",
+            'returncode': 1
+        })
+
+
 @app.route('/rundemo', methods=['POST'])
 def run_demo():
     code_to_run = request.json.get('demo_name', '')
     print(f"processing demo for :{request.json}")
-    current_directory = os.environ['PYTHONPATH']
+
+    # Get source directory - try multiple locations
+    current_directory = os.environ.get('PYTHONPATH')
+
+    if not current_directory:
+        # Try common locations where dlt-meta might be installed
+        possible_paths = [
+            '/app/python/source_code',  # Databricks App: dlt-meta root
+            os.getcwd(),  # Current working directory might be dlt-meta root
+            '/app/python/dlt-meta',
+            '/app/python/source_code/dlt-meta',
+            os.path.join(os.getcwd(), 'dlt-meta'),
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ]
+
+        for path in possible_paths:
+            cli_path = os.path.join(path, 'src', 'cli.py')
+            if os.path.exists(cli_path):
+                current_directory = path
+                break
+
+        if not current_directory:
+            return jsonify({
+                'modal_content': None,
+                'stdout': '',
+                'stderr': f"Could not find dlt-meta installation. Checked: {possible_paths}. CWD: {os.getcwd()}",
+                'returncode': 1
+            })
+
+    # Ensure no trailing slash
+    current_directory = current_directory.rstrip('/')
     demo_dict = {"demo_cloudfiles": "demo/launch_af_cloudfiles_demo.py",
                  "demo_acf": "demo/launch_acfs_demo.py",
                  "demo_silverfanout": "demo/launch_silver_fanout_demo.py",
