@@ -36,7 +36,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         "readerConfigOptions": {
         },
         "targetFormat": "delta",
-        "targetDetails": {"database": "bronze", "table": "customer", "path": "tests/localtest/delta/customers"},
+        "targetDetails": {"database": "landing", "table": "customer", "path": "tests/localtest/delta/customers"},
         "tableProperties": {},
         "schema": None,
         "partitionColumns": [""],
@@ -56,7 +56,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         "clusterBy": [""],
     }
 
-    bronze_eventhub_dataflow_spec_map = {
+    landing_eventhub_dataflow_spec_map = {
         "dataFlowId": "1",
         "dataFlowGroup": "A1",
         "sourceFormat": "eventhub",
@@ -79,7 +79,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
             "kafka.session.timeout.ms": "60000"
         },
         "targetFormat": "delta",
-        "targetDetails": {"database": "bronze", "table": "customer", "path": "tests/localtest/delta/customers"},
+        "targetDetails": {"database": "landing", "table": "customer", "path": "tests/localtest/delta/customers"},
         "tableProperties": {},
         "schema": None,
         "partitionColumns": [""],
@@ -99,7 +99,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         "clusterBy": [""],
     }
 
-    bronze_eventhub_dataflow_spec_omit_secret_map = {
+    landing_eventhub_dataflow_spec_omit_secret_map = {
         "dataFlowId": "1",
         "dataFlowGroup": "A1",
         "sourceFormat": "eventhub",
@@ -121,7 +121,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
             "kafka.session.timeout.ms": "60000"
         },
         "targetFormat": "delta",
-        "targetDetails": {"database": "bronze", "table": "customer", "path": "tests/localtest/delta/customers"},
+        "targetDetails": {"database": "landing", "table": "customer", "path": "tests/localtest/delta/customers"},
         "tableProperties": {},
         "schema": None,
         "partitionColumns": [""],
@@ -141,7 +141,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         "clusterBy": [""],
     }
 
-    bronze_kafka_dataflow_spec_map = {
+    landing_kafka_dataflow_spec_map = {
         "dataFlowId": "1",
         "dataFlowGroup": "A1",
         "sourceFormat": "kafka",
@@ -155,7 +155,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
             "startingOffsets": "latest"
         },
         "targetFormat": "delta",
-        "targetDetails": {"database": "bronze", "table": "customer", "path": "tests/localtest/delta/customers"},
+        "targetDetails": {"database": "landing", "table": "customer", "path": "tests/localtest/delta/customers"},
         "tableProperties": {},
         "schema": None,
         "partitionColumns": [""],
@@ -179,18 +179,18 @@ class PipelineReadersTests(DLTFrameworkTestCase):
     def setUp(self):
         """Set initial resources."""
         super().setUp()
-        onboardDataFlowSpecs = OnboardDataflowspec(self.spark, self.onboarding_bronze_silver_params_map)
+        onboardDataFlowSpecs = OnboardDataflowspec(self.spark, self.onboarding_landing_refinery_params_map)
         onboardDataFlowSpecs.onboard_dataflow_specs()
         self.deltaPipelinesMetaStoreOps.register_table_in_metastore(
-            self.onboarding_bronze_silver_params_map["database"],
-            self.onboarding_bronze_silver_params_map["landing_dataflowspec_table"],
-            self.onboarding_bronze_silver_params_map["landing_dataflowspec_path"],
+            self.onboarding_landing_refinery_params_map["database"],
+            self.onboarding_landing_refinery_params_map["landing_dataflowspec_table"],
+            self.onboarding_landing_refinery_params_map["landing_dataflowspec_path"],
         )
 
         self.deltaPipelinesMetaStoreOps.register_table_in_metastore(
-            self.onboarding_bronze_silver_params_map["database"],
-            self.onboarding_bronze_silver_params_map["refinery_dataflowspec_table"],
-            self.onboarding_bronze_silver_params_map["refinery_dataflowspec_path"],
+            self.onboarding_landing_refinery_params_map["database"],
+            self.onboarding_landing_refinery_params_map["refinery_dataflowspec_table"],
+            self.onboarding_landing_refinery_params_map["refinery_dataflowspec_path"],
         )
 
     @patch.object(PipelineReaders, "add_cloudfiles_metadata", return_value={"called"})
@@ -205,13 +205,13 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         mock_format.options.return_value = mock_options
         mock_options.schema.return_value = mock_schema
         mock_schema.load.return_value = mock_load
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map
         schema_ddl = "tests/resources/schema/customer_schema.ddl"
         ddlSchemaStr = self.spark.read.text(paths=schema_ddl, wholetext=True).collect()[0]["value"]
         spark_schema = T._parse_datatype_string(ddlSchemaStr)
         schema = spark_schema.jsonValue()
         schema_map = {"schema": schema}
-        bronze_map.update(schema_map)
+        landing_map.update(schema_map)
         source_metdata_json = {
             "include_autoloader_metadata_column": "True",
             "autoloader_metadata_col_name": "source_metadata",
@@ -220,9 +220,9 @@ class PipelineReadersTests(DLTFrameworkTestCase):
                 "input_file_path": "_metadata.file_path"
             }
         }
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         landing_dataflow_spec.sourceDetails["source_metadata"] = json.dumps(source_metdata_json)
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             SparkSession,
             landing_dataflow_spec.sourceFormat,
@@ -251,10 +251,10 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         mock_format.options.return_value = mock_options
         mock_options.load.return_value = mock_load
 
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map
         source_format_map = {"sourceFormat": "json"}
-        bronze_map.update(source_format_map)
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map.update(source_format_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             SparkSession,
             landing_dataflow_spec.sourceFormat,
@@ -272,17 +272,17 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_read_delta_positive(self):
         """Test read_cloud_files positive."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map
         source_format_map = {"sourceFormat": "delta"}
-        bronze_map.update(source_format_map)
-        self.spark.sql("CREATE DATABASE IF NOT EXISTS source_bronze")
+        landing_map.update(source_format_map)
+        self.spark.sql("CREATE DATABASE IF NOT EXISTS source_landing")
         full_path = os.path.abspath("tests/resources/delta/customers")
-        self.spark.sql(f"CREATE TABLE if not exists source_bronze.customer USING DELTA LOCATION '{full_path}' ")
+        self.spark.sql(f"CREATE TABLE if not exists source_landing.customer USING DELTA LOCATION '{full_path}' ")
 
-        source_details_map = {"sourceDetails": {"source_database": "source_bronze", "source_table": "customer"}}
+        source_details_map = {"sourceDetails": {"source_database": "source_landing", "source_table": "customer"}}
 
-        bronze_map.update(source_details_map)
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map.update(source_details_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             self.spark,
             landing_dataflow_spec.sourceFormat,
@@ -295,17 +295,17 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_read_delta_with_read_config_positive(self):
         """Test read_cloud_files positive."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map
         source_format_map = {"sourceFormat": "delta"}
-        bronze_map.update(source_format_map)
-        self.spark.sql("CREATE DATABASE IF NOT EXISTS source_bronze")
+        landing_map.update(source_format_map)
+        self.spark.sql("CREATE DATABASE IF NOT EXISTS source_landing")
         full_path = os.path.abspath("tests/resources/delta/customers")
-        self.spark.sql(f"CREATE TABLE if not exists source_bronze.customer USING DELTA LOCATION '{full_path}' ")
-        source_details_map = {"sourceDetails": {"source_database": "source_bronze", "source_table": "customer"}}
-        bronze_map.update(source_details_map)
+        self.spark.sql(f"CREATE TABLE if not exists source_landing.customer USING DELTA LOCATION '{full_path}' ")
+        source_details_map = {"sourceDetails": {"source_database": "source_landing", "source_table": "customer"}}
+        landing_map.update(source_details_map)
         reader_config = {"readerConfigOptions": {"maxFilesPerTrigger": "1"}}
-        bronze_map.update(reader_config)
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map.update(reader_config)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             self.spark,
             landing_dataflow_spec.sourceFormat,
@@ -320,8 +320,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
     @patch.object(dbutils, "secrets.get", return_value={"called"})
     def test_get_eventhub_kafka_options(self, get_db_utils, dbutils):
         """Test Get kafka options."""
-        bronze_map = PipelineReadersTests.bronze_eventhub_dataflow_spec_map
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map = PipelineReadersTests.landing_eventhub_dataflow_spec_map
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             self.spark,
             landing_dataflow_spec.sourceFormat,
@@ -336,8 +336,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
     @patch.object(dbutils, "secrets.get", return_value={"called"})
     def test_get_eventhub_kafka_options_omit_secret(self, get_db_utils, dbutils):
         """Test Get kafka options."""
-        bronze_map = PipelineReadersTests.bronze_eventhub_dataflow_spec_omit_secret_map
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map = PipelineReadersTests.landing_eventhub_dataflow_spec_omit_secret_map
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             self.spark,
             landing_dataflow_spec.sourceFormat,
@@ -352,15 +352,15 @@ class PipelineReadersTests(DLTFrameworkTestCase):
     @patch.object(dbutils, "secrets.get", return_value={"called"})
     def test_get_kafka_options_ssl_exception(self, get_db_utils, dbutils):
         """Test Get kafka options."""
-        bronze_map = PipelineReadersTests.bronze_kafka_dataflow_spec_map
-        source_details = bronze_map['sourceDetails']
+        landing_map = PipelineReadersTests.landing_kafka_dataflow_spec_map
+        source_details = landing_map['sourceDetails']
         source_details_map = {
             **source_details,
             "kafka.ssl.truststore.location": "tmp:/location",
             "kafka.ssl.keystore.location": "tmp:/location",
         }
-        bronze_map['sourceDetails'] = source_details_map
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map['sourceDetails'] = source_details_map
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             self.spark,
             landing_dataflow_spec.sourceFormat,
@@ -373,8 +373,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_get_kafka_options_positive(self):
         """Test Get kafka options."""
-        bronze_map = PipelineReadersTests.bronze_kafka_dataflow_spec_map
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map = PipelineReadersTests.landing_kafka_dataflow_spec_map
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             self.spark,
             landing_dataflow_spec.sourceFormat,
@@ -387,8 +387,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_get_db_utils(self):
         """Test Get kafka options."""
-        bronze_map = PipelineReadersTests.bronze_kafka_dataflow_spec_map
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map = PipelineReadersTests.landing_kafka_dataflow_spec_map
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             self.spark,
             landing_dataflow_spec.sourceFormat,
@@ -403,8 +403,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
     @patch.object(dbutils, "secrets.get", return_value={"called"})
     def test_kafka_positive(self, SparkSession, dbutils):
         """Test kafka read positive."""
-        bronze_map = PipelineReadersTests.bronze_kafka_dataflow_spec_map
-        source_details = bronze_map['sourceDetails']
+        landing_map = PipelineReadersTests.landing_kafka_dataflow_spec_map
+        source_details = landing_map['sourceDetails']
         source_details_map = {
             **source_details,
             "kafka.ssl.truststore.location": "tmp:/location",
@@ -414,8 +414,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
             "kafka.ssl.keystore.secrets.scope": "databricks",
             "kafka.ssl.keystore.secrets.key": "databricks"
         }
-        bronze_map['sourceDetails'] = source_details_map
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map['sourceDetails'] = source_details_map
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             SparkSession,
             landing_dataflow_spec.sourceFormat,
@@ -429,8 +429,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
     @patch.object(SparkSession, "readStream", return_value={"called"})
     def test_eventhub_positive(self, SparkSession):
         """Test eventhub read positive."""
-        bronze_map = PipelineReadersTests.bronze_eventhub_dataflow_spec_map
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map = PipelineReadersTests.landing_eventhub_dataflow_spec_map
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             SparkSession,
             landing_dataflow_spec.sourceFormat,
@@ -443,9 +443,9 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_add_cloudfiles_metadata(self):
         """Test add_cloudfiles_metadata."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map
         source_format_map = {"sourceFormat": "json"}
-        bronze_map.update(source_format_map)
+        landing_map.update(source_format_map)
         source_metdata_json = {
             "include_autoloader_metadata_column": "True",
             "autoloader_metadata_col_name": "source_metadata",
@@ -456,7 +456,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         }
         expected_cols = ['address', 'email', 'firstname', 'id', 'lastname', 'operation', 'operation_date',
                          'source_metadata', 'source_metadata', 'input_file_name', 'input_file_path']
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         landing_dataflow_spec.sourceDetails["source_metadata"] = json.dumps(source_metdata_json)
         df = (self.spark.read.json("tests/resources/data/customers")
               .withColumn('_metadata', struct(*[lit("filename").alias("file_name"),
@@ -467,9 +467,9 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_add_cloudfiles_metadata_cols_with_include_autoloader_metadata_column(self):
         """Test add_cloudfiles_metadata."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map
         source_format_map = {"sourceFormat": "json"}
-        bronze_map.update(source_format_map)
+        landing_map.update(source_format_map)
         source_metdata_json = {
             "include_autoloader_metadata_column": "True",
             "select_metadata_cols": {
@@ -479,7 +479,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         }
         expected_cols = ['address', 'email', 'firstname', 'id', 'lastname', 'operation', 'operation_date',
                          'source_metadata', 'source_metadata', 'input_file_name', 'input_file_path']
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         landing_dataflow_spec.sourceDetails["source_metadata"] = json.dumps(source_metdata_json)
         df = (self.spark.read.json("tests/resources/data/customers")
               .withColumn('_metadata', struct(*[lit("filename").alias("file_name"),
@@ -490,9 +490,9 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_add_cloudfiles_metadata_cols_only(self):
         """Test add_cloudfiles_metadata."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map
         source_format_map = {"sourceFormat": "json"}
-        bronze_map.update(source_format_map)
+        landing_map.update(source_format_map)
         source_metdata_json = {
             "select_metadata_cols": {
                 "input_file_name": "_metadata.file_name",
@@ -501,7 +501,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         }
         expected_cols = ['address', 'email', 'firstname', 'id', 'lastname', 'operation', 'operation_date',
                          'input_file_name', 'input_file_path']
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         landing_dataflow_spec.sourceDetails["source_metadata"] = json.dumps(source_metdata_json)
         df = (self.spark.read.json("tests/resources/data/customers")
               .withColumn('_metadata', struct(*[lit("filename").alias("file_name"),
@@ -512,15 +512,15 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_add_cloudfiles_with_include_autoloader_metadata_column_only(self):
         """Test add_cloudfiles_metadata."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map
         source_format_map = {"sourceFormat": "json"}
-        bronze_map.update(source_format_map)
+        landing_map.update(source_format_map)
         source_metdata_json = {
             "include_autoloader_metadata_column": "True"
         }
         expected_cols = ['address', 'email', 'firstname', 'id', 'lastname', 'operation', 'operation_date',
                          'source_metadata', 'source_metadata']
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         landing_dataflow_spec.sourceDetails["source_metadata"] = json.dumps(source_metdata_json)
         df = (self.spark.read.json("tests/resources/data/customers")
               .withColumn('_metadata', struct(*[lit("filename").alias("file_name"),
@@ -540,14 +540,14 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         mock_format.options.return_value = mock_options
         mock_options.load.return_value = mock_load
 
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
         # Remove source_metadata to test the negative path
-        source_details = bronze_map["sourceDetails"].copy()
+        source_details = landing_map["sourceDetails"].copy()
         if "source_metadata" in source_details:
             del source_details["source_metadata"]
-        bronze_map["sourceDetails"] = source_details
+        landing_map["sourceDetails"] = source_details
 
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             mock_readstream,
             landing_dataflow_spec.sourceFormat,
@@ -563,7 +563,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_add_cloudfiles_metadata_with_custom_column_name_different_from_default(self):
         """Test add_cloudfiles_metadata with custom column name different from _metadata to cover lines 69-71."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
         source_metdata_json = {
             "include_autoloader_metadata_column": "True",
             "autoloader_metadata_col_name": "custom_metadata_column",
@@ -574,7 +574,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         }
         expected_cols = ['address', 'email', 'firstname', 'id', 'lastname', 'operation', 'operation_date',
                          'custom_metadata_column', 'custom_metadata_column', 'input_file_name', 'input_file_path']
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         landing_dataflow_spec.sourceDetails["source_metadata"] = json.dumps(source_metdata_json)
         df = (self.spark.read.json("tests/resources/data/customers")
               .withColumn('_metadata', struct(*[lit("filename").alias("file_name"),
@@ -585,14 +585,14 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_add_cloudfiles_metadata_with_autoloader_flag_but_no_custom_name(self):
         """Test add_cloudfiles_metadata with autoloader flag but no custom name to cover lines 72-73."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
         source_metdata_json = {
             "include_autoloader_metadata_column": "True"
             # No autoloader_metadata_col_name specified
         }
         expected_cols = ['address', 'email', 'firstname', 'id', 'lastname', 'operation', 'operation_date',
                          'source_metadata', 'source_metadata']
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         landing_dataflow_spec.sourceDetails["source_metadata"] = json.dumps(source_metdata_json)
         df = (self.spark.read.json("tests/resources/data/customers")
               .withColumn('_metadata', struct(*[lit("filename").alias("file_name"),
@@ -603,7 +603,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_add_cloudfiles_metadata_without_autoloader_flag(self):
         """Test add_cloudfiles_metadata without autoloader flag to cover lines 74-76."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
         source_metdata_json = {
             "select_metadata_cols": {
                 "input_file_name": "_metadata.file_name",
@@ -613,7 +613,7 @@ class PipelineReadersTests(DLTFrameworkTestCase):
         }
         expected_cols = ['address', 'email', 'firstname', 'id', 'lastname', 'operation', 'operation_date',
                          'input_file_name', 'input_file_path']
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         landing_dataflow_spec.sourceDetails["source_metadata"] = json.dumps(source_metdata_json)
         df = (self.spark.read.json("tests/resources/data/customers")
               .withColumn('_metadata', struct(*[lit("filename").alias("file_name"),
@@ -624,16 +624,16 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_read_delta_with_snapshot_format(self):
         """Test read_dlt_delta with snapshot format to cover line 94."""
-        bronze_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
+        landing_map = PipelineReadersTests.landing_dataflow_spec_map.copy()
         source_format_map = {"sourceFormat": "snapshot"}
-        bronze_map.update(source_format_map)
-        self.spark.sql("CREATE DATABASE IF NOT EXISTS source_bronze")
+        landing_map.update(source_format_map)
+        self.spark.sql("CREATE DATABASE IF NOT EXISTS source_landing")
         full_path = os.path.abspath("tests/resources/delta/customers")
-        self.spark.sql(f"CREATE TABLE if not exists source_bronze.customer USING DELTA LOCATION '{full_path}' ")
+        self.spark.sql(f"CREATE TABLE if not exists source_landing.customer USING DELTA LOCATION '{full_path}' ")
 
-        source_details_map = {"sourceDetails": {"source_database": "source_bronze", "source_table": "customer"}}
-        bronze_map.update(source_details_map)
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        source_details_map = {"sourceDetails": {"source_database": "source_landing", "source_table": "customer"}}
+        landing_map.update(source_details_map)
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             self.spark,
             landing_dataflow_spec.sourceFormat,
@@ -663,8 +663,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
         mock_get_kafka_options.return_value = {"kafka.bootstrap.servers": "localhost:9092"}
 
-        bronze_map = PipelineReadersTests.bronze_kafka_dataflow_spec_map.copy()
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map = PipelineReadersTests.landing_kafka_dataflow_spec_map.copy()
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
         pipeline_readers = PipelineReaders(
             mock_spark,  # Use completely mocked spark session
             landing_dataflow_spec.sourceFormat,
@@ -681,8 +681,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_read_kafka_without_schema_json(self):
         """Test read_kafka without schema JSON to cover line 138 (else branch)."""
-        bronze_map = PipelineReadersTests.bronze_kafka_dataflow_spec_map.copy()
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map = PipelineReadersTests.landing_kafka_dataflow_spec_map.copy()
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
 
         # Mock the kafka methods
         with patch.object(PipelineReaders, 'get_kafka_options') as mock_get_kafka_options:
@@ -714,9 +714,9 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_get_kafka_options_with_secrets_for_broker(self):
         """Test get_kafka_options with secrets for broker to cover lines 172-183."""
-        bronze_map = PipelineReadersTests.bronze_kafka_dataflow_spec_map.copy()
+        landing_map = PipelineReadersTests.landing_kafka_dataflow_spec_map.copy()
         # Remove direct kafka.bootstrap.servers and add secrets configuration
-        source_details = bronze_map['sourceDetails'].copy()
+        source_details = landing_map['sourceDetails'].copy()
         del source_details["kafka.bootstrap.servers"]
         source_details.update({
             "kafka_source_servers_secrets_scope_key": "kafka.ssl.truststore.secrets.scope",
@@ -729,8 +729,8 @@ class PipelineReadersTests(DLTFrameworkTestCase):
             "kafka.ssl.keystore.secrets.key": "kafka_key"
 
         })
-        bronze_map['sourceDetails'] = source_details
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map['sourceDetails'] = source_details
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
 
         # Mock the get_db_utils method and secrets.get
         with patch.object(PipelineReaders, 'get_db_utils') as mock_get_db_utils:
@@ -753,13 +753,13 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_get_kafka_options_missing_broker_and_secrets(self):
         """Test get_kafka_options with missing broker and secrets to cover lines 182-185."""
-        bronze_map = PipelineReadersTests.bronze_kafka_dataflow_spec_map.copy()
+        landing_map = PipelineReadersTests.landing_kafka_dataflow_spec_map.copy()
         # Remove kafka.bootstrap.servers and don't provide secrets
-        source_details = bronze_map['sourceDetails'].copy()
+        source_details = landing_map['sourceDetails'].copy()
         del source_details["kafka.bootstrap.servers"]
         # Don't add secrets configuration
-        bronze_map['sourceDetails'] = source_details
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map['sourceDetails'] = source_details
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
 
         pipeline_readers = PipelineReaders(
             self.spark,
@@ -775,12 +775,12 @@ class PipelineReadersTests(DLTFrameworkTestCase):
 
     def test_get_kafka_options_missing_topic(self):
         """Test get_kafka_options with missing topic to cover line 188."""
-        bronze_map = PipelineReadersTests.bronze_kafka_dataflow_spec_map.copy()
+        landing_map = PipelineReadersTests.landing_kafka_dataflow_spec_map.copy()
         # Remove subscribe (topic)
-        source_details = bronze_map['sourceDetails'].copy()
+        source_details = landing_map['sourceDetails'].copy()
         del source_details["subscribe"]
-        bronze_map['sourceDetails'] = source_details
-        landing_dataflow_spec = LandingDataflowSpec(**bronze_map)
+        landing_map['sourceDetails'] = source_details
+        landing_dataflow_spec = LandingDataflowSpec(**landing_map)
 
         pipeline_readers = PipelineReaders(
             self.spark,

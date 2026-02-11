@@ -18,9 +18,9 @@
                 }
             }
         },
-        "landing_database_dev": "bronze",
-        "landing_database_staging": "bronze",
-        "landing_database_prd": "bronze",
+        "landing_database_dev": "landing",
+        "landing_database_staging": "landing",
+        "landing_database_prd": "landing",
         "landing_table": "customers_cdc",
         "landing_reader_options": {
             "cloudFiles.format": "json",
@@ -33,22 +33,22 @@
             "pipelines.reset.allowed": "false"
         },
         "landing_sinks":[{
-            "name": "bronze_sink1",
+            "name": "landing_sink1",
             "format": "delta",
             "options": {
-                "tablename": "bronze.customers_cdc"
+                "tablename": "landing.customers_cdc"
             }
         },
-        {"name": "bronze_sink2",
+        {"name": "landing_sink2",
         "format": "delta",
         "options": {
-            "tablename": "bronze.customers_cdc"
+            "tablename": "landing.customers_cdc"
         }
         }
         ],
-        "refinery_database_dev": "silver",
-        "refinery_database_staging": "silver",
-        "refinery_database_prd": "silver",
+        "refinery_database_dev": "refinery",
+        "refinery_database_staging": "refinery",
+        "refinery_database_prd": "refinery",
         "refinery_table": "customers",
         "refinery_cdc_apply_changes": {
             "keys": [
@@ -63,23 +63,23 @@
                 "_rescued_data"
             ]
         },
-        "refinery_table_path_dev": "tests/resources/data/silver/customers",
+        "refinery_table_path_dev": "tests/resources/data/refinery/customers",
         "refinery_table_properties": {
             "pipelines.autoOptimize.managed": "false",
             "pipelines.reset.allowed": "false",
             "pipelines.autoOptimize.zOrderCols": "id,email"
         },
-        "refinery_transformation_json_dev": "tests/resources/silver_transformations.json",
-        "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/silver_data_quality_expectations.json",
+        "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
+        "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/refinery_data_quality_expectations.json",
         "refinery_sinks":[{
-            "name": "silver_sink",
+            "name": "refinery_sink",
             "format": "delta",
             "options": {
-                "tablename": "silver.customers_cdc"
+                "tablename": "refinery.customers_cdc"
             }
         } ,
         {
-            "name": "silver_customer_sink",
+            "name": "refinery_customer_sink",
             "format": "kafka",
             "options": {
                 "kafka_sink_servers_secret_scope_name":"kafka_sink_servers_secret_scope_name",

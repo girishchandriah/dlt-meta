@@ -10,19 +10,19 @@
            "source_path_dev": "tests/resources/data/products",
            "source_schema_path": "tests/resources/schema/products.ddl"
         },
-        "landing_database_dev": "uc_catalog_name.bronze",
+        "landing_database_dev": "uc_catalog_name.landing",
         "landing_table": "products",
         "landing_reader_options": {
            "cloudFiles.format": "csv",
            "cloudFiles.rescuedDataColumn": "_rescued_data",
            "header": "true"
         },
-        "landing_table_path_dev": "tests/resources/delta/bronze/products",
+        "landing_table_path_dev": "tests/resources/delta/landing/products",
         "landing_data_quality_expectations_json_dev": "tests/resources/dqe/product/products.json",
-        "landing_database_quarantine_dev": "uc_catalog_name.bronze",
+        "landing_database_quarantine_dev": "uc_catalog_name.landing",
         "landing_quarantine_table": "products_quarantine",
-        "landing_quarantine_table_path_dev": "tests/resources/delta/bronze/products_quarantine",
-        "refinery_database_dev": "uc_catalog_name.silver",
+        "landing_quarantine_table_path_dev": "tests/resources/delta/landing/products_quarantine",
+        "refinery_database_dev": "uc_catalog_name.refinery",
         "refinery_table": "products",
         "refinery_cdc_apply_changes": {
            "keys": [
@@ -38,9 +38,9 @@
               "_rescued_data"
            ]
         },
-        "refinery_table_path_dev": "tests/resources/delta/silver/products",
-        "refinery_transformation_json_dev": "tests/resources/silver_transformations_ac_type2.json",
-        "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/product/silver_data_quality_expectations.json"
+        "refinery_table_path_dev": "tests/resources/delta/refinery/products",
+        "refinery_transformation_json_dev": "tests/resources/refinery_transformations_ac_type2.json",
+        "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/product/refinery_data_quality_expectations.json"
      },
      {
         "data_flow_id": "202",
@@ -53,19 +53,19 @@
            "source_path_dev": "tests/resources/data/stores",
            "source_schema_path": "tests/resources/schema/stores.ddl"
         },
-        "landing_database_dev": "uc_catalog_name.bronze",
+        "landing_database_dev": "uc_catalog_name.landing",
         "landing_table": "stores",
         "landing_reader_options": {
            "cloudFiles.format": "csv",
            "cloudFiles.rescuedDataColumn": "_rescued_data",
            "header": "true"
         },
-        "landing_table_path_dev": "tests/resources/delta/bronze/stores",
+        "landing_table_path_dev": "tests/resources/delta/landing/stores",
         "landing_data_quality_expectations_json_dev": "tests/resources/dqe/stores/stores.json",
-        "landing_database_quarantine_dev": "uc_catalog_name.bronze",
+        "landing_database_quarantine_dev": "uc_catalog_name.landing",
         "landing_quarantine_table": "stores_quarantine",
-        "landing_quarantine_table_path_dev": "tests/resources/delta/bronze/stores_quarantine",
-        "refinery_database_dev": "uc_catalog_name.silver",
+        "landing_quarantine_table_path_dev": "tests/resources/delta/landing/stores_quarantine",
+        "refinery_database_dev": "uc_catalog_name.refinery",
         "refinery_table": "stores",
         "refinery_cdc_apply_changes": {
            "keys": [
@@ -81,7 +81,7 @@
               "_rescued_data"
            ]
         },
-        "refinery_table_path_dev": "tests/resources/delta/silver/stores",
-        "refinery_transformation_json_dev": "tests/resources/silver_transformations_ac_type2.json"
+        "refinery_table_path_dev": "tests/resources/delta/refinery/stores",
+        "refinery_transformation_json_dev": "tests/resources/refinery_transformations_ac_type2.json"
      }
   ]

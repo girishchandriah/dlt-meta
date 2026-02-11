@@ -54,8 +54,8 @@ class DLTMETADABDemo(DLTMETARunner):
             uc_catalog_name=self.args["uc_catalog_name"],
             int_tests_dir="demo/dabs",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            landing_schema=f"dlt_meta_bronze_demo_{run_id}",
-            refinery_schema=f"dlt_meta_silver_demo_{run_id}",
+            landing_schema=f"dlt_meta_landing_demo_{run_id}",
+            refinery_schema=f"dlt_meta_refinery_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_demo/{run_id}",
             source="cloudfiles",
             env="demo",
@@ -93,12 +93,12 @@ class DLTMETADABDemo(DLTMETARunner):
                     "default": f"{runner_conf.dlt_meta_schema}"
                 },
                 "landing_schema": {
-                    "description": "The schema name for the bronze pipelines",
+                    "description": "The schema name for the landing pipelines",
                     "type": "string",
                     "default": f"{runner_conf.landing_schema}"
                 },
                 "refinery_schema": {
-                    "description": "The schema name for the silver pipelines",
+                    "description": "The schema name for the refinery pipelines",
                     "type": "string",
                     "default": f"{runner_conf.refinery_schema}"
                 },
@@ -113,12 +113,12 @@ class DLTMETADABDemo(DLTMETARunner):
                     "default": True
                 },
                 "landing_dataflowspecTable": {
-                    "description": "The table name for the bronze data flow specification",
+                    "description": "The table name for the landing data flow specification",
                     "type": "string",
                     "default": "landing_dataflowspec_table"
                 },
                 "refinery_dataflowspecTable": {
-                    "description": "The table name for the silver data flow specification",
+                    "description": "The table name for the refinery data flow specification",
                     "type": "string",
                     "default": "refinery_dataflowspec_table"
                 },
@@ -140,7 +140,7 @@ class DLTMETADABDemo(DLTMETARunner):
                 "dummy_param": {
                     "description": "A dummy parameter for testing purposes",
                     "type": "string",
-                    "default": "Hello Bronze 2"
+                    "default": "Hello landing 2"
                 },
                 "version": {
                     "description": "The version of the data flow specification",

@@ -53,7 +53,7 @@ class DataFlowSpecTests(DLTFrameworkTestCase):
         self.spark.conf.unset(f"{layer}.dataflowspecTable")
 
     def test_getLandingDataflowSpec_positive(self):
-        """Test Dataflowspec for Bronze layer."""
+        """Test Dataflowspec for landing layer."""
         opm = copy.deepcopy(self.onboarding_landing_refinery_params_map)
         del opm["refinery_dataflowspec_table"]
         del opm["refinery_dataflowspec_path"]

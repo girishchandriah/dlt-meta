@@ -1,20 +1,20 @@
  # [DLT-META](https://github.com/databrickslabs/dlt-meta) DEMOs
- 1. [DAIS 2023 DEMO](#dais-2023-demo): Showcases DLT-META's capabilities of creating Bronze and Silver pipelines with initial and incremental mode automatically.
- 2. [Databricks Techsummit Demo](#databricks-tech-summit-fy2024-demo): 100s of data sources ingestion in bronze and silver pipelines automatically.
+ 1. [DAIS 2023 DEMO](#dais-2023-demo): Showcases DLT-META's capabilities of creating landing and refinery pipelines with initial and incremental mode automatically.
+ 2. [Databricks Techsummit Demo](#databricks-tech-summit-fy2024-demo): 100s of data sources ingestion in landing and refinery pipelines automatically.
  3. [Append FLOW Autoloader Demo](#append-flow-autoloader-file-metadata-demo): Write to same target from multiple sources using [dlt.append_flow](https://docs.databricks.com/en/delta-live-tables/flows.html#append-flows)  and adding [File metadata column](https://docs.databricks.com/en/ingestion/file-metadata-column.html)
  4. [Append FLOW Eventhub Demo](#append-flow-eventhub-demo): Write to same target from multiple sources using [dlt.append_flow](https://docs.databricks.com/en/delta-live-tables/flows.html#append-flows)  and adding [File metadata column](https://docs.databricks.com/en/ingestion/file-metadata-column.html)
- 5. [Silver Fanout Demo](#silver-fanout-demo): This demo showcases the implementation of fanout architecture in the silver layer.
- 6. [Apply Changes From Snapshot Demo](#apply-changes-from-snapshot-demo): This demo showcases the implementation of ingesting from snapshots in bronze layer
+ 5. [refinery Fanout Demo](#refinery-fanout-demo): This demo showcases the implementation of fanout architecture in the refinery layer.
+ 6. [Apply Changes From Snapshot Demo](#apply-changes-from-snapshot-demo): This demo showcases the implementation of ingesting from snapshots in landing layer
  7. [Lakeflow Declarative Pipelines Sink Demo](#lakeflow-declarative-pipelines-sink-demo): This demo showcases the implementation of write to external sinks like delta and kafka
  8. [DAB Demo](#dab-demo): This demo showcases how to use Databricks Assets Bundles with dlt-meta
 
 
 # DAIS 2023 DEMO
 ## [DAIS 2023 Session Recording](https://www.youtube.com/watch?v=WYv5haxLlfA)
-This Demo launches Bronze and Silver pipelines with following activities:
+This Demo launches landing and refinery pipelines with following activities:
 - Customer and Transactions feeds for initial load
-- Adds new feeds Product and Stores to existing Bronze and Silver Lakeflow Declarative pipeline with metadata changes.
-- Runs Bronze and Silver pipeline for incremental load for CDC events
+- Adds new feeds Product and Stores to existing landing and refinery Lakeflow Declarative pipeline with metadata changes.
+- Runs landing and refinery pipeline for incremental load for CDC events
 
 ### Steps:
 1. Launch Command Prompt
@@ -54,7 +54,7 @@ This Demo launches Bronze and Silver pipelines with following activities:
     ![dais_demo.png](../docs/static/images/dais_demo.png)
 
 # Databricks Tech Summit FY2024 DEMO:
-This demo will launch auto generated tables(100s) inside single bronze and silver pipeline using dlt-meta.
+This demo will launch auto generated tables(100s) inside single landing and refinery pipeline using dlt-meta.
 
 1. Launch Command Prompt
 
@@ -95,8 +95,8 @@ This demo will launch auto generated tables(100s) inside single bronze and silve
 # Append Flow Autoloader file metadata demo:
 This demo will perform following tasks:
 - Read from different source paths using autoloader and write to same target using append_flow API
-- Read from different delta tables and write to same silver table using append_flow API
-- Add file_name and file_path to target bronze table for autoloader source using [File metadata column](https://docs.databricks.com/en/ingestion/file-metadata-column.html)
+- Read from different delta tables and write to same refinery table using append_flow API
+- Add file_name and file_path to target landing table for autoloader source using [File metadata column](https://docs.databricks.com/en/ingestion/file-metadata-column.html)
 
 1. Launch Command Prompt
 
@@ -194,12 +194,12 @@ This demo will perform following tasks:
   ![af_eh_demo.png](../docs/static/images/af_eh_demo.png)
 
 
-# Silver Fanout Demo
-- This demo will showcase the onboarding process for the silver fanout pattern.
-    - Run the onboarding process for the bronze cars table, which contains data from various countries.
-    - Run the onboarding process for the silver tables, which have a `where_clause` based on the country condition specified in [silver_transformations_cars.json](https://github.com/databrickslabs/dlt-meta/blob/main/demo/conf/silver_transformations_cars.json).
-    - Run the Bronze pipeline which will produce cars table.
-    - Run Silver pipeline, fanning out from the bronze cars table to country-specific tables such as cars_usa, cars_uk, cars_germany, and cars_japan.
+# refinery Fanout Demo
+- This demo will showcase the onboarding process for the refinery fanout pattern.
+    - Run the onboarding process for the landing cars table, which contains data from various countries.
+    - Run the onboarding process for the refinery tables, which have a `where_clause` based on the country condition specified in [refinery_transformations_cars.json](https://github.com/databrickslabs/dlt-meta/blob/main/demo/conf/refinery_transformations_cars.json).
+    - Run the landing pipeline which will produce cars table.
+    - Run refinery pipeline, fanning out from the landing cars table to country-specific tables such as cars_usa, cars_uk, cars_germany, and cars_japan.
 
 ### Steps:
 1. Launch Command Prompt
@@ -229,7 +229,7 @@ This demo will perform following tasks:
 
 6. Run the command 
     ```commandline
-    python demo/launch_silver_fanout_demo.py --source=cloudfiles --uc_catalog_name=<<uc catalog name>> --profile=<<DEFAULT>>
+    python demo/launch_refinery_fanout_demo.py --source=cloudfiles --uc_catalog_name=<<uc catalog name>> --profile=<<DEFAULT>>
     ```
 
     - you can provide `--profile=databricks_profile name` in case you already have databricks cli otherwise command prompt will ask host and token.
@@ -250,23 +250,23 @@ This demo will perform following tasks:
 
         - Paste to command prompt
 
-    ![silver_fanout_workflow.png](../docs/static/images/silver_fanout_workflow.png)
+    ![refinery_fanout_workflow.png](../docs/static/images/refinery_fanout_workflow.png)
     
-    ![silver_fanout_dlt.png](../docs/static/images/silver_fanout_dlt.png)
+    ![refinery_fanout_dlt.png](../docs/static/images/refinery_fanout_dlt.png)
 
 # Apply Changes From Snapshot Demo
   - This demo will perform following steps
     - Showcase onboarding process for apply changes from snapshot pattern([snapshot-onboarding.template](https://github.com/databrickslabs/dlt-meta/blob/main/demo/conf/snapshot-onboarding.template))
-    - Run onboarding for the bronze stores and products tables, which contains data snapshot data in csv files.
+    - Run onboarding for the landing stores and products tables, which contains data snapshot data in csv files.
     - Create source delta table for products
-    - Run Bronze Pipeline to load initial snapshot for stores(LOAD_1.csv) and products delta table
-    - Run Silver Pipeline to ingest bronze data using apply_changes_from_snapshot API
+    - Run landing Pipeline to load initial snapshot for stores(LOAD_1.csv) and products delta table
+    - Run refinery Pipeline to ingest landing data using apply_changes_from_snapshot API
     - Upload incremental snapshot LOAD_2.csv version=2 for stores and load products delta table for next snapshot
-    - Run Bronze Pipeline to load incremental snapshot (LOAD_2.csv). Products is scd_type=2 so updated records will expired and added new records with version_number. Stores is scd_type=1 so in case records missing for scd_type=1 will be deleted.
-    - Run Silver Pipeline to ingest bronze data using apply_changes_from_snapshot API
+    - Run landing Pipeline to load incremental snapshot (LOAD_2.csv). Products is scd_type=2 so updated records will expired and added new records with version_number. Stores is scd_type=1 so in case records missing for scd_type=1 will be deleted.
+    - Run refinery Pipeline to ingest landing data using apply_changes_from_snapshot API
     -  Upload incremental snapshot LOAD_3.csv version=2 for stores and load products delta table for next snapshot
-    - Run Bronze Pipeline to load incremental snapshot (LOAD_2.csv). Products is scd_type=2 so updated records will expired and added new records with version_number. Stores is scd_type=1 so in case records missing for scd_type=1 will be deleted.
-    - Run Silver Pipeline to ingest bronze data using apply_changes_from_snapshot API
+    - Run landing Pipeline to load incremental snapshot (LOAD_2.csv). Products is scd_type=2 so updated records will expired and added new records with version_number. Stores is scd_type=1 so in case records missing for scd_type=1 will be deleted.
+    - Run refinery Pipeline to ingest landing data using apply_changes_from_snapshot API
 ### Steps:
 1. Launch Command Prompt
 
@@ -301,9 +301,9 @@ This demo will perform following tasks:
 # Lakeflow Declarative Pipelines Sink Demo
   - This demo will perform following steps
     - Showcase onboarding process for dlt writing to external sink pattern
-    - Run onboarding for the bronze iot events.
+    - Run onboarding for the landing iot events.
     - Publish test events to kafka topic
-    - Run Bronze Lakeflow Declarative Pipelines which will read from kafka source topic and write to
+    - Run landing Lakeflow Declarative Pipelines which will read from kafka source topic and write to
         - events delta table into uc
         - create quarantine table as per data quality expectations
         - writes to external kafka topics
@@ -360,17 +360,17 @@ This demo will perform following tasks:
 ## Overview
 This demo showcases how to use Databricks Asset Bundles (DABs) with DLT-Meta:
 This demo will perform following steps:
-- Create dlt-meta schema's for dataflowspec and bronze/silver layer
+- Create dlt-meta schema's for dataflowspec and landing/refinery layer
 - Upload nccessary resources to unity catalog volume
 - Create DAB files with catalog, schema, file locations populated
 - Deploy DAB to databricks workspace
 - Run onboarding usind DAB commands
-- Run Bronze/Silver Pipelines using DAB commands
-- Demo examples will showcase fan-out pattern in silver layer
-- Demo example will show case custom transfomations for bronze/silver layers
-- Adding custom columns and metadata to Bronze tables
-- Implementing SCD Type 1 to Silver tables
-- Applying expectations to filter data in Silver tables
+- Run landing/refinery Pipelines using DAB commands
+- Demo examples will showcase fan-out pattern in refinery layer
+- Demo example will show case custom transfomations for landing/refinery layers
+- Adding custom columns and metadata to landing tables
+- Implementing SCD Type 1 to refinery tables
+- Applying expectations to filter data in refinery tables
 
 ### Steps:
 1. Launch Command Prompt

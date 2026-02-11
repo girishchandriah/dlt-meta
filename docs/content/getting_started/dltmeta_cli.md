@@ -88,7 +88,7 @@ You can deploy pipelines for different layer combinations:
    ```
 - Above command will prompt you to provide pipeline details. Please provide respective details for schema which you provided in above steps
 
-![deployingDLTMeta_bronze_silver.gif](/images/deployingDLTMeta_bronze_silver.gif)
+![deployingDLTMeta_landing_refinery.gif](/images/deployingDLTMeta_landing_refinery.gif)
 
 - Above deploy cli command will:
    1. Deploy Lakeflow Declarative pipeline with dlt-meta configuration like ```layer```, ```group```, ```dataflowSpec table details``` etc to your databricks workspace

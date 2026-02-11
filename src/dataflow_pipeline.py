@@ -532,7 +532,7 @@ class DataflowPipeline:
         dlt_table_with_expectation = None
         expect_or_quarantine_dict = None
         expect_all_dict, expect_all_or_drop_dict, expect_all_or_fail_dict = self.get_dq_expectations()
-        # Both bronze and silver layers support quarantine tables
+        # Both landing and refinery layers support quarantine tables
         if "expect_or_quarantine" in data_quality_expectations_json:
             expect_or_quarantine_dict = data_quality_expectations_json["expect_or_quarantine"]
         if self.dataflowSpec.cdcApplyChanges:
@@ -586,7 +586,7 @@ class DataflowPipeline:
                 else:
                     dlt_table_with_expectation = dlt.expect_all_or_drop(expect_all_or_drop_dict)(
                         dlt_table_with_expectation)
-            # Handle quarantine table (Bronze and Silver layers)
+            # Handle quarantine table (landing and refinery layers)
         if expect_or_quarantine_dict:
             q_partition_cols = None
             q_cluster_by = None

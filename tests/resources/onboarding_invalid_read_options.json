@@ -7,12 +7,12 @@
         "source_table": "CUSTOMERS",
         "source_format": "json",
         "source_path_dev": "tests/resources/data/customers",
-        "landing_database_dev": "bronze",
+        "landing_database_dev": "landing",
         "landing_table": "customers_cdc",
         "landing_partition_columns": "operation_date",
-        "landing_table_path_dev": "tests/resources/data/bronze/customers",
-        "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/bronze_data_quality_expectations.json",
-        "refinery_database_dev": "silver",
+        "landing_table_path_dev": "tests/resources/data/landing/customers",
+        "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/landing_data_quality_expectations.json",
+        "refinery_database_dev": "refinery",
         "refinery_table": "customers",
         "refinery_cdc_apply_changes": {
             "keys": [
@@ -27,8 +27,8 @@
                 "_rescued_data"
             ]
         },
-        "refinery_table_path_dev": "tests/resources/data/silver/customers",
-        "refinery_transformation_json_dev": "tests/resources/silver_transformations.json"
+        "refinery_table_path_dev": "tests/resources/data/refinery/customers",
+        "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json"
     },
     {
         "data_flow_group": "A1",
@@ -38,7 +38,7 @@
         "source_table": "TRANSACTIONS",
         "source_format": "json",
         "source_path_dev": "tests/resources/data/transactions",
-        "landing_database_dev": "bronze",
+        "landing_database_dev": "landing",
         "landing_table": "transactions_cdc",
         "landing_reader_options": {
             "cloudFiles.format": "json",
@@ -46,13 +46,13 @@
             "cloudFiles.rescuedDataColumn": "_rescued_data"
         },
         "landing_partition_columns": "transaction_date",
-        "landing_table_path_dev": "tests/resources/data/bronze/transactions",
-        "landing_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/bronze_data_quality_expectations.json",
-        "landing_database_quarantine_dev": "bronze",
+        "landing_table_path_dev": "tests/resources/data/landing/transactions",
+        "landing_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/landing_data_quality_expectations.json",
+        "landing_database_quarantine_dev": "landing",
         "landing_quarantine_table": "transactions_cdc_quarantine",
-        "landing_quarantine_table_path_dev": "tests/resources/data/bronze/transactions_quarantine",
-        "bronze_quarantine_table_partitions": "",
-        "refinery_database_dev": "silver",
+        "landing_quarantine_table_path_dev": "tests/resources/data/landing/transactions_quarantine",
+        "landing_quarantine_table_partitions": "",
+        "refinery_database_dev": "refinery",
         "refinery_table": "transactions",
         "refinery_cdc_apply_changes": {
             "keys": [
@@ -68,6 +68,6 @@
             ]
         },
         "refinery_table_path_dev": "tests/resources/data/delta/transactions",
-        "refinery_transformation_json_dev": "tests/resources/silver_transformations.json"
+        "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json"
     }
 ]

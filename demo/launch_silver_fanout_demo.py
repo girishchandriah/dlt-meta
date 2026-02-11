@@ -11,11 +11,11 @@ from integration_tests.run_integration_tests import (
 )
 
 
-class DLTMETATSilverFanoutDemo(DLTMETARunner):
+class DLTMETATrefineryFanoutDemo(DLTMETARunner):
     """
-    Represents the DLT-META Silver Fanout Demo.
+    Represents the DLT-META refinery Fanout Demo.
 
-    This class is responsible for running the DLT-META Silver Fanout Demo, which includes setting up metadata tables,
+    This class is responsible for running the DLT-META refinery Fanout Demo, which includes setting up metadata tables,
     creating clusters, launching workflows, and more.
 
     Attributes:
@@ -24,10 +24,10 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
     - base_dir: The base directory of the project.
 
     Methods:
-    - run: Runs the DLT-META Silver Fanout Demo.
+    - run: Runs the DLT-META refinery Fanout Demo.
     - init_runner_conf: Initializes the runner configuration for running integration tests.
-    - launch_workflow: Launches the workflow for the DLT-META Silver Fanout Demo.
-    - create_sfo_workflow_spec: Creates the workflow for the DLT-META Silver Fanout Demo by defining the tasks
+    - launch_workflow: Launches the workflow for the DLT-META refinery Fanout Demo.
+    - create_sfo_workflow_spec: Creates the workflow for the DLT-META refinery Fanout Demo by defining the tasks
                                 and their dependencies.
     """
 
@@ -39,7 +39,7 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
 
     def run(self, runner_conf: DLTMetaRunnerConf):
         """
-        Runs the DLT-META Silver Fanout Demo.
+        Runs the DLT-META refinery Fanout Demo.
 
         Parameters:
         - runner_conf: The DLTMetaRunnerConf object containing the runner configuration parameters.
@@ -69,7 +69,7 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
             username=self.wsi._my_username,
             int_tests_dir="demo",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            landing_schema=f"dlt_meta_bronze_demo_{run_id}",
+            landing_schema=f"dlt_meta_landing_demo_{run_id}",
             refinery_schema=f"dlt_meta_refinery_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_fout_demo/{run_id}",
             runners_full_local_path="demo/notebooks/refinery_fanout_runners",
@@ -92,7 +92,7 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
 
     def create_sfo_workflow_spec(self, runner_conf: DLTMetaRunnerConf):
         """
-        Creates the workflow for the DLT-META Silver Fanout Demo by defining the tasks and their dependencies.
+        Creates the workflow for the DLT-META refinery Fanout Demo by defining the tasks and their dependencies.
 
         Parameters:
         - runner_conf: The DLTMetaRunnerConf object containing the runner configuration parameters.
@@ -127,7 +127,7 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
                             "onboarding_file_path":
                             f"{runner_conf.uc_volume_path}/{runner_conf.onboarding_file_path}",
                             "refinery_dataflowspec_table": "refinery_dataflowspec_cdc",
-                            "landing_dataflowspec_table": "bronze_dataflowspec_cdc",
+                            "landing_dataflowspec_table": "landing_dataflowspec_cdc",
                             "import_author": "Ravi",
                             "version": "v1",
                             "overwrite": "True",
@@ -160,7 +160,7 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
                     ),
                 ),
                 jobs.Task(
-                    task_key="bronze_dlt",
+                    task_key="landing_dlt",
                     depends_on=[jobs.TaskDependency(task_key="onboard_refineryfanout_job")],
                     pipeline_task=jobs.PipelineTask(
                         pipeline_id=runner_conf.landing_pipeline_id
@@ -168,7 +168,7 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
                 ),
                 jobs.Task(
                     task_key="refinery_dlt",
-                    depends_on=[jobs.TaskDependency(task_key="bronze_dlt")],
+                    depends_on=[jobs.TaskDependency(task_key="landing_dlt")],
                     pipeline_task=jobs.PipelineTask(
                         pipeline_id=runner_conf.refinery_pipeline_id
                     )
@@ -180,7 +180,7 @@ class DLTMETATSilverFanoutDemo(DLTMETARunner):
 def main():
     args = process_arguments()
     workspace_client = get_workspace_api_client(args['profile'])
-    dltmeta_afam_demo_runner = DLTMETATSilverFanoutDemo(args, workspace_client, "demo")
+    dltmeta_afam_demo_runner = DLTMETATrefineryFanoutDemo(args, workspace_client, "demo")
     print("initializing complete")
     runner_conf = dltmeta_afam_demo_runner.init_runner_conf()
     dltmeta_afam_demo_runner.run(runner_conf)

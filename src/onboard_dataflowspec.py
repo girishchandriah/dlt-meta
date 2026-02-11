@@ -77,16 +77,16 @@ class OnboardDataflowspec:
 
     def onboard_dataflow_specs(self):
         """
-        Onboard_dataflow_specs method will onboard dataFlowSpecs for bronze, silver and gold.
+        Onboard_dataflow_specs method will onboard dataFlowSpecs for landing, refinery and gold.
 
         This method takes in a SparkSession object and a dictionary object containing the following attributes:
         - onboarding_file_path: The path to the onboarding file.
         - database: The name of the database to onboard the dataflow specs to.
         - env: The environment to onboard the dataflow specs to.
-        - landing_dataflowspec_table: The name of the bronze dataflow specs table.
-        - landing_dataflowspec_path: The path to the bronze dataflow specs.
-        - refinery_dataflowspec_table: The name of the silver dataflow specs table.
-        - refinery_dataflowspec_path: The path to the silver dataflow specs.
+        - landing_dataflowspec_table: The name of the landing dataflow specs table.
+        - landing_dataflowspec_path: The path to the landing dataflow specs.
+        - refinery_dataflowspec_table: The name of the refinery dataflow specs table.
+        - refinery_dataflowspec_path: The path to the refinery dataflow specs.
         - import_author: The author of the import.
         - version: The version of the import.
         - overwrite: Whether to overwrite existing dataflow specs or not.
@@ -95,8 +95,8 @@ class OnboardDataflowspec:
         If the `uc_enabled` flag is set to False, the dictionary object must contain all the attributes listed above
         except for `landing_dataflowspec_path` and `refinery_dataflowspec_path`.
 
-        This method calls the `onboard_bronze_dataflow_spec` and `onboard_silver_dataflow_spec` methods to onboard
-        the bronze and silver dataflow specs respectively.
+        This method calls the `onboard_landing_dataflow_spec` and `onboard_refinery_dataflow_spec` methods to onboard
+        the landing and refinery dataflow specs respectively.
         """
         attributes = [
             "onboarding_file_path",
@@ -122,7 +122,7 @@ class OnboardDataflowspec:
         self.onboard_refinery_dataflow_spec()
 
     def register_landing_dataflow_spec_tables(self):
-        """Register bronze/silver dataflow specs tables."""
+        """Register landing/refinery dataflow specs tables."""
         self.deltaPipelinesMetaStoreOps.create_database(
             self.dict_obj["database"], "dlt-meta database"
         )
@@ -132,14 +132,14 @@ class OnboardDataflowspec:
             self.dict_obj["landing_dataflowspec_path"],
         )
         logger.info(
-            f"""onboarded bronze table={self.dict_obj["database"]}.{self.dict_obj["landing_dataflowspec_table"]}"""
+            f"""onboarded landing table={self.dict_obj["database"]}.{self.dict_obj["landing_dataflowspec_table"]}"""
         )
         self.spark.read.table(
             f"""{self.dict_obj["database"]}.{self.dict_obj["landing_dataflowspec_table"]}"""
         ).show()
 
     def register_refinery_dataflow_spec_tables(self):
-        """Register bronze dataflow specs tables."""
+        """Register landing dataflow specs tables."""
         self.deltaPipelinesMetaStoreOps.create_database(
             self.dict_obj["database"], "dlt-meta database"
         )
@@ -149,7 +149,7 @@ class OnboardDataflowspec:
             self.dict_obj["refinery_dataflowspec_path"],
         )
         logger.info(
-            f"""onboarded silver table={self.dict_obj["database"]}.{self.dict_obj["refinery_dataflowspec_table"]}"""
+            f"""onboarded refinery table={self.dict_obj["database"]}.{self.dict_obj["refinery_dataflowspec_table"]}"""
         )
         self.spark.read.table(
             f"""{self.dict_obj["database"]}.{self.dict_obj["refinery_dataflowspec_table"]}"""
@@ -157,17 +157,17 @@ class OnboardDataflowspec:
 
     def onboard_refinery_dataflow_spec(self):
         """
-        Onboard silver dataflow spec.
+        Onboard refinery dataflow spec.
 
         Args:
             onboarding_df (pyspark.sql.DataFrame): DataFrame containing the onboarding file data.
-            dict_obj (dict): Dictionary containing the required attributes for onboarding silver dataflow spec.
+            dict_obj (dict): Dictionary containing the required attributes for onboarding refinery dataflow spec.
                 Required attributes:
                     - onboarding_file_path (str): Path of the onboarding file.
                     - database (str): Name of the database.
                     - env (str): Environment name.
-                    - refinery_dataflowspec_table (str): Name of the silver dataflow spec table.
-                    - refinery_dataflowspec_path (str): Path of the silver dataflow spec file. if uc_enabled is False
+                    - refinery_dataflowspec_table (str): Name of the refinery dataflow spec table.
+                    - refinery_dataflowspec_path (str): Path of the refinery dataflow spec file. if uc_enabled is False
                     - import_author (str): Name of the import author.
                     - version (str): Version of the dataflow spec.
                     - overwrite (str): Whether to overwrite the existing dataflow spec table/file or not.
@@ -271,7 +271,7 @@ class OnboardDataflowspec:
                 original_dataflow_df = self.spark.read.format("delta").load(
                     dict_obj["refinery_dataflowspec_path"]
                 )
-            logger.info("In Merge block for Silver")
+            logger.info("In Merge block for refinery")
             self.deltaPipelinesInternalTableOps.merge(
                 refinery_dataflow_spec_df,
                 f"{database}.{table}",
@@ -283,18 +283,18 @@ class OnboardDataflowspec:
 
     def onboard_landing_dataflow_spec(self):
         """
-        Onboard bronze dataflow spec.
+        Onboard landing dataflow spec.
 
-        This function reads the onboarding file and creates bronze dataflow spec. It adds audit columns to the dataframe
+        This function reads the onboarding file and creates landing dataflow spec. It adds audit columns to the dataframe
         If overwrite is True, it overwrites the table or file with the new dataframe. If overwrite is False,
         it merges the new dataframe with the existing dataframe.
-        dict_obj (dict): Dictionary containing the required attributes for onboarding bronze dataflow spec.
+        dict_obj (dict): Dictionary containing the required attributes for onboarding landing dataflow spec.
             Required attributes:
                 - onboarding_file_path (str): Path of the onboarding file.
                 - database (str): Name of the database.
                 - env (str): Environment name.
-                - landing_dataflowspec_table (str): Name of the bronze dataflow spec table.
-                - landing_dataflowspec_path (str): Path of the bronze dataflow spec file. if uc_enabled is False
+                - landing_dataflowspec_table (str): Name of the landing dataflow spec table.
+                - landing_dataflowspec_path (str): Path of the landing dataflow spec file. if uc_enabled is False
                 - import_author (str): Name of the import author.
                 - version (str): Version of the dataflow spec.
                 - overwrite (str): Whether to overwrite the existing dataflow spec table/file or not.
@@ -368,7 +368,7 @@ class OnboardDataflowspec:
                     dict_obj["landing_dataflowspec_path"]
                 )
 
-            logger.info("In Merge block for Bronze")
+            logger.info("In Merge block for landing")
             self.deltaPipelinesInternalTableOps.merge(
                 landing_dataflow_spec_df,
                 f"{database}.{table}",
@@ -470,7 +470,7 @@ class OnboardDataflowspec:
                 raise Exception(f"Missing field={field} in onboarding_row")
 
     def __get_landing_dataflow_spec_dataframe(self, onboarding_df, env):
-        """Get bronze dataflow spec method will convert onboarding dataframe to Bronze Dataflowspec dataframe.
+        """Get landing dataflow spec method will convert onboarding dataframe to landing Dataflowspec dataframe.
 
         Args:
             onboarding_df ([type]): [description]
@@ -557,8 +557,8 @@ class OnboardDataflowspec:
             except ValueError:
                 mandatory_fields.append(f"landing_table_path_{env}")
                 self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
-            bronze_data_flow_spec_id = onboarding_row["data_flow_id"]
-            bronze_data_flow_spec_group = onboarding_row["data_flow_group"]
+            landing_data_flow_spec_id = onboarding_row["data_flow_id"]
+            landing_data_flow_spec_group = onboarding_row["data_flow_group"]
             if "source_format" not in onboarding_row:
                 raise Exception(f"Source format not provided for row={onboarding_row}")
 
@@ -655,15 +655,15 @@ class OnboardDataflowspec:
                     )
                     if onboarding_row["landing_quarantine_table"]:
                         quarantine_target_details, quarantine_table_properties = self.__get_quarantine_details(
-                            env, "bronze", onboarding_row
+                            env, "landing", onboarding_row
                         )
 
             append_flows, append_flows_schemas = self.get_append_flows_json(
-                onboarding_row, "bronze", env
+                onboarding_row, "landing", env
             )
-            bronze_row = (
-                bronze_data_flow_spec_id,
-                bronze_data_flow_spec_group,
+            landing_row = (
+                landing_data_flow_spec_id,
+                landing_data_flow_spec_group,
                 source_format,
                 source_details,
                 landing_reader_config_options,
@@ -682,8 +682,8 @@ class OnboardDataflowspec:
                 dlt_sinks,
                 cluster_by
             )
-            data.append(bronze_row)
-            # logger.info(bronze_parition_columns)
+            data.append(landing_row)
+            # logger.info(landing_parition_columns)
 
         data_flow_spec_rows_df = self.spark.createDataFrame(
             data, data_flow_spec_schema
@@ -1067,7 +1067,7 @@ class OnboardDataflowspec:
         return json_string
 
     def __get_refinery_dataflow_spec_dataframe(self, onboarding_df, env):
-        """Get silver_dataflow_spec method transform onboarding dataframe to silver dataflowSpec dataframe.
+        """Get refinery_dataflow_spec method transform onboarding dataframe to refinery dataflowSpec dataframe.
 
         Args:
             onboarding_df ([type]): [description]
@@ -1147,9 +1147,9 @@ class OnboardDataflowspec:
             except ValueError:
                 mandatory_fields.append(f"refinery_table_path_{env}")
                 self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
-            silver_data_flow_spec_id = onboarding_row["data_flow_id"]
-            silver_data_flow_spec_group = onboarding_row["data_flow_group"]
-            silver_reader_config_options = {}
+            refinery_data_flow_spec_id = onboarding_row["data_flow_id"]
+            refinery_data_flow_spec_group = onboarding_row["data_flow_group"]
+            refinery_reader_config_options = {}
 
             refinery_target_format = "delta"
 
@@ -1185,12 +1185,12 @@ class OnboardDataflowspec:
                     f"refinery_table_path_{env}"
                 ]
             refinery_reader_options_json = (
-                onboarding_row["silver_reader_options"]
-                if "silver_reader_options" in onboarding_row
+                onboarding_row["refinery_reader_options"]
+                if "refinery_reader_options" in onboarding_row
                 else {}
             )
             if refinery_reader_options_json:
-                silver_reader_config_options = self.__delete_none(
+                refinery_reader_config_options = self.__delete_none(
                     refinery_reader_options_json.asDict()
                 )
             refinery_table_properties = {}
@@ -1245,7 +1245,7 @@ class OnboardDataflowspec:
                         refinery_data_quality_expectations_json
                     )
                 refinery_quarantine_target_details, refinery_quarantine_table_properties = self.__get_quarantine_details(
-                    env, "silver", onboarding_row
+                    env, "refinery", onboarding_row
                 )
                 refinery_quarantine_cluster_by = self.__get_cluster_by_properties(
                     onboarding_row,
@@ -1253,7 +1253,7 @@ class OnboardDataflowspec:
                     "refinery_quarantine_cluster_by"
                 )
             append_flows, append_flow_schemas = self.get_append_flows_json(
-                onboarding_row, layer="silver", env=env
+                onboarding_row, layer="refinery", env=env
             )
             apply_changes_from_snapshot = None
             source_format = "delta"
@@ -1264,12 +1264,12 @@ class OnboardDataflowspec:
                     self.__delete_none(onboarding_row["refinery_apply_changes_from_snapshot"].asDict())
                 )
                 source_format = "snapshot"
-            silver_row = (
-                silver_data_flow_spec_id,
-                silver_data_flow_spec_group,
+            refinery_row = (
+                refinery_data_flow_spec_id,
+                refinery_data_flow_spec_group,
                 source_format,
                 landing_target_details,
-                silver_reader_config_options,
+                refinery_reader_config_options,
                 refinery_target_format,
                 refinery_target_details,
                 refinery_table_properties,
@@ -1285,8 +1285,8 @@ class OnboardDataflowspec:
                 refinery_cluster_by,
                 dlt_sinks
             )
-            data.append(silver_row)
-            logger.info(f"silver_data ==== {data}")
+            data.append(refinery_row)
+            logger.info(f"refinery_data ==== {data}")
 
         data_flow_spec_rows_df = self.spark.createDataFrame(
             data, data_flow_spec_schema

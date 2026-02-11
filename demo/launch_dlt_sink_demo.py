@@ -51,7 +51,7 @@ class DLTMETASinkDemo(DLTMETARunner):
             uc_catalog_name=self.args["uc_catalog_name"],
             int_tests_dir="demo",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            landing_schema=f"dlt_meta_bronze_demo_{run_id}",
+            landing_schema=f"dlt_meta_landing_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_demo/{run_id}",
             source="kafka",
             kafka_template="demo/conf/kafka-sink-onboarding.template",

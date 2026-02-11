@@ -50,9 +50,9 @@ class DLTMetaRunnerConf:
     dlt_meta_schema : str, optional
         The name of the DLT meta schema to use for the test run.
     landing_schema : str, optional
-        The name of the bronze schema to use for the test run.
+        The name of the landing schema to use for the test run.
     refinery_schema : str, optional
-        The name of the silver schema to use for the test run.
+        The name of the refinery schema to use for the test run.
     runners_nb_path : str, optional
         The path to the runners notebook.
     runners_full_local_path : str, optional
@@ -78,9 +78,9 @@ class DLTMetaRunnerConf:
     node_type_id : str, optional
         The node type ID to use for the test run.
     landing_pipeline_id : str, optional
-        The ID of the bronze pipeline to use for the test run.
+        The ID of the landing pipeline to use for the test run.
     refinery_pipeline_id : str, optional
-        The ID of the silver pipeline to use for the test run.
+        The ID of the refinery pipeline to use for the test run.
     job_id : str, optional
         The ID of the job to use for the test run.
     """
@@ -109,7 +109,7 @@ class DLTMetaRunnerConf:
     remote_whl_path: str = None
     node_type_id: str = None
     landing_pipeline_id: str = None
-    bronze_pipeline_A2_id: str = None
+    landing_pipeline_A2_id: str = None
     refinery_pipeline_id: str = None
     job_id: str = None
     test_output_file_path: str = None
@@ -175,8 +175,8 @@ class DLTMETARunner:
             username=self.wsi._my_username,
             uc_catalog_name=self.args["uc_catalog_name"],
             dlt_meta_schema=f"dlt_meta_dataflowspecs_it_{run_id}",
-            landing_schema=f"dlt_meta_bronze_it_{run_id}",
-            refinery_schema=f"dlt_meta_silver_it_{run_id}",
+            landing_schema=f"dlt_meta_landing_it_{run_id}",
+            refinery_schema=f"dlt_meta_refinery_it_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_int_tests/{run_id}",
             source=self.args["source"] if "source" in self.args else None,
             # node_type_id=cloud_node_type_id_dict[self.args["cloud_provider_name"]],
@@ -328,18 +328,18 @@ class DLTMETARunner:
                     entry_point="run",
                     named_parameters={
                         "onboard_layer": (
-                            "bronze_silver"
+                            "landing_refinery"
                             if runner_conf.source in ["cloudfiles", "snapshot"]
-                            else "bronze"
+                            else "landing"
                         ),
                         "database": f"{runner_conf.uc_catalog_name}.{runner_conf.dlt_meta_schema}",
                         "onboarding_file_path": f"{runner_conf.uc_volume_path}/{self.base_dir}/conf/onboarding.json",
-                        "silver_dataflowspec_table": "silver_dataflowspec_cdc",
-                        "silver_dataflowspec_path": f"{runner_conf.uc_volume_path}/data/dlt_spec/silver",
-                        "bronze_dataflowspec_table": "bronze_dataflowspec_cdc",
+                        "refinery_dataflowspec_table": "refinery_dataflowspec_cdc",
+                        "refinery_dataflowspec_path": f"{runner_conf.uc_volume_path}/data/dlt_spec/refinery",
+                        "landing_dataflowspec_table": "landing_dataflowspec_cdc",
                         "import_author": "Ravi",
                         "version": "v1",
-                        "bronze_dataflowspec_path": f"{runner_conf.uc_volume_path}/data/dlt_spec/bronze",
+                        "landing_dataflowspec_path": f"{runner_conf.uc_volume_path}/data/dlt_spec/landing",
                         "overwrite": "True",
                         "env": runner_conf.env,
                         "uc_enabled": "True",
@@ -347,7 +347,7 @@ class DLTMETARunner:
                 ),
             ),
             jobs.Task(
-                task_key="bronze_dlt_pipeline",
+                task_key="landing_dlt_pipeline",
                 depends_on=[
                     jobs.TaskDependency(
                         task_key=(
@@ -395,7 +395,7 @@ class DLTMETARunner:
                     jobs.Task(
                         task_key="onboard_spec_A2",
                         depends_on=[
-                            jobs.TaskDependency(task_key="bronze_dlt_pipeline")
+                            jobs.TaskDependency(task_key="landing_dlt_pipeline")
                         ],
                         description="test",
                         environment_key="dl_meta_int_env",
@@ -404,10 +404,10 @@ class DLTMETARunner:
                             package_name="dlt_meta_cds",
                             entry_point="run",
                             named_parameters={
-                                "onboard_layer": "bronze",
+                                "onboard_layer": "landing",
                                 "database": f"{runner_conf.uc_catalog_name}.{runner_conf.dlt_meta_schema}",
                                 "onboarding_file_path": f"{runner_conf.uc_volume_path}/{self.base_dir}/conf/onboarding_A2.json",  # noqa : E501
-                                "bronze_dataflowspec_table": "bronze_dataflowspec_cdc",
+                                "landing_dataflowspec_table": "landing_dataflowspec_cdc",
                                 "import_author": "Ravi",
                                 "version": "v1",
                                 "overwrite": "False",
@@ -417,16 +417,16 @@ class DLTMETARunner:
                         ),
                     ),
                     jobs.Task(
-                        task_key="bronze_A2_dlt_pipeline",
+                        task_key="landing_A2_dlt_pipeline",
                         depends_on=[jobs.TaskDependency(task_key="onboard_spec_A2")],
                         pipeline_task=jobs.PipelineTask(
-                            pipeline_id=runner_conf.bronze_pipeline_A2_id
+                            pipeline_id=runner_conf.landing_pipeline_A2_id
                         ),
                     ),
                     jobs.Task(
-                        task_key="silver_dlt_pipeline",
+                        task_key="refinery_dlt_pipeline",
                         depends_on=[
-                            jobs.TaskDependency(task_key="bronze_A2_dlt_pipeline")
+                            jobs.TaskDependency(task_key="landing_A2_dlt_pipeline")
                         ],
                         pipeline_task=jobs.PipelineTask(
                             pipeline_id=runner_conf.refinery_pipeline_id
@@ -476,9 +476,9 @@ class DLTMETARunner:
                         ),
                     ),
                     jobs.Task(
-                        task_key="silver_dlt_pipeline",
+                        task_key="refinery_dlt_pipeline",
                         depends_on=[
-                            jobs.TaskDependency(task_key="bronze_dlt_pipeline")
+                            jobs.TaskDependency(task_key="landing_dlt_pipeline")
                         ],
                         pipeline_task=jobs.PipelineTask(
                             pipeline_id=runner_conf.refinery_pipeline_id
@@ -488,7 +488,7 @@ class DLTMETARunner:
                         task_key="upload_v2_snapshots",
                         description="test",
                         depends_on=[
-                            jobs.TaskDependency(task_key="silver_dlt_pipeline")
+                            jobs.TaskDependency(task_key="refinery_dlt_pipeline")
                         ],
                         notebook_task=jobs.NotebookTask(
                             notebook_path=f"{runner_conf.runners_nb_path}/runners/upload_snapshots.py",
@@ -496,16 +496,16 @@ class DLTMETARunner:
                         ),
                     ),
                     jobs.Task(
-                        task_key="bronze_v2_dlt_pipeline",
+                        task_key="landing_v2_dlt_pipeline",
                         depends_on=[jobs.TaskDependency(task_key="upload_v2_snapshots")],
                         pipeline_task=jobs.PipelineTask(
                             pipeline_id=runner_conf.landing_pipeline_id
                         ),
                     ),
                     jobs.Task(
-                        task_key="silver_v2_dlt_pipeline",
+                        task_key="refinery_v2_dlt_pipeline",
                         depends_on=[
-                            jobs.TaskDependency(task_key="bronze_v2_dlt_pipeline")
+                            jobs.TaskDependency(task_key="landing_v2_dlt_pipeline")
                         ],
                         pipeline_task=jobs.PipelineTask(
                             pipeline_id=runner_conf.refinery_pipeline_id
@@ -514,7 +514,7 @@ class DLTMETARunner:
                     jobs.Task(
                         task_key="upload_v3_snapshots",
                         depends_on=[
-                            jobs.TaskDependency(task_key="silver_v2_dlt_pipeline")
+                            jobs.TaskDependency(task_key="refinery_v2_dlt_pipeline")
                         ],
                         notebook_task=jobs.NotebookTask(
                             notebook_path=f"{runner_conf.runners_nb_path}/runners/upload_snapshots.py",
@@ -522,16 +522,16 @@ class DLTMETARunner:
                         ),
                     ),
                     jobs.Task(
-                        task_key="bronze_v3_dlt_pipeline",
+                        task_key="landing_v3_dlt_pipeline",
                         depends_on=[jobs.TaskDependency(task_key="upload_v3_snapshots")],
                         pipeline_task=jobs.PipelineTask(
                             pipeline_id=runner_conf.landing_pipeline_id
                         ),
                     ),
                     jobs.Task(
-                        task_key="silver_v3_dlt_pipeline",
+                        task_key="refinery_v3_dlt_pipeline",
                         depends_on=[
-                            jobs.TaskDependency(task_key="bronze_v3_dlt_pipeline")
+                            jobs.TaskDependency(task_key="landing_v3_dlt_pipeline")
                         ],
                         pipeline_task=jobs.PipelineTask(
                             pipeline_id=runner_conf.refinery_pipeline_id
@@ -580,11 +580,11 @@ class DLTMETARunner:
 
     def get_validate_task_key(self, source):
         if source == "cloudfiles":
-            return "silver_dlt_pipeline"
+            return "refinery_dlt_pipeline"
         elif source == "snapshot":
-            return "silver_v3_dlt_pipeline"
+            return "refinery_v3_dlt_pipeline"
         else:
-            return "bronze_dlt_pipeline"
+            return "landing_dlt_pipeline"
 
     def initialize_uc_resources(self, runner_conf):
         """Create UC schemas and volumes needed to run the integration tests"""
@@ -764,17 +764,17 @@ class DLTMETARunner:
 
     def create_landing_refinery_dlt(self, runner_conf: DLTMetaRunnerConf):
         runner_conf.landing_pipeline_id = self.create_dlt_meta_pipeline(
-            f"dlt-meta-bronze-{runner_conf.run_id}",
-            "bronze",
+            f"dlt-meta-landing-{runner_conf.run_id}",
+            "landing",
             "A1",
             runner_conf.landing_schema,
             runner_conf,
         )
 
         if runner_conf.source == "cloudfiles":
-            runner_conf.bronze_pipeline_A2_id = self.create_dlt_meta_pipeline(
-                f"dlt-meta-bronze-A2-{runner_conf.run_id}",
-                "bronze",
+            runner_conf.landing_pipeline_A2_id = self.create_dlt_meta_pipeline(
+                f"dlt-meta-landing-A2-{runner_conf.run_id}",
+                "landing",
                 "A2",
                 runner_conf.landing_schema,
                 runner_conf,
@@ -782,8 +782,8 @@ class DLTMETARunner:
 
         if runner_conf.source in ["cloudfiles", "snapshot"]:
             runner_conf.refinery_pipeline_id = self.create_dlt_meta_pipeline(
-                f"dlt-meta-silver-{runner_conf.run_id}",
-                "silver",
+                f"dlt-meta-refinery-{runner_conf.run_id}",
+                "refinery",
                 "A1",
                 runner_conf.refinery_schema,
                 runner_conf,
@@ -823,8 +823,8 @@ class DLTMETARunner:
             self.ws.jobs.delete(runner_conf.job_id)
         if runner_conf.landing_pipeline_id:
             self.ws.pipelines.delete(runner_conf.landing_pipeline_id)
-        if runner_conf.bronze_pipeline_A2_id:
-            self.ws.pipelines.delete(runner_conf.bronze_pipeline_A2_id)
+        if runner_conf.landing_pipeline_A2_id:
+            self.ws.pipelines.delete(runner_conf.landing_pipeline_A2_id)
         if runner_conf.refinery_pipeline_id:
             self.ws.pipelines.delete(runner_conf.refinery_pipeline_id)
         if runner_conf.uc_catalog_name:

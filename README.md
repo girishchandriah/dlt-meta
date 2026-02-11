@@ -17,7 +17,8 @@
 
 
 # Project Overview
-`DLT-META` is a metadata-driven framework designed to work with [Lakeflow Declarative Pipelines](https://www.databricks.com/product/data-engineering/lakeflow-declarative-pipelines). This framework enables the automation of bronze and silver data pipelines by leveraging metadata recorded in an onboarding JSON file. This file, known as the Dataflowspec, serves as the data flow specification, detailing the source and target metadata required for the pipelines.
+`DLT-META` is a metadata-driven framework designed to work with [Lakeflow Declarative Pipelines](https://www.databricks.com/product/data-engineering/lakeflow-declarative-pipelines). This framework enables the automation of -
+ and refinery data pipelines by leveraging metadata recorded in an onboarding JSON file. This file, known as the Dataflowspec, serves as the data flow specification, detailing the source and target metadata required for the pipelines.
 
 In practice, a single generic pipeline reads the Dataflowspec and uses it to orchestrate and run the necessary data processing workloads. This approach streamlines the development and management of data pipelines, allowing for a more efficient and scalable data processing workflow
 
@@ -28,8 +29,8 @@ In practice, a single generic pipeline reads the Dataflowspec and uses it to orc
 #### Metadata Interface
 
 - Capture input/output metadata in [onboarding file](https://github.com/databrickslabs/dlt-meta/blob/main/examples/onboarding.template)
-- Capture [Data Quality Rules](https://github.com/databrickslabs/dlt-meta/tree/main/examples/dqe/customers/bronze_data_quality_expectations.json)
-- Capture processing logic as sql in [Silver transformation file](https://github.com/databrickslabs/dlt-meta/blob/main/examples/silver_transformations.json)
+- Capture [Data Quality Rules](https://github.com/databrickslabs/dlt-meta/tree/main/examples/dqe/customers/landing_data_quality_expectations.json)
+- Capture processing logic as sql in [refinery transformation file](https://github.com/databrickslabs/dlt-meta/blob/main/examples/refinery_transformations.json)
 
 #### Generic Lakeflow Declarative Pipeline
 
@@ -167,7 +168,7 @@ Above onboard cli command will:
   ```
 The command will prompt you to provide pipeline configuration details.
 
-![deployingDLTMeta_bronze_silver.gif](docs/static/images/deployingDLTMeta_bronze_silver.gif)
+![deployingDLTMeta_landing_refinery.gif](docs/static/images/deployingDLTMeta_landing_refinery.gif)
 
 Above deploy cli command will:
 1. Deploy Lakeflow Declarative Pipeline with dlt-meta configuration like ```layer```, ```group```, ```dataflowSpec table details``` etc to your databricks workspace

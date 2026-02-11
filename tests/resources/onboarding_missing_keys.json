@@ -3,9 +3,9 @@
       "data_flow_id": "100",
       "data_flow_group": "A1",
       "source_system": "MYSQL",
-      "landing_database_dev": "bronze",
-      "landing_database_staging": "bronze",
-      "landing_database_prd": "bronze",
+      "landing_database_dev": "landing",
+      "landing_database_staging": "landing",
+      "landing_database_prd": "landing",
       "landing_table": "customers_cdc",
       "landing_reader_options": {
          "cloudFiles.format": "json",
@@ -17,10 +17,10 @@
          "pipelines.autoOptimize.managed": "false",
          "pipelines.reset.allowed": "false"
       },
-      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/bronze_data_quality_expectations.json",
-      "refinery_database_dev": "silver",
-      "refinery_database_staging": "silver",
-      "refinery_database_prd": "silver",
+      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/landing_data_quality_expectations.json",
+      "refinery_database_dev": "refinery",
+      "refinery_database_staging": "refinery",
+      "refinery_database_prd": "refinery",
       "refinery_table": "customers",
       "refinery_cdc_apply_changes": {
          "keys": [
@@ -35,14 +35,14 @@
             "_rescued_data"
          ]
       },
-      "refinery_table_path_dev": "tests/resources/data/silver/customers",
+      "refinery_table_path_dev": "tests/resources/data/refinery/customers",
       "refinery_table_properties": {
          "pipelines.autoOptimize.managed": "false",
          "pipelines.reset.allowed": "false",
          "pipelines.autoOptimize.zOrderCols": "id,email"
       },
-      "refinery_transformation_json_dev": "tests/resources/silver_transformations.json",
-      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/silver_data_quality_expectations.json"
+      "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
+      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/refinery_data_quality_expectations.json"
    },
    {
       "data_flow_id": "101",
@@ -55,9 +55,9 @@
          "source_path_prd": "tests/resources/data/transactions",
          "source_path_dev": "tests/resources/data/transactions"
       },
-      "landing_database_dev": "bronze",
-      "landing_database_staging": "bronze",
-      "landing_database_prd": "bronze",
+      "landing_database_dev": "landing",
+      "landing_database_staging": "landing",
+      "landing_database_prd": "landing",
       "landing_table": "transactions_cdc",
       "landing_reader_options": {
          "cloudFiles.format": "json",
@@ -65,20 +65,20 @@
          "cloudFiles.rescuedDataColumn": "_rescued_data"
       },
       "landing_table_path_dev": "tests/resources/delta/transactions",
-      "landing_table_path_staging": "s3://db-dlt-meta-staging/demo/data/bronze/transactions",
-      "landing_table_path_prd": "s3://db-dlt-meta-prod/demo/data/bronze/transactions",
+      "landing_table_path_staging": "s3://db-dlt-meta-staging/demo/data/landing/transactions",
+      "landing_table_path_prd": "s3://db-dlt-meta-prod/demo/data/landing/transactions",
       "landing_table_properties": {
          "pipelines.reset.allowed": "false"
       },
-      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/bronze_data_quality_expectations.json",
-      "landing_database_quarantine_dev": "bronze",
-      "landing_database_quarantine_staging": "bronze",
-      "landing_database_quarantine_prd": "bronze",
+      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/landing_data_quality_expectations.json",
+      "landing_database_quarantine_dev": "landing",
+      "landing_database_quarantine_staging": "landing",
+      "landing_database_quarantine_prd": "landing",
       "landing_quarantine_table": "transactions_cdc_quarantine",
-      "landing_quarantine_table_path_dev": "tests/resources/data/bronze/transactions_quarantine",
-      "refinery_database_dev": "silver",
-      "refinery_database_preprd": "silver",
-      "refinery_database_prd": "silver",
+      "landing_quarantine_table_path_dev": "tests/resources/data/landing/transactions_quarantine",
+      "refinery_database_dev": "refinery",
+      "refinery_database_preprd": "refinery",
+      "refinery_database_prd": "refinery",
       "refinery_table": "transactions",
       "refinery_cdc_apply_changes": {
          "keys": [
@@ -98,6 +98,6 @@
          "pipelines.reset.allowed": "false",
          "pipelines.autoOptimize.zOrderCols": "id, customer_id"
       },
-      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/silver_data_quality_expectations.json"
+      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/refinery_data_quality_expectations.json"
    }
 ]

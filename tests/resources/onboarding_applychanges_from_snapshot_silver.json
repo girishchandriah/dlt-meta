@@ -19,45 +19,45 @@
         "source_schema_path": "tests/resources/schema/customer_schema.ddl"
      },
      "landing_catalog_dev": "uc_catalog_name",
-     "landing_database_dev": "dlt_meta_bronze_dev_23de6188b0b0442a9f0bdbaed368b1f7",
+     "landing_database_dev": "dlt_meta_landing_dev_23de6188b0b0442a9f0bdbaed368b1f7",
      "landing_table": "customers",
-     "landing_table_comment": "bronze customer table",
+     "landing_table_comment": "landing customer table",
      "landing_reader_options": {
         "cloudFiles.format": "json",
         "cloudFiles.inferColumnTypes": "true",
         "cloudFiles.rescuedDataColumn": "_rescued_data"
      },
-     "landing_table_path_dev": "/Volumes/data/bronze/customers",
+     "landing_table_path_dev": "/Volumes/data/landing/customers",
      "landing_table_properties": {
            "pipelines.autoOptimize.managed": "true",
            "pipelines.autoOptimize.zOrderCols": "id, email"
      },    
-     "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/bronze_data_quality_expectations.json",
+     "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/landing_data_quality_expectations.json",
      "landing_catalog_quarantine_dev": "uc_catalog_name",
-     "landing_database_quarantine_dev": "dlt_meta_bronze_dev_23de6188b0b0442a9f0bdbaed368b1f7",
+     "landing_database_quarantine_dev": "dlt_meta_landing_dev_23de6188b0b0442a9f0bdbaed368b1f7",
      "landing_quarantine_table": "customers_quarantine",
-     "bronze_quarantine_table_comment": "bronze customers quarantine table",
-     "landing_quarantine_table_path_dev": "/Volumes/data/bronze/customers_quarantine",  
-     "bronze_quarantine_table_properties": {
+     "landing_quarantine_table_comment": "landing customers quarantine table",
+     "landing_quarantine_table_path_dev": "/Volumes/data/landing/customers_quarantine",  
+     "landing_quarantine_table_properties": {
            "pipelines.reset.allowed": "false",
            "pipelines.autoOptimize.zOrderCols": "id, email"
      },
      "refinery_catalog_dev": "uc_catalog_name",
-     "refinery_database_dev": "dlt_meta_silver_dev_23de6188b0b0442a9f0bdbaed368b1f7",
+     "refinery_database_dev": "dlt_meta_refinery_dev_23de6188b0b0442a9f0bdbaed368b1f7",
      "refinery_table": "customers",
-     "refinery_table_comment": "customers silver table",
+     "refinery_table_comment": "customers refinery table",
      "refinery_apply_changes_from_snapshot":{
          "keys": [
            "id"
         ],
         "scd_type": "2"
      },   
-     "refinery_transformation_json_dev": "tests/resources/silver_transformations.json",
+     "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
      "refinery_table_properties": {
            "pipelines.reset.allowed": "false",
            "pipelines.autoOptimize.zOrderCols": "id, email"         
      },
-     "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/silver_data_quality_expectations.json"
+     "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/refinery_data_quality_expectations.json"
   },
   {
      "data_flow_id": "204",
@@ -78,30 +78,30 @@
         "source_schema_path": "tests/resources/schema/transactions_schema.ddl"
      },
      "landing_catalog_dev": "uc_catalog_name",
-     "landing_database_dev": "uc_catalog_name.dlt_meta_bronze_dev_23de6188b0b0442a9f0bdbaed368b1f7",
+     "landing_database_dev": "uc_catalog_name.dlt_meta_landing_dev_23de6188b0b0442a9f0bdbaed368b1f7",
      "landing_table": "transactions",
      "landing_reader_options": {
         "cloudFiles.format": "json",
         "cloudFiles.inferColumnTypes": "true",
         "cloudFiles.rescuedDataColumn": "_rescued_data"
      },
-     "landing_table_path_dev": "/Volumes/data/bronze/transactions",
+     "landing_table_path_dev": "/Volumes/data/landing/transactions",
      "landing_table_properties": {
            "pipelines.reset.allowed": "true",
            "pipelines.autoOptimize.zOrderCols": "id, customer_id"    
      },
-     "landing_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/bronze_data_quality_expectations.json",
+     "landing_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/landing_data_quality_expectations.json",
      "landing_catalog_quarantine_dev": "uc_catalog_name",
-     "landing_database_quarantine_dev": "uc_catalog_name.dlt_meta_bronze_dev_23de6188b0b0442a9f0bdbaed368b1f7",
+     "landing_database_quarantine_dev": "uc_catalog_name.dlt_meta_landing_dev_23de6188b0b0442a9f0bdbaed368b1f7",
      "landing_quarantine_table": "transactions_quarantine",
-     "landing_quarantine_table_path_dev": "/Volumes/data/bronze/transactions_quarantine",
-     "bronze_quarantine_table_properties": {
+     "landing_quarantine_table_path_dev": "/Volumes/data/landing/transactions_quarantine",
+     "landing_quarantine_table_properties": {
            "pipelines.reset.allowed": "true",
            "pipelines.autoOptimize.managed": "false",
            "pipelines.autoOptimize.zOrderCols": "id, customer_id"   
      },
      "refinery_catalog_dev": "uc_catalog_name",
-     "refinery_database_dev": "dlt_meta_silver_dev_23de6188b0b0442a9f0bdbaed368b1f7",
+     "refinery_database_dev": "dlt_meta_refinery_dev_23de6188b0b0442a9f0bdbaed368b1f7",
      "refinery_table": "transactions",
      "refinery_apply_changes_from_snapshot":{
          "keys": [
@@ -109,8 +109,8 @@
         ],
         "scd_type": "1"
      },
-     "refinery_transformation_json_dev": "tests/resources/silver_transformations.json",
-     "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/silver_data_quality_expectations.json",
+     "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
+     "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/refinery_data_quality_expectations.json",
      "refinery_table_properties": {
            "pipelines.reset.allowed": "false",
            "pipelines.autoOptimize.zOrderCols": "id, customer_id"         

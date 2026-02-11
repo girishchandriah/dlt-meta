@@ -15,25 +15,25 @@
             "eventhub.namespace": "{eventhub_nmspace}",
             "eventhub.port": "{eventhub_port}"
         },
-        "bronze_reader_options": {
+        "landing_reader_options": {
             "maxOffsetsPerTrigger": "50000",
             "startingOffsets": "earliest",
             "failOnDataLoss": "false",
             "kafka.request.timeout.ms": "60000",
             "kafka.session.timeout.ms": "60000"
         },
-        "bronze_catalog_demo": "{uc_catalog_name}",
+        "landing_catalog_demo": "{uc_catalog_name}",
         "landing_database_demo": "{landing_schema}",
-        "landing_table": "bronze_{run_id}_iot",
-        "bronze_partition_columns": "date",
-        "bronze_data_quality_expectations_json_demo": "{uc_volume_path}/demo/conf/dqe/iot/bronze_data_quality_expectations.json",
-        "bronze_catalog_quarantine_demo": "{uc_catalog_name}",
+        "landing_table": "landing_{run_id}_iot",
+        "landing_partition_columns": "date",
+        "landing_data_quality_expectations_json_demo": "{uc_volume_path}/demo/conf/dqe/iot/landing_data_quality_expectations.json",
+        "landing_catalog_quarantine_demo": "{uc_catalog_name}",
         "landing_database_quarantine_demo": "{landing_schema}",
-        "bronze_quarantine_table": "bronze_{run_id}_iot_quarantine",
-        "bronze_quarantine_table_path_demo": "{uc_volume_path}/data/bronze/iot_quarantine",
-        "bronze_append_flows": [
+        "landing_quarantine_table": "landing_{run_id}_iot_quarantine",
+        "landing_quarantine_table_path_demo": "{uc_volume_path}/data/landing/iot_quarantine",
+        "landing_append_flows": [
             {
-                    "name": "io_bronze_eventhub_append_flow",
+                    "name": "io_landing_eventhub_append_flow",
                     "create_streaming_table": false,
                     "source_format": "eventhub",
                     "source_details": {

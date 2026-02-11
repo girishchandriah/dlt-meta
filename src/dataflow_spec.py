@@ -337,7 +337,7 @@ class DataflowSpecUtils:
         if layer is None:
             raise Exception(
                 f"""parameter {layer_arg} is missing in spark.conf.
-                 Please set spark.conf.set({layer_arg},'silver') """
+                 Please set spark.conf.set({layer_arg},'refinery') """
             )
         dataflow_spec_table = spark.conf.get(f"{layer_arg}.dataflowspecTable", None)
         if dataflow_spec_table is None:

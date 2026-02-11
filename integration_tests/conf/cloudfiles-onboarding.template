@@ -18,33 +18,33 @@
       },
       "source_schema_path": "{uc_volume_path}/integration_tests/resources/customers.ddl"
    },
-   "bronze_catalog_it": "{uc_catalog_name}",
+   "landing_catalog_it": "{uc_catalog_name}",
    "landing_database_it": "{landing_schema}",
    "landing_table": "customers",
-   "landing_table_comment": "bronze customer table",
-   "bronze_reader_options": {
+   "landing_table_comment": "landing customer table",
+   "landing_reader_options": {
       "cloudFiles.format": "json",
       "cloudFiles.inferColumnTypes": "true",
       "cloudFiles.rescuedDataColumn": "_rescued_data"
    },
-   "landing_table_path_it": "{uc_volume_path}/data/bronze/customers",
+   "landing_table_path_it": "{uc_volume_path}/data/landing/customers",
    "landing_table_properties": {
          "pipelines.autoOptimize.managed": "true"
    },
-   "bronze_cluster_by": ["id", "email"],    
-   "bronze_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/customers/bronze_data_quality_expectations.json",
-   "bronze_catalog_quarantine_it": "{uc_catalog_name}",
+   "landing_cluster_by": ["id", "email"],    
+   "landing_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/customers/landing_data_quality_expectations.json",
+   "landing_catalog_quarantine_it": "{uc_catalog_name}",
    "landing_database_quarantine_it": "{landing_schema}",
-   "bronze_quarantine_table": "customers_quarantine",
-   "bronze_quarantine_table_comment": "bronze customers quarantine table",
-   "bronze_quarantine_table_path_it": "{uc_volume_path}/data/bronze/customers_quarantine",  
-   "bronze_quarantine_table_properties": {
+   "landing_quarantine_table": "customers_quarantine",
+   "landing_quarantine_table_comment": "landing customers quarantine table",
+   "landing_quarantine_table_path_it": "{uc_volume_path}/data/landing/customers_quarantine",  
+   "landing_quarantine_table_properties": {
          "pipelines.reset.allowed": "false"
    },
-   "bronze_quarantine_table_cluster_by":["id", "email"],
-   "bronze_append_flows": [
+   "landing_quarantine_table_cluster_by":["id", "email"],
+   "landing_append_flows": [
       {
-            "name": "customer_bronze_flow",
+            "name": "customer_landing_flow",
             "create_streaming_table": false,
             "source_format": "cloudFiles",
             "source_details": {
@@ -59,27 +59,27 @@
             "once": false
       }
    ],
-   "silver_catalog_it": "{uc_catalog_name}",
+   "refinery_catalog_it": "{uc_catalog_name}",
    "refinery_database_it": "{refinery_schema}",
    "refinery_table": "customers",
-   "refinery_table_comment": "customers silver table",
-   "refinery_table_path_it": "{uc_volume_path}/data/silver/customers",
-   "silver_transformation_json_it": "{uc_volume_path}/integration_tests/conf/silver_transformations.json",
+   "refinery_table_comment": "customers refinery table",
+   "refinery_table_path_it": "{uc_volume_path}/data/refinery/customers",
+   "refinery_transformation_json_it": "{uc_volume_path}/integration_tests/conf/refinery_transformations.json",
    "refinery_table_properties": {
          "pipelines.reset.allowed": "false"
    },
    "refinery_table_cluster_by":["customer_id"],
-   "silver_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/customers/silver_data_quality_expectations.json",
-   "silver_catalog_quarantine_it":"{uc_catalog_name}",
+   "refinery_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/customers/refinery_data_quality_expectations.json",
+   "refinery_catalog_quarantine_it":"{uc_catalog_name}",
    "refinery_database_quarantine_it":"{refinery_schema}",
-   "silver_quarantine_table":"customers_quarantine",
-   "silver_quarantine_table_properties": {
+   "refinery_quarantine_table":"customers_quarantine",
+   "refinery_quarantine_table_properties": {
          "pipelines.reset.allowed": "false"
    },
-   "silver_cluster_by":["id", "email"],   
-   "silver_append_flows": [
+   "refinery_cluster_by":["id", "email"],   
+   "refinery_append_flows": [
       {
-            "name": "customers_silver_flow",
+            "name": "customers_refinery_flow",
             "create_streaming_table": false,
             "source_format": "delta",
             "source_details": {
@@ -108,32 +108,32 @@
       },            
       "source_schema_path": "{uc_volume_path}/integration_tests/resources/transactions.ddl"
    },
-   "bronze_catalog_it": "{uc_catalog_name}",
+   "landing_catalog_it": "{uc_catalog_name}",
    "landing_database_it": "{landing_schema}",
    "landing_table": "transactions",
-   "bronze_reader_options": {
+   "landing_reader_options": {
       "cloudFiles.format": "json",
       "cloudFiles.inferColumnTypes": "true",
       "cloudFiles.rescuedDataColumn": "_rescued_data"
    },
-   "landing_table_path_it": "{uc_volume_path}/data/bronze/transactions",
+   "landing_table_path_it": "{uc_volume_path}/data/landing/transactions",
    "landing_table_properties": {
          "pipelines.reset.allowed": "true"         
    },
    "landing_table_cluster_by":["id", "customer_id"],
-   "bronze_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/transactions/bronze_data_quality_expectations.json",
-   "bronze_catalog_quarantine_it": "{uc_catalog_name}",
+   "landing_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/transactions/landing_data_quality_expectations.json",
+   "landing_catalog_quarantine_it": "{uc_catalog_name}",
    "landing_database_quarantine_it": "{landing_schema}",
-   "bronze_quarantine_table": "transactions_quarantine",
-   "bronze_quarantine_table_path_it": "{uc_volume_path}/data/bronze/transactions_quarantine",
-   "bronze_quarantine_table_properties": {
+   "landing_quarantine_table": "transactions_quarantine",
+   "landing_quarantine_table_path_it": "{uc_volume_path}/data/landing/transactions_quarantine",
+   "landing_quarantine_table_properties": {
          "pipelines.reset.allowed": "true",
          "pipelines.autoOptimize.managed": "false"
    },   
-   "bronze_quarantine_table_cluster_by": ["id", "customer_id"],
-   "bronze_append_flows": [
+   "landing_quarantine_table_cluster_by": ["id", "customer_id"],
+   "landing_append_flows": [
       {
-            "name": "transactions_bronze_flow",
+            "name": "transactions_landing_flow",
             "create_streaming_table": false,
             "source_format": "cloudFiles",
             "source_details": {
@@ -148,10 +148,10 @@
             "once": false
       }
    ],
-   "silver_catalog_it": "{uc_catalog_name}",
+   "refinery_catalog_it": "{uc_catalog_name}",
    "refinery_database_it": "{refinery_schema}",
    "refinery_table": "transactions",
-   "silver_cdc_apply_changes": {
+   "refinery_cdc_apply_changes": {
       "keys": [
          "id"
       ],
@@ -163,18 +163,18 @@
          "operation_date",
          "_rescued_data"
       ],
-      "flow_name":"silver_transactions_cdc_applychanges_flow"
+      "flow_name":"refinery_transactions_cdc_applychanges_flow"
    },
-   "refinery_table_path_it": "{uc_volume_path}/data/silver/transactions",
-   "silver_transformation_json_it": "{uc_volume_path}/integration_tests/conf/silver_transformations.json",
-   "silver_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/transactions/silver_data_quality_expectations.json",
+   "refinery_table_path_it": "{uc_volume_path}/data/refinery/transactions",
+   "refinery_transformation_json_it": "{uc_volume_path}/integration_tests/conf/refinery_transformations.json",
+   "refinery_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/transactions/refinery_data_quality_expectations.json",
    "refinery_table_properties": {
          "pipelines.reset.allowed": "false"
    },
-   "silver_cluster_by":["id", "customer_id"],
-   "silver_catalog_quarantine_it":"{uc_catalog_name}",
+   "refinery_cluster_by":["id", "customer_id"],
+   "refinery_catalog_quarantine_it":"{uc_catalog_name}",
    "refinery_database_quarantine_it":"{refinery_schema}",
-   "silver_quarantine_table":"transactions_quarantine",
-   "silver_quarantine_table_cluster_by":["id","customer_id"]
+   "refinery_quarantine_table":"transactions_quarantine",
+   "refinery_quarantine_table_cluster_by":["id","customer_id"]
 }
 ]

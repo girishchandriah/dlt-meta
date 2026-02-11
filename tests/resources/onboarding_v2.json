@@ -9,21 +9,21 @@
          "source_table": "CUSTOMERS",
          "source_path_dev": "tests/resources/data/customers"
       },
-      "landing_database_dev": "bronze",
-      "landing_database_staging": "bronze",
-      "landing_database_prd": "bronze",
+      "landing_database_dev": "landing",
+      "landing_database_staging": "landing",
+      "landing_database_prd": "landing",
       "landing_table": "customers_cdc",
       "landing_reader_options": {
          "cloudFiles.format": "json",
          "cloudFiles.inferColumnTypes": "true"
       },
       "landing_table_path_dev": "tests/resources/delta/customers",
-      "landing_table_path_staging": "s3://db-dlt-meta-staging/demo/data/bronze/customers",
-      "landing_table_path_prd": "s3://db-dlt-meta-prod/demo/data/bronze/customers",
-      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/bronze_data_quality_expectations.json",
-      "refinery_database_dev": "silver",
-      "refinery_database_staging": "silver",
-      "refinery_database_prd": "silver",
+      "landing_table_path_staging": "s3://db-dlt-meta-staging/demo/data/landing/customers",
+      "landing_table_path_prd": "s3://db-dlt-meta-prod/demo/data/landing/customers",
+      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/landing_data_quality_expectations.json",
+      "refinery_database_dev": "refinery",
+      "refinery_database_staging": "refinery",
+      "refinery_database_prd": "refinery",
       "refinery_table": "customers",
       "refinery_cdc_apply_changes": {
          "keys": [
@@ -37,9 +37,9 @@
             "operation_date"
          ]
       },
-      "refinery_table_path_dev": "tests/resources/data/silver/customers",
-      "refinery_transformation_json_dev": "tests/resources/silver_transformations.json",
-      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/silver_data_quality_expectations.json"
+      "refinery_table_path_dev": "tests/resources/data/refinery/customers",
+      "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
+      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/refinery_data_quality_expectations.json"
    },
    {
       "data_flow_id": "101",
@@ -52,30 +52,30 @@
          "source_path_prd": "tests/resources/data/transactions",
          "source_path_dev": "tests/resources/data/transactions"
       },
-      "landing_database_dev": "bronze",
-      "landing_database_staging": "bronze",
-      "landing_database_prd": "bronze",
+      "landing_database_dev": "landing",
+      "landing_database_staging": "landing",
+      "landing_database_prd": "landing",
       "landing_table": "transactions_cdc",
       "landing_reader_options": {
          "cloudFiles.format": "json",
          "cloudFiles.inferColumnTypes": "true"
       },
       "landing_table_path_dev": "tests/resources/delta/transactions",
-      "landing_table_path_staging": "s3://db-dlt-meta-staging/demo/data/bronze/transactions",
-      "landing_table_path_prd": "s3://db-dlt-meta-prod/demo/data/bronze/transactions",
-      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/bronze_data_quality_expectations.json",
+      "landing_table_path_staging": "s3://db-dlt-meta-staging/demo/data/landing/transactions",
+      "landing_table_path_prd": "s3://db-dlt-meta-prod/demo/data/landing/transactions",
+      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/landing_data_quality_expectations.json",
       "landing_table_partitions": "transaction_date",
-      "landing_database_quarantine_dev": "bronze",
-      "landing_database_quarantine_staging": "bronze",
-      "landing_database_quarantine_prd": "bronze",
+      "landing_database_quarantine_dev": "landing",
+      "landing_database_quarantine_staging": "landing",
+      "landing_database_quarantine_prd": "landing",
       "landing_quarantine_table": "transactions_cdc_quarantine",
-      "landing_quarantine_table_path_dev": "tests/resources/data/bronze/transactions_quarantine",
-      "landing_quarantine_table_path_staging": "s3://db-dlt-meta-staging/demo/data/bronze/transactions_quarantine",
-      "landing_quarantine_table_path_prd": "s3://db-dlt-meta-prod/demo/data/bronze/transactions_quarantine",
-      "bronze_quarantine_table_partitions": "transaction_date",
-      "refinery_database_dev": "silver",
-      "refinery_database_preprd": "silver",
-      "refinery_database_prd": "silver",
+      "landing_quarantine_table_path_dev": "tests/resources/data/landing/transactions_quarantine",
+      "landing_quarantine_table_path_staging": "s3://db-dlt-meta-staging/demo/data/landing/transactions_quarantine",
+      "landing_quarantine_table_path_prd": "s3://db-dlt-meta-prod/demo/data/landing/transactions_quarantine",
+      "landing_quarantine_table_partitions": "transaction_date",
+      "refinery_database_dev": "refinery",
+      "refinery_database_preprd": "refinery",
+      "refinery_database_prd": "refinery",
       "refinery_table": "transactions",
       "refinery_cdc_apply_changes": {
          "keys": [
@@ -89,9 +89,9 @@
             "operation_date"
          ]
       },
-      "refinery_table_path_dev": "tests/resources/data/silver/transactions",
-      "refinery_transformation_json_dev": "tests/resources/silver_transformations.json",
-      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/silver_data_quality_expectations.json"
+      "refinery_table_path_dev": "tests/resources/data/refinery/transactions",
+      "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
+      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/transactions/refinery_data_quality_expectations.json"
    },
    {
       "data_flow_id": "103",
@@ -108,7 +108,7 @@
          "kafka.security.protocol": "SASL_SSL",
          "kafka.bootstrap.servers": "standard.servicebus.windows.net:9093"
       },
-      "landing_database_dev": "bronze",
+      "landing_database_dev": "landing",
       "landing_table": "iot_cdc",
       "landing_reader_options": {
          "maxOffsetsPerTrigger": "60000",
@@ -118,8 +118,8 @@
          "kafka.session.timeout.ms": "60000"
       },
       "landing_table_path_dev": "tests/resources/delta/iot_cdc",
-      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/iot_cdc/bronze_data_quality_expectations.json",
-      "refinery_database_dev": "silver",
+      "landing_data_quality_expectations_json_dev": "tests/resources/dqe/iot_cdc/landing_data_quality_expectations.json",
+      "refinery_database_dev": "refinery",
       "refinery_table": "iot_cdc",
       "refinery_cdc_apply_changes": {
          "keys": [
@@ -130,8 +130,8 @@
          "apply_as_deletes": "operation = 'DELETE'",
          "except_column_list": []
       },
-      "refinery_table_path_dev": "tests/resources/data/silver/iot_cdc",
-      "refinery_transformation_json_dev": "tests/resources/silver_transformations.json",
-      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/iot_cdc/silver_data_quality_expectations.json"
+      "refinery_table_path_dev": "tests/resources/data/refinery/iot_cdc",
+      "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
+      "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/iot_cdc/refinery_data_quality_expectations.json"
    }
 ]

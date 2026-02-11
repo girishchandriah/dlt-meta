@@ -1,5 +1,5 @@
 ---
-title: "Silver Fanout Demo"
+title: "refinery Fanout Demo"
 date: 2024-10-04T14:25:26-04:00
 weight: 26
 draft: false
@@ -8,12 +8,12 @@ draft: false
 ### Apply Changes From Snapshot Demo
   - This demo will perform following steps
     - Showcase onboarding process for apply changes from snapshot pattern
-    - Run onboarding for the bronze stores and products tables, which contains data snapshot data in csv files.
-    - Run Bronze Lakeflow Declarative Pipeline to load initial snapshot (LOAD_1.csv)
+    - Run onboarding for the landing stores and products tables, which contains data snapshot data in csv files.
+    - Run landing Lakeflow Declarative Pipeline to load initial snapshot (LOAD_1.csv)
     - Upload incremental snapshot LOAD_2.csv version=2 for stores and product
-    - Run Bronze Lakeflow Declarative Pipeline to load incremental snapshot (LOAD_2.csv). Stores is scd_type=2 so updated records will expired and added new records with version_number. Products is scd_type=1 so in case records missing for scd_type=1 will be deleted.
+    - Run landing Lakeflow Declarative Pipeline to load incremental snapshot (LOAD_2.csv). Stores is scd_type=2 so updated records will expired and added new records with version_number. Products is scd_type=1 so in case records missing for scd_type=1 will be deleted.
     - Upload incremental snapshot LOAD_3.csv version=3 for stores and product
-    - Run Bronze Lakeflow Declarative Pipeline to load incremental snapshot (LOAD_3.csv). Stores is scd_type=2 so updated records will expired and added new records with version_number. Products is scd_type=1 so in case records missing for scd_type=1 will be deleted.
+    - Run landing Lakeflow Declarative Pipeline to load incremental snapshot (LOAD_3.csv). Stores is scd_type=2 so updated records will expired and added new records with version_number. Products is scd_type=1 so in case records missing for scd_type=1 will be deleted.
 
 
 ### Steps:

@@ -38,8 +38,8 @@ class DLTMETADAISDemo(DLTMETARunner):
             username=self._my_username(self.ws),
             int_tests_dir="demo",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            landing_schema=f"dlt_meta_bronze_dais_demo_{run_id}",
-            refinery_schema=f"dlt_meta_silver_dais_demo_{run_id}",
+            landing_schema=f"dlt_meta_landing_dais_demo_{run_id}",
+            refinery_schema=f"dlt_meta_refinery_dais_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_dais_demo/{run_id}",
             runners_full_local_path="demo/notebooks/dais_runners",
             # node_type_id=cloud_node_type_id_dict[self.args.__dict__['cloud_provider_name']],
@@ -118,15 +118,15 @@ class DLTMETADAISDemo(DLTMETARunner):
                             "onboard_layer": "landing_refinery",
                             "database": f"{runner_conf.uc_catalog_name}.{runner_conf.dlt_meta_schema}",
                             "onboarding_file_path": f"{runner_conf.uc_volume_path}/demo/conf/onboarding.json",
-                            "refinery_dataflowspec_table": "silver_dataflowspec_cdc",
+                            "refinery_dataflowspec_table": "refinery_dataflowspec_cdc",
                             "refinery_dataflowspec_path": (
-                                f"{runner_conf.uc_volume_path}/demo/resources/data/dlt_spec/silver"
+                                f"{runner_conf.uc_volume_path}/demo/resources/data/dlt_spec/refinery"
                             ),
-                            "landing_dataflowspec_table": "bronze_dataflowspec_cdc",
+                            "landing_dataflowspec_table": "landing_dataflowspec_cdc",
                             "import_author": "Ravi",
                             "version": "v1",
                             "landing_dataflowspec_path": (
-                                f"{runner_conf.uc_volume_path}/demo/resources/data/dlt_spec/bronze"
+                                f"{runner_conf.uc_volume_path}/demo/resources/data/dlt_spec/landing"
                             ),
                             "overwrite": "True",
                             "env": runner_conf.env,

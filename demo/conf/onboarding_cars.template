@@ -7,19 +7,19 @@
       "source_details": {
          "source_path_demo": "{uc_volume_path}/demo/resources/data/cars"
       },
-      "bronze_catalog_demo": "{uc_catalog_name}",
+      "landing_catalog_demo": "{uc_catalog_name}",
       "landing_database_demo": "{landing_schema}",
       "landing_table": "cars",
-      "landing_table_comment": "bronze cars table",
-      "bronze_reader_options": {
+      "landing_table_comment": "landing cars table",
+      "landing_reader_options": {
          "cloudFiles.format": "csv",
          "cloudFiles.rescuedDataColumn": "_rescued_data",
          "header": "true"
       },
-      "silver_catalog_demo": "{uc_catalog_name}",
+      "refinery_catalog_demo": "{uc_catalog_name}",
       "refinery_database_demo": "{refinery_schema}",
       "refinery_table": "cars_usa",
-      "refinery_table_comment": "cars_usa silver table",
-      "silver_transformation_json_demo": "{uc_volume_path}/demo/conf/silver_transformations_cars.json"
+      "refinery_table_comment": "cars_usa refinery table",
+      "refinery_transformation_json_demo": "{uc_volume_path}/demo/conf/refinery_transformations_cars.json"
    }
 ]

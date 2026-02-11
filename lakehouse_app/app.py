@@ -495,7 +495,7 @@ def run_demo():
     current_directory = current_directory.rstrip('/')
     demo_dict = {"demo_cloudfiles": "demo/launch_af_cloudfiles_demo.py",
                  "demo_acf": "demo/launch_acfs_demo.py",
-                 "demo_silverfanout": "demo/launch_silver_fanout_demo.py",
+                 "demo_refineryfanout": "demo/launch_refinery_fanout_demo.py",
                  "demo_dias": "demo/launch_dais_demo.py",
                  "demo_dlt_sink": "demo/launch_dlt_sink_demo.py",
                  "demo_dabs": "demo/generate_dabs_resources.py"

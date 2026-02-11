@@ -18,7 +18,7 @@ IT_REQUIREMENTS = ["typer[all]==0.6.1"]
 
 package_long_description = """###Databricks Labs DLT-META Framework###
     The Databricks Labs DLT META is a metadata-driven Databricks Delta Live Tables (aka DLT) framework
-     which lets you automate your bronze and silver pipelines.
+     which lets you automate your landing and refinery pipelines.
     """
 setup(
     name="dlt_meta_cds",

@@ -71,7 +71,7 @@ Alternatly you can enter keyword arguments, click + Add and enter a key and valu
 
 14. Make sure job runs successfully. Verify metadata in your dataflow spec tables entered in step: 11 e.g ```dlt_demo.landing_dataflowspec_table```, ```dlt_demo.refinery_dataflowspec_table```
 
-**Note:** The framework also supports legacy parameter names (bronze_dataflowspec_table, silver_dataflowspec_table) for backward compatibility.
+**Note:** The framework also supports legacy parameter names (landing_dataflowspec_table, refinery_dataflowspec_table) for backward compatibility.
 
 ### Option#2: Databricks Notebook 
 1. Copy below code to databricks notebook cells
@@ -133,7 +133,7 @@ OnboardDataflowspec(spark, onboarding_params_map, uc_enabled=True).onboard_dataf
         from src.dataflow_pipeline import DataflowPipeline
         DataflowPipeline.invoke_dlt_pipeline(spark, layer)
     ```
-### Create Bronze Lakeflow Declarative Pipeline
+### Create landing Lakeflow Declarative Pipeline
 
 1. Click Jobs Icon Workflows in the sidebar, click the Lakeflow Declarative Pipelines tab, and click Create Pipeline.
 

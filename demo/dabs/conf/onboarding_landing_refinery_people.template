@@ -18,13 +18,13 @@
                 }
             }         
         },
-        "bronze_catalog_dev": "{uc_catalog_name}",
+        "landing_catalog_dev": "{uc_catalog_name}",
         "landing_database_dev": "{landing_schema}",
-        "bronze_catalog_prod": "{uc_catalog_name}",
+        "landing_catalog_prod": "{uc_catalog_name}",
         "landing_database_prod": "{landing_schema}",        
-        "landing_table": "people_bronze",
-        "bronze_quarantine_table": "people_bronze_quarantine",
-        "bronze_cluster_by": ["country"],
+        "landing_table": "people_landing",
+        "landing_quarantine_table": "people_landing_quarantine",
+        "landing_cluster_by": ["country"],
 
         "landing_table_properties" : {
             "pipelines.autoOptimize.managed": "true", 
@@ -38,17 +38,17 @@
             "delta.logRetentionDuration": "30 days"
         },
 
-        "bronze_reader_options": {
+        "landing_reader_options": {
             "cloudFiles.format": "csv",
             "cloudFiles.inferColumnTypes": "true",
             "cloudFiles.rescuedDataColumn": "_rescued_data"
         },
-        "silver_catalog_dev": "{uc_catalog_name}",
+        "refinery_catalog_dev": "{uc_catalog_name}",
         "refinery_database_dev": "{refinery_schema}",
-        "silver_catalog_prod": "{uc_catalog_name}",
+        "refinery_catalog_prod": "{uc_catalog_name}",
         "refinery_database_prod": "{refinery_schema}",
-        "refinery_table": "people_silver",
-        "silver_cluster_by": ["country"],
+        "refinery_table": "people_refinery",
+        "refinery_cluster_by": ["country"],
 
         "refinery_table_properties" : {
             "pipelines.autoOptimize.managed": "true", 
@@ -62,13 +62,13 @@
             "delta.logRetentionDuration": "30 days"
         },
 
-        "silver_transformation_json_dev": "{uc_volume_path}/demo/dabs/conf/silver_queries_people.json",
-        "silver_data_quality_expectations_json_dev": "{uc_volume_path}/demo/dabs/conf/dqe/dqe_silver_people.json",
+        "refinery_transformation_json_dev": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json",
+        "refinery_data_quality_expectations_json_dev": "{uc_volume_path}/demo/dabs/conf/dqe/dqe_refinery_people.json",
 
-        "silver_transformation_json_prod": "{uc_volume_path}/demo/dabs/conf/silver_queries_people.json",
-        "silver_data_quality_expectations_json_prod": "{uc_volume_path}/demo/dabs/conf/dqe/dqe_silver_people.json",
+        "refinery_transformation_json_prod": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json",
+        "refinery_data_quality_expectations_json_prod": "{uc_volume_path}/demo/dabs/conf/dqe/dqe_refinery_people.json",
 
-        "silver_cdc_apply_changes": {
+        "refinery_cdc_apply_changes": {
             "keys": [
                 "id"
             ],

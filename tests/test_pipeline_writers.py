@@ -64,22 +64,22 @@ class TestDLTSinkWriter(DLTFrameworkTestCase):
     @patch('dlt.create_sink', new_callable=MagicMock)
     @patch('dlt.append_flow', new_callable=MagicMock)
     @patch('dlt.table', new_callable=MagicMock)
-    def test_dataflowpipeline_bronze_sink_write(self, mock_dlt_table, mock_append_flow, mock_create_sink):
-        local_params = copy.deepcopy(self.onboarding_bronze_silver_params_map)
+    def test_dataflowpipeline_landing_sink_write(self, mock_dlt_table, mock_append_flow, mock_create_sink):
+        local_params = copy.deepcopy(self.onboarding_landing_refinery_params_map)
         local_params["onboarding_file_path"] = self.onboarding_sink_json_file
-        local_params["landing_dataflowspec_table"] = "bronze_dataflowspec_sink"
+        local_params["landing_dataflowspec_table"] = "landing_dataflowspec_sink"
         del local_params["refinery_dataflowspec_table"]
         del local_params["refinery_dataflowspec_path"]
         onboardDataFlowSpecs = OnboardDataflowspec(self.spark, local_params)
         onboardDataFlowSpecs.onboard_landing_dataflow_spec()
-        bronze_dataflowSpec_df = self.spark.read.table(
-            f"{self.onboarding_bronze_silver_params_map['database']}.bronze_dataflowspec_sink")
-        bronze_dataflowSpec_df.show(truncate=False)
-        self.assertEqual(bronze_dataflowSpec_df.count(), 1)
+        landing_dataflowSpec_df = self.spark.read.table(
+            f"{self.onboarding_landing_refinery_params_map['database']}.landing_dataflowspec_sink")
+        landing_dataflowSpec_df.show(truncate=False)
+        self.assertEqual(landing_dataflowSpec_df.count(), 1)
         landing_dataflow_spec = DataflowSpecUtils._get_dataflow_spec(
             spark=self.spark,
-            dataflow_spec_df=bronze_dataflowSpec_df,
-            layer="bronze"
+            dataflow_spec_df=landing_dataflowSpec_df,
+            layer="landing"
         ).collect()[0]
         self.spark.conf.set("spark.databricks.unityCatalog.enabled", "True")
         view_name = f"{landing_dataflow_spec.targetDetails['table']}_inputView"

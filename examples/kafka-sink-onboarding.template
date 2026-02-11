@@ -11,22 +11,22 @@
             "kafka_source_servers_secrets_scope_name":"{kafka_source_servers_secrets_scope_name}",
             "kafka_source_servers_secrets_scope_key":"{kafka_source_servers_secrets_scope_key}"
         },
-        "bronze_reader_options": {
+        "landing_reader_options": {
             "startingOffsets": "earliest",
             "kafka.request.timeout.ms": "60000",
             "kafka.session.timeout.ms": "60000"
         },
         "landing_database_it": "{uc_catalog_name}.{landing_schema}",
-        "landing_table": "bronze_{run_id}_iot",
-        "bronze_partition_columns": "date",
-        "landing_table_path_it": "{uc_volume_path}/data/bronze/iot",
-        "bronze_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/iot/bronze_data_quality_expectations.json",
+        "landing_table": "landing_{run_id}_iot",
+        "landing_partition_columns": "date",
+        "landing_table_path_it": "{uc_volume_path}/data/landing/iot",
+        "landing_data_quality_expectations_json_it": "{uc_volume_path}/integration_tests/conf/dqe/iot/landing_data_quality_expectations.json",
         "landing_database_quarantine_it": "{uc_catalog_name}.{landing_schema}",
-        "bronze_quarantine_table": "bronze_{run_id}_iot_quarantine",
-        "bronze_quarantine_table_path_it": "{uc_volume_path}/data/bronze/iot_quarantine",
-        "bronze_sinks": [
+        "landing_quarantine_table": "landing_{run_id}_iot_quarantine",
+        "landing_quarantine_table_path_it": "{uc_volume_path}/data/landing/iot_quarantine",
+        "landing_sinks": [
                 {
-                    "name": "bronze_customer_kafka_sink1",
+                    "name": "landing_customer_kafka_sink1",
                     "format": "kafka",
                     "options": {
                         "kafka_sink_servers_secret_scope_name":"{kafka_sink_servers_secret_scope_name}",
@@ -38,7 +38,7 @@
                     "where_clause":"value is not null"  
                 },
                 {
-                    "name": "bronze_customer_kafka_sink2",
+                    "name": "landing_customer_kafka_sink2",
                     "format": "kafka",
                     "options": {
                         "kafka_sink_servers_secret_scope_name":"{kafka_sink_servers_secret_scope_name}",

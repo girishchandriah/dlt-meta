@@ -8,8 +8,8 @@ draft: false
 ### Append FLOW Autoloader Demo:
 This demo will perform following tasks:
 - Read from different source paths using autoloader and write to same target using [dlt.append_flow](https://docs.databricks.com/en/delta-live-tables/flows.html#append-flows) API
-- Read from different delta tables and write to same silver table using append_flow API
-- Add file_name and file_path to target bronze table for autoloader source using [File metadata column](https://docs.databricks.com/en/ingestion/file-metadata-column.html)
+- Read from different delta tables and write to same refinery table using append_flow API
+- Add file_name and file_path to target landing table for autoloader source using [File metadata column](https://docs.databricks.com/en/ingestion/file-metadata-column.html)
 ## Append flow with autoloader
 
 1. Launch Command Prompt

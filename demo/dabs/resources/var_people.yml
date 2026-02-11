@@ -11,14 +11,14 @@ variables:
     description: The schema name for the pipelines
     type: string
     default: dlt_meta_dataflowspecs_demo_6d5fe507bd764d978bf89db089a570d8
-  bronze_schema:
-    description: The schema name for the bronze pipelines
+  landing_schema:
+    description: The schema name for the landing pipelines
     type: string
-    default: dlt_meta_bronze_demo_6d5fe507bd764d978bf89db089a570d8
-  silver_schema:
-    description: The schema name for the silver pipelines
+    default: dlt_meta_landing_demo_6d5fe507bd764d978bf89db089a570d8
+  refinery_schema:
+    description: The schema name for the refinery pipelines
     type: string
-    default: dlt_meta_silver_demo_6d5fe507bd764d978bf89db089a570d8
+    default: dlt_meta_refinery_demo_6d5fe507bd764d978bf89db089a570d8
   photon_enabled:
     description: Whether Photon is enabled for the pipelines
     type: bool
@@ -27,14 +27,14 @@ variables:
     description: Whether serverless mode is enabled for the pipelines
     type: bool
     default: true
-  bronze_dataflowspecTable:
-    description: The table name for the bronze data flow specification
+  landing_dataflowspecTable:
+    description: The table name for the landing data flow specification
     type: string
-    default: bronze_dataflowspec_table
-  silver_dataflowspecTable:
-    description: The table name for the silver data flow specification
+    default: landing_dataflowspec_table
+  refinery_dataflowspecTable:
+    description: The table name for the refinery data flow specification
     type: string
-    default: silver_dataflowspec_table
+    default: refinery_dataflowspec_table
   author:
     description: The author of the import
     type: string
@@ -42,15 +42,15 @@ variables:
   people_onboarding_file_path:
     description: The path to the onboarding file for people
     type: string
-    default: /Volumes/ravi_dlt_meta_uc/dlt_meta_dataflowspecs_demo_6d5fe507bd764d978bf89db089a570d8/dlt_meta_files/demo/dabs/conf/onboarding_bronze_silver_people.json
+    default: /Volumes/ravi_dlt_meta_uc/dlt_meta_dataflowspecs_demo_6d5fe507bd764d978bf89db089a570d8/dlt_meta_files/demo/dabs/conf/onboarding_landing_refinery_people.json
   people_fanout_onboarding_file_path:
     description: The path to the onboarding file for people
     type: string
-    default: /Volumes/ravi_dlt_meta_uc/dlt_meta_dataflowspecs_demo_6d5fe507bd764d978bf89db089a570d8/dlt_meta_files/demo/dabs/conf/onboarding_silver_fanout_people.json
+    default: /Volumes/ravi_dlt_meta_uc/dlt_meta_dataflowspecs_demo_6d5fe507bd764d978bf89db089a570d8/dlt_meta_files/demo/dabs/conf/onboarding_refinery_fanout_people.json
   dummy_param:
     description: A dummy parameter for testing purposes
     type: string
-    default: Hello Bronze 2
+    default: Hello landing 2
   version:
     description: The version of the data flow specification
     type: string

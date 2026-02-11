@@ -41,8 +41,8 @@ class ApplyChangesFromSnapshotDemo(DLTMETARunner):
             username=self.wsi._my_username,
             int_tests_dir="demo",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            landing_schema=f"dlt_meta_bronze_demo_{run_id}",
-            refinery_schema=f"dlt_meta_silver_demo_{run_id}",
+            landing_schema=f"dlt_meta_landing_demo_{run_id}",
+            refinery_schema=f"dlt_meta_refinery_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_demo/{run_id}",
             runners_full_local_path="demo/notebooks/snapshot_runners",
             test_output_file_path=(

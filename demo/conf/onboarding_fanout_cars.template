@@ -2,39 +2,39 @@
    {
       "data_flow_id": "101",
       "data_flow_group": "A1",
-      "bronze_catalog_demo": "{uc_catalog_name}",
+      "landing_catalog_demo": "{uc_catalog_name}",
       "landing_database_demo": "{landing_schema}",
       "landing_table": "cars",
-      "landing_table_comment": "cars bronze table",
-      "silver_catalog_demo": "{uc_catalog_name}",
+      "landing_table_comment": "cars landing table",
+      "refinery_catalog_demo": "{uc_catalog_name}",
       "refinery_database_demo": "{refinery_schema}",
       "refinery_table": "cars_germany",
-      "refinery_table_comment": "cars_germany silver table",
-      "silver_transformation_json_demo": "{uc_volume_path}/demo/conf/silver_transformations_cars.json"
+      "refinery_table_comment": "cars_germany refinery table",
+      "refinery_transformation_json_demo": "{uc_volume_path}/demo/conf/refinery_transformations_cars.json"
    },
    {
       "data_flow_id": "102",
       "data_flow_group": "A1",
-      "bronze_catalog_demo": "{uc_catalog_name}",
+      "landing_catalog_demo": "{uc_catalog_name}",
       "landing_database_demo": "{landing_schema}",
       "landing_table": "cars",
-      "landing_table_comment": "bronze cars table",
-      "silver_catalog_demo": "{uc_catalog_name}",
+      "landing_table_comment": "landing cars table",
+      "refinery_catalog_demo": "{uc_catalog_name}",
       "refinery_database_demo": "{refinery_schema}",
       "refinery_table": "cars_uk",
-      "refinery_table_comment": "cars_uk silver table",
-      "silver_transformation_json_demo": "{uc_volume_path}/demo/conf/silver_transformations_cars.json"
+      "refinery_table_comment": "cars_uk refinery table",
+      "refinery_transformation_json_demo": "{uc_volume_path}/demo/conf/refinery_transformations_cars.json"
    },
    {
       "data_flow_id": "103",
       "data_flow_group": "A1",
-      "bronze_catalog_demo": "{uc_catalog_name}",
+      "landing_catalog_demo": "{uc_catalog_name}",
       "landing_database_demo": "{landing_schema}",
       "landing_table": "cars",
-      "silver_catalog_demo": "{uc_catalog_name}",
+      "refinery_catalog_demo": "{uc_catalog_name}",
       "refinery_database_demo": "{refinery_schema}",
       "refinery_table": "cars_japan",
-      "refinery_table_comment": "cars_japan silver table",
-      "silver_transformation_json_demo": "{uc_volume_path}/demo/conf/silver_transformations_cars.json"
+      "refinery_table_comment": "cars_japan refinery table",
+      "refinery_transformation_json_demo": "{uc_volume_path}/demo/conf/refinery_transformations_cars.json"
    }        
 ]

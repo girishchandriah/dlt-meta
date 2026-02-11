@@ -11,24 +11,24 @@
             "kafka_source_servers_secrets_scope_name":"{kafka_source_servers_secrets_scope_name}",
             "kafka_source_servers_secrets_scope_key":"{kafka_source_servers_secrets_scope_key}"
         },
-        "bronze_reader_options": {
+        "landing_reader_options": {
             "startingOffsets": "earliest",
             "kafka.request.timeout.ms": "60000",
             "kafka.session.timeout.ms": "60000"
         },
-        "bronze_catalog_demo": "{uc_catalog_name}",
+        "landing_catalog_demo": "{uc_catalog_name}",
         "landing_database_demo": "{landing_schema}",
-        "landing_table": "bronze_{run_id}_iot",
-        "bronze_partition_columns": "date",
-        "landing_table_path_demo": "{uc_volume_path}/data/bronze/iot",
-        "bronze_data_quality_expectations_json_demo": "{uc_volume_path}/demo/conf/dqe/iot/bronze_data_quality_expectations.json",
-        "bronze_catalog_quarantine_demo": "{uc_catalog_name}",
+        "landing_table": "landing_{run_id}_iot",
+        "landing_partition_columns": "date",
+        "landing_table_path_demo": "{uc_volume_path}/data/landing/iot",
+        "landing_data_quality_expectations_json_demo": "{uc_volume_path}/demo/conf/dqe/iot/landing_data_quality_expectations.json",
+        "landing_catalog_quarantine_demo": "{uc_catalog_name}",
         "landing_database_quarantine_demo": "{landing_schema}",
-        "bronze_quarantine_table": "bronze_{run_id}_iot_quarantine",
-        "bronze_quarantine_table_path_demo": "{uc_volume_path}/data/bronze/iot_quarantine",
-        "bronze_sinks": [
+        "landing_quarantine_table": "landing_{run_id}_iot_quarantine",
+        "landing_quarantine_table_path_demo": "{uc_volume_path}/data/landing/iot_quarantine",
+        "landing_sinks": [
                 {
-                    "name": "bronze_customer_kafka_sink",
+                    "name": "landing_customer_kafka_sink",
                     "format": "kafka",
                     "options": {
                         "kafka_sink_servers_secret_scope_name":"{kafka_sink_servers_secret_scope_name}",
@@ -41,7 +41,7 @@
                     "where_clause":"value is not null"                    
                 },
                 {
-                    "name": "bronze_customer_delta_sink",
+                    "name": "landing_customer_delta_sink",
                     "format": "delta",
                     "options": {
                         "path":"dbfs:/mnt/dltmeta_sink/iot"

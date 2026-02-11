@@ -101,19 +101,19 @@
 11. Output of a successful run should have the following in the file
 ```
 ,0
-0,Completed Bronze Lakeflow Declarative Pipeline.
-1,Completed Silver Lakeflow Declarative Pipeline.
-2,Validating Lakeflow Declarative Pipeline Bronze and Silver Table Counts...
-3,Validating Counts for Table bronze_7d1d3ccc9e144a85b07c23110ea50133.transactions.
+0,Completed landing Lakeflow Declarative Pipeline.
+1,Completed refinery Lakeflow Declarative Pipeline.
+2,Validating Lakeflow Declarative Pipeline landing and refinery Table Counts...
+3,Validating Counts for Table landing_7d1d3ccc9e144a85b07c23110ea50133.transactions.
 4,Expected: 10002 Actual: 10002. Passed!
-5,Validating Counts for Table bronze_7d1d3ccc9e144a85b07c23110ea50133.transactions_quarantine.
+5,Validating Counts for Table landing_7d1d3ccc9e144a85b07c23110ea50133.transactions_quarantine.
 6,Expected: 7 Actual: 7. Passed!
-7,Validating Counts for Table bronze_7d1d3ccc9e144a85b07c23110ea50133.customers.
+7,Validating Counts for Table landing_7d1d3ccc9e144a85b07c23110ea50133.customers.
 8,Expected: 98928 Actual: 98928. Passed!
-9,Validating Counts for Table bronze_7d1d3ccc9e144a85b07c23110ea50133.customers_quarantine.
+9,Validating Counts for Table landing_7d1d3ccc9e144a85b07c23110ea50133.customers_quarantine.
 10,Expected: 1077 Actual: 1077. Passed!
-11,Validating Counts for Table silver_7d1d3ccc9e144a85b07c23110ea50133.transactions.
+11,Validating Counts for Table refinery_7d1d3ccc9e144a85b07c23110ea50133.transactions.
 12,Expected: 8759 Actual: 8759. Passed!
-13,Validating Counts for Table silver_7d1d3ccc9e144a85b07c23110ea50133.customers.
+13,Validating Counts for Table refinery_7d1d3ccc9e144a85b07c23110ea50133.customers.
 14,Expected: 87256 Actual: 87256. Passed!
 ```

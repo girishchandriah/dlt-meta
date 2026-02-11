@@ -2,36 +2,36 @@
   {
       "data_flow_id": "0070",
       "data_flow_group": "my_people",
-      "bronze_catalog_dev": "{uc_catalog_name}",
+      "landing_catalog_dev": "{uc_catalog_name}",
       "landing_database_dev": "{landing_schema}",
-      "bronze_catalog_prod": "{uc_catalog_name}",
+      "landing_catalog_prod": "{uc_catalog_name}",
       "landing_database_prod": "{landing_schema}",  
-      "landing_table": "people_bronze",
+      "landing_table": "people_landing",
       
-      "silver_catalog_dev": "{uc_catalog_name}",
+      "refinery_catalog_dev": "{uc_catalog_name}",
       "refinery_database_dev": "{refinery_schema}",
-      "silver_catalog_prod": "{uc_catalog_name}",
+      "refinery_catalog_prod": "{uc_catalog_name}",
       "refinery_database_prod": "{refinery_schema}",
-      "refinery_table": "people_silver_sal_below_50K",
+      "refinery_table": "people_refinery_sal_below_50K",
       
-      "silver_transformation_json_dev": "{uc_volume_path}/demo/dabs/conf/silver_queries_people.json",
-      "silver_transformation_json_prod": "{uc_volume_path}/demo/dabs/conf/silver_queries_people.json"      
+      "refinery_transformation_json_dev": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json",
+      "refinery_transformation_json_prod": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json"      
   },
   {
       "data_flow_id": "0071",
       "data_flow_group": "my_people",
-      "bronze_catalog_dev": "{uc_catalog_name}",
+      "landing_catalog_dev": "{uc_catalog_name}",
       "landing_database_dev": "{landing_schema}",
-      "bronze_catalog_prod": "{uc_catalog_name}",
+      "landing_catalog_prod": "{uc_catalog_name}",
       "landing_database_prod": "{landing_schema}",  
-      "landing_table": "people_bronze",
-      "silver_catalog_dev": "{uc_catalog_name}",
+      "landing_table": "people_landing",
+      "refinery_catalog_dev": "{uc_catalog_name}",
       "refinery_database_dev": "{refinery_schema}",
-      "silver_catalog_prod": "{uc_catalog_name}",
+      "refinery_catalog_prod": "{uc_catalog_name}",
       "refinery_database_prod": "{refinery_schema}",
-      "refinery_table": "people_silver_sal_above_50K",
+      "refinery_table": "people_refinery_sal_above_50K",
       
-      "silver_transformation_json_dev": "{uc_volume_path}/demo/dabs/conf/silver_queries_people.json",
-      "silver_transformation_json_prod": "{uc_volume_path}/demo/dabs/conf/silver_queries_people.json"
+      "refinery_transformation_json_dev": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json",
+      "refinery_transformation_json_prod": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json"
   }        
 ]

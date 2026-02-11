@@ -17,23 +17,23 @@
             }
         }         
       },
-      "bronze_catalog_it": "bronze_catalog",
-      "landing_database_it": "bronze_it_{run_id}",
+      "landing_catalog_it": "landing_catalog",
+      "landing_database_it": "landing_it_{run_id}",
       "landing_table": "customers_cdc",
       "landing_table_comment": "table for customers_cdc",
-      "bronze_reader_options": {
+      "landing_reader_options": {
          "cloudFiles.format": "json",
          "cloudFiles.inferColumnTypes": "true",
          "cloudFiles.rescuedDataColumn": "_rescued_data"
       },
-      "landing_table_path_it": "{dbfs_path}/data/bronze/customers",
-      "bronze_cluster_by":["operation_date"],
-      "bronze_data_quality_expectations_json_it": "{dbfs_path}/dlt-meta/conf/dqe/customers/bronze_data_quality_expectations.json",
-      "silver_catalog_it": "silver_catalog",
-      "refinery_database_it": "silver",
+      "landing_table_path_it": "{dbfs_path}/data/landing/customers",
+      "landing_cluster_by":["operation_date"],
+      "landing_data_quality_expectations_json_it": "{dbfs_path}/dlt-meta/conf/dqe/customers/landing_data_quality_expectations.json",
+      "refinery_catalog_it": "refinery_catalog",
+      "refinery_database_it": "refinery",
       "refinery_table": "customers",
-      "refinery_table_comment": "silver table for customers"
-      "silver_cdc_apply_changes": {
+      "refinery_table_comment": "refinery table for customers"
+      "refinery_cdc_apply_changes": {
          "keys": [
             "id"
          ],
@@ -46,9 +46,9 @@
             "_rescued_data"
          ]
       },
-      "refinery_table_path_it": "{dbfs_path}/data/silver/customers",
-      "silver_cluster_by":["operation_date"],
-      "silver_transformation_json_it": "{dbfs_path}/dlt-meta/conf/silver_transformations.json"
+      "refinery_table_path_it": "{dbfs_path}/data/refinery/customers",
+      "refinery_cluster_by":["operation_date"],
+      "refinery_transformation_json_it": "{dbfs_path}/dlt-meta/conf/refinery_transformations.json"
    },
    {
       "data_flow_id": "101",
@@ -60,27 +60,27 @@
          "source_table": "TRANSACTIONS",
          "source_path_it": "{dbfs_path}/cdc_raw/transactions"
       },
-      "landing_database_it": "bronze_it_{run_id}",
+      "landing_database_it": "landing_it_{run_id}",
       "landing_table": "transactions_cdc",
-      "landing_table_comment": "bronze table for transactions_cdc",
-      "bronze_reader_options": {
+      "landing_table_comment": "landing table for transactions_cdc",
+      "landing_reader_options": {
          "cloudFiles.format": "json",
          "cloudFiles.inferColumnTypes": "true",
          "cloudFiles.rescuedDataColumn": "_rescued_data"
       },
-      "bronze_partition_columns": "",
-      "landing_table_path_it": "{dbfs_path}/data/bronze/transactions",
-      "bronze_data_quality_expectations_json_it": "{dbfs_path}/dlt-meta/conf/dqe/transactions/bronze_data_quality_expectations.json",
-      "bronze_catalog_quarantine_it": "bronze_catalog",
-      "landing_database_quarantine_it": "bronze_it_{run_id}",
-      "bronze_quarantine_table": "transactions_cdc_quarantine",
-      "bronze_quarantine_table_comment": "quarantine table for transactions_cdc_quarantine",
-      "bronze_quarantine_table_path_it": "{dbfs_path}/data/bronze/transactions_quarantine",
-      "bronze_quarantine_table_partitions": "",
-      "refinery_database_it": "silver_it_{run_id}",
+      "landing_partition_columns": "",
+      "landing_table_path_it": "{dbfs_path}/data/landing/transactions",
+      "landing_data_quality_expectations_json_it": "{dbfs_path}/dlt-meta/conf/dqe/transactions/landing_data_quality_expectations.json",
+      "landing_catalog_quarantine_it": "landing_catalog",
+      "landing_database_quarantine_it": "landing_it_{run_id}",
+      "landing_quarantine_table": "transactions_cdc_quarantine",
+      "landing_quarantine_table_comment": "quarantine table for transactions_cdc_quarantine",
+      "landing_quarantine_table_path_it": "{dbfs_path}/data/landing/transactions_quarantine",
+      "landing_quarantine_table_partitions": "",
+      "refinery_database_it": "refinery_it_{run_id}",
       "refinery_table": "transactions",
-      "refinery_table_comment": "silver table for transactions",
-      "silver_cdc_apply_changes": {
+      "refinery_table_comment": "refinery table for transactions",
+      "refinery_cdc_apply_changes": {
          "keys": [
             "id"
          ],
@@ -93,9 +93,9 @@
             "_rescued_data"
          ]
       },
-      "silver_partition_columns": "",
-      "refinery_table_path_it": "{dbfs_path}/data/silver/transactions",
-      "silver_transformation_json_it": "{dbfs_path}/dlt-meta/conf/silver_transformations.json"
+      "refinery_partition_columns": "",
+      "refinery_table_path_it": "{dbfs_path}/data/refinery/transactions",
+      "refinery_transformation_json_it": "{dbfs_path}/dlt-meta/conf/refinery_transformations.json"
    },
    {
       "data_flow_id": "103",
@@ -113,35 +113,35 @@
          "eventhub.namespace": "{eventhub_nmspace}",
          "eventhub.port": "{eventhub_port}"
       },
-      "bronze_reader_options": {
+      "landing_reader_options": {
          "maxOffsetsPerTrigger": "50000",
          "startingOffsets": "latest",
          "failOnDataLoss": "false",
          "kafka.request.timeout.ms": "60000",
          "kafka.session.timeout.ms": "60000"
       },
-      "bronze_catalog_it": "bronze_catalog",
-      "landing_database_it": "bronze_it_{run_id}",
-      "landing_table": "bronze_{run_id}_iot",
-      "landing_table_comment": "bronze table for iot",
-      "bronze_partition_columns": "date",
-      "landing_table_path_it": "{dbfs_path}/data/bronze/iot",
-      "bronze_data_quality_expectations_json_it": "{dbfs_path}/dlt-meta/conf/dlt-meta/dqe/iot/bronze_data_quality_expectations.json",
-      "bronze_catalog_quarantine_it": "bronze_catalog",
-      "landing_database_quarantine_it": "bronze_it_{run_id}",
-      "bronze_quarantine_table": "bronze_{run_id}_iot_quarantine",
-      "bronze_quarantine_table_path_it": "{dbfs_path}/data/bronze/iot_quarantine",
-      "silver_catalog_it": "",
+      "landing_catalog_it": "landing_catalog",
+      "landing_database_it": "landing_it_{run_id}",
+      "landing_table": "landing_{run_id}_iot",
+      "landing_table_comment": "landing table for iot",
+      "landing_partition_columns": "date",
+      "landing_table_path_it": "{dbfs_path}/data/landing/iot",
+      "landing_data_quality_expectations_json_it": "{dbfs_path}/dlt-meta/conf/dlt-meta/dqe/iot/landing_data_quality_expectations.json",
+      "landing_catalog_quarantine_it": "landing_catalog",
+      "landing_database_quarantine_it": "landing_it_{run_id}",
+      "landing_quarantine_table": "landing_{run_id}_iot_quarantine",
+      "landing_quarantine_table_path_it": "{dbfs_path}/data/landing/iot_quarantine",
+      "refinery_catalog_it": "",
       "refinery_database_it": "",
       "refinery_database_staging": "",
       "refinery_database_prd": "",
       "refinery_table": "",
       "refinery_table_comment": "",
-      "silver_cdc_apply_changes": "",
-      "silver_partition_columns": "",
+      "refinery_cdc_apply_changes": "",
+      "refinery_partition_columns": "",
       "refinery_table_path_it": "",
       "refinery_table_path_staging": "",
       "refinery_table_path_prd": "",
-      "silver_transformation_json_it": ""
+      "refinery_transformation_json_it": ""
    }
 ]

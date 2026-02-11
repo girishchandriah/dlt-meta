@@ -10,30 +10,30 @@
          "source_path_prod": "{uc_volume_path}/demo/resources/data/customers",
          "source_schema_path": "{uc_volume_path}/demo/resources/ddl/customers.ddl"
       },
-      "bronze_catalog_prod": "{uc_catalog_name}",
+      "landing_catalog_prod": "{uc_catalog_name}",
       "landing_database_prod": "{landing_schema}",
       "landing_table": "customers",
-      "landing_table_comment": "customers bronze table",
-      "landing_table_path_prod": "{uc_volume_path}/data/bronze/customers",
-      "bronze_reader_options": {
+      "landing_table_comment": "customers landing table",
+      "landing_table_path_prod": "{uc_volume_path}/data/landing/customers",
+      "landing_reader_options": {
          "cloudFiles.format": "csv",
          "cloudFiles.rescuedDataColumn": "_rescued_data",
          "header": "true"
       },
-      "bronze_cluster_by":["dob"],
-      "bronze_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/customers.json",
-      "bronze_catalog_quarantine_prod": "{uc_catalog_name}",
+      "landing_cluster_by":["dob"],
+      "landing_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/customers.json",
+      "landing_catalog_quarantine_prod": "{uc_catalog_name}",
       "landing_database_quarantine_prod": "{landing_schema}",
-      "bronze_quarantine_table": "customers_quarantine",
-      "bronze_quarantine_table_comment": "customers quarantine table",
-      "bronze_quarantine_table_path_prod": "{uc_volume_path}/data/bronze/customers_quarantine",
-      "bronze_quarantine_table_cluster_by": ["dob"],
-      "silver_catalog_prod": "{uc_catalog_name}",
+      "landing_quarantine_table": "customers_quarantine",
+      "landing_quarantine_table_comment": "customers quarantine table",
+      "landing_quarantine_table_path_prod": "{uc_volume_path}/data/landing/customers_quarantine",
+      "landing_quarantine_table_cluster_by": ["dob"],
+      "refinery_catalog_prod": "{uc_catalog_name}",
       "refinery_database_prod": "{refinery_schema}",
       "refinery_table": "customers",
-      "refinery_table_comment": "customers silver table",
-      "refinery_table_path_prod": "{uc_volume_path}/data/silver/customers",
-      "silver_cdc_apply_changes": {
+      "refinery_table_comment": "customers refinery table",
+      "refinery_table_path_prod": "{uc_volume_path}/data/refinery/customers",
+      "refinery_cdc_apply_changes": {
          "keys": [
             "customer_id"
          ],
@@ -46,9 +46,9 @@
             "_rescued_data"
          ]
       },
-      "silver_cluster_by":["customer_id"],
-      "silver_transformation_json_prod": "{uc_volume_path}/demo/conf/silver_transformations.json",
-      "silver_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/customers_silver_dqe.json"
+      "refinery_cluster_by":["customer_id"],
+      "refinery_transformation_json_prod": "{uc_volume_path}/demo/conf/refinery_transformations.json",
+      "refinery_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/customers_refinery_dqe.json"
 
    },
    {
@@ -62,29 +62,29 @@
          "source_path_prod": "{uc_volume_path}/demo/resources/data/transactions",
          "source_schema_path": "{uc_volume_path}/demo/resources/ddl/transactions.ddl"
       },
-      "bronze_catalog_prod": "{uc_catalog_name}",
+      "landing_catalog_prod": "{uc_catalog_name}",
       "landing_database_prod": "{landing_schema}",
       "landing_table": "transactions",
-      "landing_table_comment": "transactions bronze table",
-      "landing_table_path_prod": "{uc_volume_path}/data/bronze/transactions",     
-      "bronze_reader_options": {
+      "landing_table_comment": "transactions landing table",
+      "landing_table_path_prod": "{uc_volume_path}/data/landing/transactions",     
+      "landing_reader_options": {
          "cloudFiles.format": "csv",
          "cloudFiles.rescuedDataColumn": "_rescued_data",
          "header": "true"
       },
-      "bronze_cluster_by":["transaction_date"],
-      "bronze_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/transactions.json",
+      "landing_cluster_by":["transaction_date"],
+      "landing_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/transactions.json",
       "landing_database_quarantine_prod": "{uc_catalog_name}.{landing_schema}",
-      "bronze_quarantine_table": "transactions_quarantine",
-      "bronze_quarantine_table_comment": "transactions bronze quarantine table",
-      "bronze_quarantine_table_path_prod": "{uc_volume_path}/demo/resources/data/bronze/transactions_quarantine",
-      "bronze_quarantine_table_cluster_by": ["transaction_date"],
-      "silver_catalog_prod": "{uc_catalog_name}",
+      "landing_quarantine_table": "transactions_quarantine",
+      "landing_quarantine_table_comment": "transactions landing quarantine table",
+      "landing_quarantine_table_path_prod": "{uc_volume_path}/demo/resources/data/landing/transactions_quarantine",
+      "landing_quarantine_table_cluster_by": ["transaction_date"],
+      "refinery_catalog_prod": "{uc_catalog_name}",
       "refinery_database_prod": "{refinery_schema}",
       "refinery_table": "transactions",
-      "refinery_table_comment": "transactions silver table",
-      "refinery_table_path_prod": "{uc_volume_path}/data/silver/transactions",
-      "silver_cdc_apply_changes": {
+      "refinery_table_comment": "transactions refinery table",
+      "refinery_table_path_prod": "{uc_volume_path}/data/refinery/transactions",
+      "refinery_cdc_apply_changes": {
          "keys": [
             "transaction_id"
          ],
@@ -97,10 +97,10 @@
             "_rescued_data"
          ]
       },
-      "silver_cluster_by":["transaction_date"],
-      "refinery_table_path_prod": "{uc_volume_path}/demo/resources/data/silver/transactions",
-      "silver_transformation_json_prod": "{uc_volume_path}/demo/conf/silver_transformations.json",
-      "silver_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/transactions_silver_dqe.json"
+      "refinery_cluster_by":["transaction_date"],
+      "refinery_table_path_prod": "{uc_volume_path}/demo/resources/data/refinery/transactions",
+      "refinery_transformation_json_prod": "{uc_volume_path}/demo/conf/refinery_transformations.json",
+      "refinery_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/transactions_refinery_dqe.json"
    },
    {
       "data_flow_id": "103",
@@ -113,29 +113,29 @@
          "source_path_prod": "{uc_volume_path}/demo/resources/data/products",
          "source_schema_path": "{uc_volume_path}/demo/resources/ddl/products.ddl"
       },
-      "bronze_catalog_prod": "{uc_catalog_name}",
+      "landing_catalog_prod": "{uc_catalog_name}",
       "landing_database_prod": "{landing_schema}",
       "landing_table": "products",
-      "landing_table_comment": "products bronze table",
-      "landing_table_path_prod": "{uc_volume_path}/data/bronze/products",
-      "bronze_reader_options": {
+      "landing_table_comment": "products landing table",
+      "landing_table_path_prod": "{uc_volume_path}/data/landing/products",
+      "landing_reader_options": {
          "cloudFiles.format": "csv",
          "cloudFiles.rescuedDataColumn": "_rescued_data",
          "header": "true"
       },
-      "landing_table_path_prod": "{uc_volume_path}/demo/resources/data/bronze/products",
-      "bronze_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/products.json",
+      "landing_table_path_prod": "{uc_volume_path}/demo/resources/data/landing/products",
+      "landing_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/products.json",
       "landing_database_quarantine_prod": "{uc_catalog_name}.{landing_schema}",
-      "bronze_quarantine_table": "products_quarantine",
-      "bronze_quarantine_table_comment": "products quarantine bronze table",
-      "bronze_quarantine_table_path_prod": "{uc_volume_path}/demo/resources/data/bronze/products_quarantine",
-      "bronze_quarantine_table_cluster_by": ["product_id"],
-      "silver_catalog_prod": "{uc_catalog_name}",
+      "landing_quarantine_table": "products_quarantine",
+      "landing_quarantine_table_comment": "products quarantine landing table",
+      "landing_quarantine_table_path_prod": "{uc_volume_path}/demo/resources/data/landing/products_quarantine",
+      "landing_quarantine_table_cluster_by": ["product_id"],
+      "refinery_catalog_prod": "{uc_catalog_name}",
       "refinery_database_prod": "{refinery_schema}",
       "refinery_table": "products",
-      "refinery_table_comment": "products silver table",
-      "refinery_table_path_prod": "{uc_volume_path}/data/silver/products",
-      "silver_cdc_apply_changes": {
+      "refinery_table_comment": "products refinery table",
+      "refinery_table_path_prod": "{uc_volume_path}/data/refinery/products",
+      "refinery_cdc_apply_changes": {
          "keys": [
             "product_id"
          ],
@@ -148,9 +148,9 @@
             "_rescued_data"
          ]
       },
-      "refinery_table_path_prod": "{uc_volume_path}/demo/resources/data/silver/products",
-      "silver_transformation_json_prod": "{uc_volume_path}/demo/conf/silver_transformations.json",
-      "silver_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/products_silver_dqe.json"
+      "refinery_table_path_prod": "{uc_volume_path}/demo/resources/data/refinery/products",
+      "refinery_transformation_json_prod": "{uc_volume_path}/demo/conf/refinery_transformations.json",
+      "refinery_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/products_refinery_dqe.json"
    },
    {
       "data_flow_id": "104",
@@ -163,30 +163,30 @@
          "source_path_prod": "{uc_volume_path}/demo/resources/data/stores",
          "source_schema_path": "{uc_volume_path}/demo/resources/ddl/stores.ddl"
       },
-      "bronze_catalog_prod": "{uc_catalog_name}",
+      "landing_catalog_prod": "{uc_catalog_name}",
       "landing_database_prod": "{landing_schema}",
       "landing_table": "stores",
-      "landing_table_comment": "stores bronze table",
-      "landing_table_path_prod": "{uc_volume_path}/data/bronze/stores",
-      "bronze_reader_options": {
+      "landing_table_comment": "stores landing table",
+      "landing_table_path_prod": "{uc_volume_path}/data/landing/stores",
+      "landing_reader_options": {
          "cloudFiles.format": "csv",
          "cloudFiles.rescuedDataColumn": "_rescued_data",
          "header": "true"
       },
-      "landing_table_path_prod": "{uc_volume_path}/demo/resources/data/bronze/stores",
-      "bronze_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/stores.json",
-      "bronze_catalog_quarantine_prod": "{uc_catalog_name}",
+      "landing_table_path_prod": "{uc_volume_path}/demo/resources/data/landing/stores",
+      "landing_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/stores.json",
+      "landing_catalog_quarantine_prod": "{uc_catalog_name}",
       "landing_database_quarantine_prod": "{landing_schema}",
-      "bronze_quarantine_table": "stores_quarantine",
-      "bronze_quarantine_table_comment": "stores quarantine bronze table",
-      "bronze_quarantine_table_path_prod": "{uc_volume_path}/demo/resources/data/bronze/stores_quarantine",
-      "bronze_quarantine_table_cluster_by": ["store_id"],
-      "silver_catalog_prod": "{uc_catalog_name}",
+      "landing_quarantine_table": "stores_quarantine",
+      "landing_quarantine_table_comment": "stores quarantine landing table",
+      "landing_quarantine_table_path_prod": "{uc_volume_path}/demo/resources/data/landing/stores_quarantine",
+      "landing_quarantine_table_cluster_by": ["store_id"],
+      "refinery_catalog_prod": "{uc_catalog_name}",
       "refinery_database_prod": "{refinery_schema}",
       "refinery_table": "stores",
-      "refinery_table_comment": "stores silver table",
-      "refinery_table_path_prod": "{uc_volume_path}/data/silver/stores",
-      "silver_cdc_apply_changes": {
+      "refinery_table_comment": "stores refinery table",
+      "refinery_table_path_prod": "{uc_volume_path}/data/refinery/stores",
+      "refinery_cdc_apply_changes": {
          "keys": [
             "store_id"
          ],
@@ -199,8 +199,8 @@
             "_rescued_data"
          ]
       },
-      "refinery_table_path_prod": "{uc_volume_path}/demo/resources/data/silver/stores",
-      "silver_transformation_json_prod": "{uc_volume_path}/demo/conf/silver_transformations.json",
-      "silver_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/stores_silver_dqe.json"
+      "refinery_table_path_prod": "{uc_volume_path}/demo/resources/data/refinery/stores",
+      "refinery_transformation_json_prod": "{uc_volume_path}/demo/conf/refinery_transformations.json",
+      "refinery_data_quality_expectations_json_prod": "{uc_volume_path}/demo/conf/dqe/stores_refinery_dqe.json"
    }
 ]

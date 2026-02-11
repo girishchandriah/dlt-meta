@@ -50,7 +50,7 @@ draft: false
 
 7. Run the command:
     ```commandline
-    python demo/launch_silver_fanout_demo.py --uc_catalog_name=<<uc catalog name>> --cloud_provider_name=aws
+    python demo/launch_refinery_fanout_demo.py --uc_catalog_name=<<uc catalog name>> --cloud_provider_name=aws
     ```
     - uc_catalog_name : aws or azure
     - cloud_provider_name : aws or azure
@@ -72,6 +72,6 @@ draft: false
 
         - Paste to command prompt
 
-    ![silver_fanout_workflow.png](/images/silver_fanout_workflow.png)
+    ![refinery_fanout_workflow.png](/images/refinery_fanout_workflow.png)
     
-    ![silver_fanout_dlt.png](/images/silver_fanout_dlt.png)
+    ![refinery_fanout_dlt.png](/images/refinery_fanout_dlt.png)

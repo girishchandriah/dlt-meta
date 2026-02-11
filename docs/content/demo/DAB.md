@@ -11,17 +11,17 @@ draft: false
 This demo showcases how to use Databricks Asset Bundles (DABs) with DLT-Meta:
 
 This demo will perform following steps:
-- Create dlt-meta schema's for dataflowspec and bronze/silver layer
+- Create dlt-meta schema's for dataflowspec and landing/refinery layer
 - Upload necessary resources to unity catalog volume
 - Create DAB files with catalog, schema, file locations populated
 - Deploy DAB to databricks workspace
 - Run onboarding using DAB commands
-- Run Bronze/Silver Pipelines using DAB commands
-- Demo examples will showcase fan-out pattern in silver layer
-- Demo example will show case custom transformations for bronze/silver layers
-- Adding custom columns and metadata to Bronze tables
-- Implementing SCD Type 1 to Silver tables
-- Applying expectations to filter data in Silver tables
+- Run landing/refinery Pipelines using DAB commands
+- Demo examples will showcase fan-out pattern in refinery layer
+- Demo example will show case custom transformations for landing/refinery layers
+- Adding custom columns and metadata to landing tables
+- Implementing SCD Type 1 to refinery tables
+- Applying expectations to filter data in refinery tables
 
 ### Steps:
 1. Launch Command Prompt

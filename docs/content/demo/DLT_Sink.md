@@ -8,9 +8,9 @@ draft: false
 ### Lakeflow Declarative Pipelines Sink Demo
 This demo will perform following steps:
 - Showcase onboarding process for dlt writing to external sink pattern
-- Run onboarding for the bronze iot events
+- Run onboarding for the landing iot events
 - Publish test events to kafka topic
-- Run Bronze Lakeflow Declarative Pipelines which will read from kafka source topic and write to:
+- Run landing Lakeflow Declarative Pipelines which will read from kafka source topic and write to:
   - Events delta table into UC
   - Create quarantine table as per data quality expectations
   - Writes to external kafka topics
