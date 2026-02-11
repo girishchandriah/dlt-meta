@@ -207,6 +207,7 @@ def index():
 
 @app.route('/start_command', methods=['POST'])
 def start_command():
+    print("here")
     data = request.json
     command = data.get('command')
 
@@ -225,7 +226,7 @@ def start_command():
         if 'PYTHONPATH' not in os.environ or not os.path.isdir(os.environ.get('PYTHONPATH', '')):
             commands = [
                 "pip install databricks-cli",
-                "git clone https://github.com/databrickslabs/dlt-meta.git",
+                f"git clone https://github.com/dlt-meta/dlt-meta.git {current_directory}/dlt-meta",
                 f"python -m venv {current_directory}/dlt-meta/.venv",
                 f"export HOME={current_directory}",
                 "cd dlt-meta",
