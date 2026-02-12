@@ -126,7 +126,7 @@ class WorkspaceInstaller:
                 # under the same open statement, the second upload the file is empty, it probably
                 # treats the open output as some sort of iterator
                 with local_wheel.open("rb") as f:
-                    uc_wheel_path = f"{uc_volume_path}wheels/{local_wheel.name}"
+                    uc_wheel_path = f"{uc_volume_path}/wheels/{local_wheel.name}"
                     logger.info(f"Uploading wheel to {uc_wheel_path}")
                     self._ws.files.upload(uc_wheel_path, f, overwrite=True)
                     return uc_wheel_path

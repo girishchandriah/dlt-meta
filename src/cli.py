@@ -391,7 +391,7 @@ class DLTMeta:
         # Upload wheel and get path for configuration
         if cmd.uc_enabled and cmd.uc_catalog_name:
             # For UC-enabled, construct uc_volume_path and upload wheel there
-            uc_volume_path = f"/Volumes/{cmd.uc_catalog_name}/{cmd.dlt_meta_landing_schema or cmd.dlt_meta_refinery_schema}/dlt_meta_files"
+            uc_volume_path = f"/Volumes/{cmd.uc_catalog_name}/{cmd.dlt_meta_landing_schema or cmd.dlt_meta_refinery_schema}/dlt_meta_files/"
             wheel_path = self._wsi._upload_wheel(uc_volume_path=uc_volume_path)
         else:
             # For non-UC, upload to workspace
