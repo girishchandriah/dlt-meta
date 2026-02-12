@@ -7,6 +7,17 @@ resources:
       name: People - Onboard Job
       description: "Job to onboard DLT META data"
 
+      job_clusters:
+        - job_cluster_key: onboard_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 1
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+
       tasks:
         - task_key: onboard_landing_refinery_tables
           python_wheel_task:
@@ -24,8 +35,10 @@ resources:
               overwrite: "True"
               env: ${bundle.target}
 
-          # job_cluster_key: my_job_cluster
-          environment_key: default
+          libraries:
+            - whl: ${workspace.artifact_path}/artifacts/dlt_meta_wheel/*.whl
+
+          job_cluster_key: onboard_cluster
 
         - task_key: onboard_refinery_fanout_tables
           python_wheel_task:
@@ -41,17 +54,23 @@ resources:
               onboard_layer: refinery
               overwrite: "False"
               env: ${bundle.target}
+
+          libraries:
+            - whl: ${workspace.artifact_path}/artifacts/dlt_meta_wheel/*.whl
+
+          job_cluster_key: onboard_cluster
+
           depends_on:
             - task_key: onboard_landing_refinery_tables
 
-          environment_key: default
 
-      environments: 
-        - environment_key: default
-          spec: 
-            client: "1"
-            dependencies:
-              - dlt-meta
+      # Removed PyPI dependencies - using local wheel artifact instead
+      # environments:
+      #   - environment_key: default
+      #     spec:
+      #       client: "1"
+      #       dependencies:
+      #         - dlt-meta
 
     execute_pipelines_people:
       name: People - Raw_Br_Si Job

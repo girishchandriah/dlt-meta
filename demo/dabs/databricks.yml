@@ -4,6 +4,11 @@ bundle:
   name: dab_dlt_meta_demo
   uuid: fb711a7b-ceb7-4054-a49c-cf1d53702692
 
+artifacts:
+  dlt_meta_wheel:
+    type: whl
+    path: ../../
+
 include:
   - resources/*.yml
 sync:

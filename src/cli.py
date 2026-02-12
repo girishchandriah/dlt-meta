@@ -280,6 +280,11 @@ class DLTMeta:
 
     def create_onnboarding_job(self, cmd: OnboardCommand):
         """Create the onboarding job."""
+        # Build and upload the wheel to Databricks
+        uc_volume_path = cmd.uc_volume_path if cmd.uc_enabled else None
+        wheel_path = self._wsi._upload_wheel(uc_volume_path=uc_volume_path)
+        logger.info(f"Wheel uploaded to: {wheel_path}")
+
         if cmd.serverless:
             cluster_spec = None
         else:
@@ -296,23 +301,16 @@ class DLTMeta:
                 }
             )
         named_parameters = self._get_onboarding_named_parameters(cmd)
-        dltmeta_environments = [
-            jobs.JobEnvironment(
-                environment_key="dl_meta_cli_env",
-                spec=compute.Environment(client="1",
-                                         dependencies=[f"dlt-meta=={self.version}"]
-                                         )
-            )
-        ]
+
         return self._ws.jobs.create(
             name="dlt_meta_onboarding_job",
-            environments=None if not cmd.serverless else dltmeta_environments,
+            environments=None,
             tasks=[
                 jobs.Task(
                     task_key="dlt_meta_onbarding_task",
                     description="test",
                     new_cluster=cluster_spec if not cmd.serverless else None,
-                    environment_key="dl_meta_cli_env" if cmd.serverless else None,
+                    environment_key=None,
                     timeout_seconds=0,
                     python_wheel_task=jobs.PythonWheelTask(
                         package_name="dlt_meta_cds",
@@ -321,9 +319,9 @@ class DLTMeta:
                     ),
                     libraries=[
                         jobs.compute.Library(
-                            pypi=compute.PythonPyPiLibrary(package=f"dlt-meta=={self.version}")
+                            whl=wheel_path
                         )
-                    ] if not cmd.serverless else None,
+                    ],
                 ),
             ]
         )
