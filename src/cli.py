@@ -224,12 +224,12 @@ class DLTMeta:
             self._ws.volumes.create(
                 catalog_name=uc_catalog_name,
                 schema_name=dlt_meta_schema,
-                name=dlt_meta_schema,
+                name="dlt_meta_files",
                 volume_type=VolumeType.MANAGED,
             )
         except Exception:
-            logger.info(f"Volume {dlt_meta_schema} already exists")
-        return f"/Volumes/{uc_catalog_name}/{dlt_meta_schema}/{dlt_meta_schema}/"
+            logger.info(f"Volume dlt_meta_files already exists")
+        return f"/Volumes/{uc_catalog_name}/{dlt_meta_schema}/dlt_meta_files/"
 
     def onboard(self, cmd: OnboardCommand):
         """launch the onboarding job."""
