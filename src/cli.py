@@ -285,8 +285,21 @@ class DLTMeta:
         wheel_path = self._wsi._upload_wheel(uc_volume_path=uc_volume_path)
         logger.info(f"Wheel uploaded to: {wheel_path}")
 
+        # For serverless, libraries must be in environment, not task libraries
         if cmd.serverless:
             cluster_spec = None
+            # Create environment with wheel dependency for serverless
+            environments = [
+                jobs.JobEnvironment(
+                    environment_key="dlt_meta_env",
+                    spec=jobs.compute.Environment(
+                        client="1",
+                        dependencies=[wheel_path]
+                    )
+                )
+            ]
+            environment_key = "dlt_meta_env"
+            task_libraries = None
         else:
             cluster_spec = compute.ClusterSpec(
                 spark_version=cmd.dbr_version,
@@ -300,28 +313,32 @@ class DLTMeta:
                     "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
                 }
             )
+            environments = None
+            environment_key = None
+            task_libraries = [
+                jobs.compute.Library(
+                    whl=wheel_path
+                )
+            ]
+
         named_parameters = self._get_onboarding_named_parameters(cmd)
 
         return self._ws.jobs.create(
             name="dlt_meta_onboarding_job",
-            environments=None,
+            environments=environments,
             tasks=[
                 jobs.Task(
                     task_key="dlt_meta_onbarding_task",
                     description="test",
                     new_cluster=cluster_spec if not cmd.serverless else None,
-                    environment_key=None,
+                    environment_key=environment_key,
                     timeout_seconds=0,
                     python_wheel_task=jobs.PythonWheelTask(
                         package_name="dlt_meta_cds",
                         entry_point="run",
                         named_parameters=named_parameters,
                     ),
-                    libraries=[
-                        jobs.compute.Library(
-                            whl=wheel_path
-                        )
-                    ],
+                    libraries=task_libraries,
                 ),
             ]
         )
