@@ -1,6 +1,7 @@
 # Databricks notebook source
 dlt_meta_whl = spark.conf.get("dlt_meta_whl")
 %pip install $dlt_meta_whl
+dbutils.library.restartPython()
 
 # COMMAND ----------
 
