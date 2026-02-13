@@ -1,18 +1,18 @@
 [
   {
     "target_table": "customers",
-    "sql_query": "SELECT customer_id, concat(first_name,' ',last_name) as full_name, email, address, dob, dmsTimestamp, Op, _rescued_data FROM privacy_nonprod_dltmeta_silver_customers_inputview"
+    "sql_query": "SELECT customer_id, concat(first_name,' ',last_name) as full_name, email, address, dob, dmsTimestamp, Op, _rescued_data FROM live.privacy_nonprod_dltmeta_silver_customers_inputview"
   },
   {
     "target_table": "transactions",
-    "sql_query": "SELECT transaction_id, transaction_date, customer_id, product_id, store_id, dmsTimestamp, Op, _rescued_data FROM privacy_nonprod_dltmeta_silver_transactions_inputview"
+    "sql_query": "SELECT transaction_id, transaction_date, customer_id, product_id, store_id, dmsTimestamp, Op, _rescued_data FROM live.privacy_nonprod_dltmeta_silver_transactions_inputview"
   },
   {
     "target_table": "products",
-    "sql_query": "SELECT product_id, name, price, dmsTimestamp, Op, _rescued_data FROM privacy_nonprod_dltmeta_silver_products_inputview"
+    "sql_query": "SELECT product_id, name, price, dmsTimestamp, Op, _rescued_data FROM live.privacy_nonprod_dltmeta_silver_products_inputview"
   },
   {
     "target_table": "stores",
-    "sql_query": "SELECT store_id, address, dmsTimestamp, Op, _rescued_data FROM privacy_nonprod_dltmeta_silver_stores_inputview"
+    "sql_query": "SELECT store_id, address, dmsTimestamp, Op, _rescued_data FROM live.privacy_nonprod_dltmeta_silver_stores_inputview"
   }
 ]
