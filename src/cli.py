@@ -721,10 +721,12 @@ class DLTMeta:
 
         if load_from_ojd_json and oc_job_details_json:
             oc_job_details_json = json.loads(oc_job_details_json)
-            deploy_cmd_dict["uc_enabled"] = input_params.get("uc_enabled", False)
+            uc_enabled_value = input_params.get("uc_enabled", False)
+            deploy_cmd_dict["uc_enabled"] = uc_enabled_value == "1" or uc_enabled_value is True
             if deploy_cmd_dict["uc_enabled"]:
                 deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
-                deploy_cmd_dict["serverless"] = input_params.get("serverless", False)
+                serverless_value = input_params.get("serverless", False)
+                deploy_cmd_dict["serverless"] = serverless_value == "1" or serverless_value is True
             else:
                 deploy_cmd_dict["serverless"] = False
             deploy_cmd_dict["layer"] = input_params.get("layer")
@@ -745,10 +747,12 @@ class DLTMeta:
             if not deploy_cmd_dict["serverless"]:
                 deploy_cmd_dict["num_workers"] = input_params.get("num_workers", 4)
         else:
-            deploy_cmd_dict["uc_enabled"] = input_params.get("uc_enabled", False)
+            uc_enabled_value = input_params.get("uc_enabled", False)
+            deploy_cmd_dict["uc_enabled"] = uc_enabled_value == "1" or uc_enabled_value is True
             if deploy_cmd_dict["uc_enabled"]:
                 deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
-                deploy_cmd_dict["serverless"] = input_params.get("serverless", False)
+                serverless_value = input_params.get("serverless", False)
+                deploy_cmd_dict["serverless"] = serverless_value == "1" or serverless_value is True
             else:
                 deploy_cmd_dict["serverless"] = False
             deploy_cmd_dict["layer"] = input_params.get("layer")
