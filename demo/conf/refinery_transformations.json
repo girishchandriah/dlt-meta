@@ -1,18 +1,18 @@
 [
   {
     "target_table": "customers",
-    "sql_query": "SELECT customer_id, concat(first_name,' ',last_name) as full_name, email, address, dob, dmsTimestamp, Op, _rescued_data FROM live.privacy_nonprod_dltmeta_refinery_customers_refinery_inputview"
+    "sql_query": "SELECT customer_id, concat(first_name,' ',last_name) as full_name, email, address, dob, dmsTimestamp, Op, _rescued_data FROM source_100"
   },
   {
     "target_table": "transactions",
-    "sql_query": "SELECT transaction_id, transaction_date, customer_id, product_id, store_id, dmsTimestamp, Op, _rescued_data FROM live.privacy_nonprod_dltmeta_refinery_transactions_refinery_inputview"
+    "sql_query": "SELECT transaction_id, transaction_date, customer_id, product_id, store_id, dmsTimestamp, Op, _rescued_data FROM source_101"
   },
   {
     "target_table": "products",
-    "sql_query": "SELECT product_id, name, price, dmsTimestamp, Op, _rescued_data FROM live.privacy_nonprod_dltmeta_refinery_products_refinery_inputview"
+    "sql_query": "SELECT product_id, name, price, dmsTimestamp, Op, _rescued_data FROM source_103"
   },
   {
     "target_table": "stores",
-    "sql_query": "SELECT store_id, address, dmsTimestamp, Op, _rescued_data FROM live.privacy_nonprod_dltmeta_refinery_stores_refinery_inputview"
+    "sql_query": "SELECT store_id, address, dmsTimestamp, Op, _rescued_data FROM source_104"
   }
 ]
