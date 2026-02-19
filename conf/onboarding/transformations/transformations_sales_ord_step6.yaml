@@ -1,0 +1,73 @@
+transformation_id: pfocusdb_sales_ord_tran_batch_update
+transformation_name: Sales Order Transaction 
+description: "Step 6: Complex transformation from landing to refinery with business logic for DSN sales order transactions"
+sql_query: |
+            with src as (select  distinct  host_vax_acct_num,
+                                host_sys_cd,
+                                cast(host_acct_create_dt as date) host_acct_create_dt,
+                                event_id,is_upsell,is_delivery, update_ts
+                                from {refinery_catalog}.{refinery_database}.pfocusst_mdb_st_order_events_0208_dl
+                                where cast(src_last_mod_ts as date) >= current_date()-7),
+            update_2 as (
+                        select  a.sales_ord_id,
+                        a.host_sys_cd,
+                        a.host_vax_acct_num,
+                        a.host_acct_create_dt,
+                        a.event_id,
+                        a.event_id_src_sys_cd,
+                        a.src_event_id,
+                        a.sales_ord_tran_id,
+                        a.sales_ord_tran_dt,
+                        a.sales_ord_trans_lcl_dttm,
+                        a.tran_amt,
+                        a.acct_mode_cd,
+                        a.tickets_purchased_qty,
+                        a.print_flg,
+                        a.print_dt,
+                        a.tran_void_flg,
+                        a.tran_void_dt,
+                        a.print_opr_id,
+                        a.print_opr_cd,
+                        a.ovrrd_print_opr_type_cd,
+                        a.tran_opr_id,
+                        a.tran_opr_cd,
+                        a.ovrrd_tran_opr_type_cd,
+                        a.void_opr_id,
+                        a.void_opr_cd,
+                        a.ovrrd_void_opr_type_cd,
+                        a.trans_face_val_amt,
+                        a.trans_service_charge_amt,
+                        a.trans_service_tax_amt,
+                        a.trans_service_tax_2_amt,
+                        a.trans_set_tax_amt,
+                        a.trans_zone_charge_amt,
+                        a.trans_fac_fee_amt,
+                        a.trans_exch_fee_amt,
+                        a.last_batch_id,
+                        a.init_run_id,
+                        a.last_run_id,
+                        a.tkt_transfer_sent_flg,
+                        a.tkt_transfer_rcvd_flg,
+                        a.tkt_transfer_surrender_flg,
+                        a.resale_status_nm,
+                        src.is_upsell  as  upsell_flg  ,
+                        src.is_delivery  as dlvry_flg  ,
+                        a.void_used_opr_cd,
+                        a.mimic_flg,
+                        a.price_level_id,
+                        a.price_level_nm,
+                        a.expected_pmt_method_type_id,
+                        a.expected_pmt_method_type_cd,
+                        a.tkt_type_cnt
+                        from {treasury_catalog}.{treasury_database}.pfocusdb_sales_ord_tran_dlt a
+                        inner join src on
+                        a.event_id = src.event_id and
+                        trim(a.host_sys_cd) = trim(src.host_sys_cd) and
+                        a.host_vax_acct_num = src.host_vax_acct_num and
+                        (a.host_acct_create_dt = src.host_acct_create_dt
+                        or a.host_acct_create_dt = src.host_acct_create_dt-1
+                        or a.host_acct_create_dt = src.host_acct_create_dt+1) and
+                        (coalesce(a.upsell_flg,'')  <> coalesce(src.is_upsell,'')
+                        or coalesce(a.dlvry_flg,'')  <> coalesce(src.is_delivery,''))
+                        qualify row_number() over (partition by a.sales_ord_id ,a.event_id ,a.sales_ord_tran_id ,a.sales_ord_tran_dt order by src.update_ts desc) = 1 )
+                select * from update_2
