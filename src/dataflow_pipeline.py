@@ -351,6 +351,114 @@ class DataflowPipeline:
             input_df = self.custom_transform_func(input_df, self.dataflowSpec)
         return input_df
 
+    def replace_sql_placeholders(self, sql_query: str) -> str:
+        """Replace placeholders in SQL query with actual catalog and database names.
+
+        Supports placeholders like:
+        - {landing_catalog}, {landing_database}
+        - {refinery_catalog}, {refinery_database}
+        - {treasury_catalog}, {treasury_database}
+
+        Tries to get values from:
+        1. DataflowSpec (current and source layers)
+        2. Spark configuration (fallback for cross-layer references)
+
+        Args:
+            sql_query: SQL query with placeholders
+
+        Returns:
+            SQL query with placeholders replaced
+        """
+        if not sql_query or not sql_query.strip():
+            return sql_query
+
+        # Get environment from spark config (e.g., 'nonprod', 'prod', 'preprod')
+        env = self.spark.conf.get("env", "prod")
+        logger.info(f"Replacing SQL placeholders for environment: {env}")
+
+        replacements = {}
+
+        # Helper function to safely get catalog/database with fallback to spark conf
+        def get_catalog_database(layer_name, details_dict=None):
+            """Get catalog and database for a layer from dict or spark conf."""
+            catalog = None
+            database = None
+
+            if details_dict:
+                catalog = details_dict.get('catalog', '')
+                database = details_dict.get('database', '')
+
+            # Fallback to spark conf if not found in dict
+            if not catalog:
+                catalog = self.spark.conf.get(f"{layer_name}.catalog", None)
+            if not database:
+                database = self.spark.conf.get(f"{layer_name}.database", None)
+
+            return catalog, database
+
+        # Get landing catalog/database
+        if isinstance(self.dataflowSpec, LandingDataflowSpec):
+            target_details = dict(self.dataflowSpec.targetDetails) if self.dataflowSpec.targetDetails else {}
+            landing_catalog, landing_database = get_catalog_database('landing', target_details)
+        elif isinstance(self.dataflowSpec, RefineryDataflowSpec):
+            # For refinery, landing is the source
+            source_details = self._get_source_details()
+            landing_catalog, landing_database = get_catalog_database('landing', source_details)
+        else:
+            # Fallback for other layers
+            landing_catalog, landing_database = get_catalog_database('landing')
+
+        if landing_catalog:
+            replacements['{landing_catalog}'] = landing_catalog
+        if landing_database:
+            replacements['{landing_database}'] = landing_database
+
+        # Get refinery catalog/database
+        if isinstance(self.dataflowSpec, RefineryDataflowSpec):
+            target_details = dict(self.dataflowSpec.targetDetails) if self.dataflowSpec.targetDetails else {}
+            refinery_catalog, refinery_database = get_catalog_database('refinery', target_details)
+        elif isinstance(self.dataflowSpec, TreasuryDataflowSpec):
+            # For treasury, refinery is the source
+            source_details = self._get_source_details()
+            refinery_catalog, refinery_database = get_catalog_database('refinery', source_details)
+        else:
+            # Fallback for other layers
+            refinery_catalog, refinery_database = get_catalog_database('refinery')
+
+        if refinery_catalog:
+            replacements['{refinery_catalog}'] = refinery_catalog
+        if refinery_database:
+            replacements['{refinery_database}'] = refinery_database
+
+        # Get treasury catalog/database
+        if isinstance(self.dataflowSpec, TreasuryDataflowSpec):
+            target_details = dict(self.dataflowSpec.targetDetails) if self.dataflowSpec.targetDetails else {}
+            treasury_catalog, treasury_database = get_catalog_database('treasury', target_details)
+        else:
+            # Try to get from spark conf (for cross-layer references)
+            treasury_catalog, treasury_database = get_catalog_database('treasury')
+
+        if treasury_catalog:
+            replacements['{treasury_catalog}'] = treasury_catalog
+        if treasury_database:
+            replacements['{treasury_database}'] = treasury_database
+
+        # Perform replacements
+        replaced_query = sql_query
+        for placeholder, value in replacements.items():
+            if placeholder in replaced_query:
+                replaced_query = replaced_query.replace(placeholder, value)
+                logger.info(f"Replaced {placeholder} with {value}")
+
+        # Log if there are still unreplaced placeholders
+        import re
+        remaining_placeholders = re.findall(r'\{[^}]+\}', replaced_query)
+        if remaining_placeholders:
+            logger.warning(f"Unreplaced placeholders found in SQL: {remaining_placeholders}")
+            logger.warning(f"Available replacements were: {list(replacements.keys())}")
+
+        return replaced_query
+
     def execute_sql_transformation(self, source_df: DataFrame, sql_query: str) -> DataFrame:
         """Execute full SQL query with support for JOINs.
 
@@ -363,6 +471,9 @@ class DataflowPipeline:
         """
         if not sql_query or not sql_query.strip():
             return source_df
+
+        # Replace placeholders in SQL query before execution
+        sql_query = self.replace_sql_placeholders(sql_query)
 
         # Create temp view for source table
         source_view_name = f"source_{self.dataflowSpec.dataFlowId}"
