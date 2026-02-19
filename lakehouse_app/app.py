@@ -222,36 +222,48 @@ def start_command():
             current_directory = os.getcwd()
 
         command_id = None
-        # Chain commands with && to ensure they run in sequence
-        if 'PYTHONPATH' not in os.environ or not os.path.isdir(os.environ.get('PYTHONPATH', '')):
-            commands = [
-                "pip install databricks-cli",
-                f"git clone -b 'feature/layer-terminology-update' https://github.com/girishchandriah/dlt-meta.git {current_directory}/dlt-meta",
-                f"python -m venv {current_directory}/dlt-meta/.venv",
-                f"export HOME={current_directory}",
-                "cd dlt-meta",
-                "source .venv/bin/activate",
-                f"export PYTHONPATH={current_directory}/dlt-meta/",
-                "pwd",
-                "pip install databricks-sdk",
-                "pip install PyYAML",
-            ]
-            print("Start setting up dlt-meta environment")
-            for c in commands:
-                try:
-                    command_id = str(time.time())
+        dlt_meta_path = f"{current_directory}/dlt-meta"
 
-                    input_queue = queue.Queue()
-                    output_queue = queue.Queue()
+        # Always perform setup - remove old installation if exists and setup fresh
+        commands = [
+            "pip install databricks-cli",
+            # Remove existing dlt-meta directory if it exists
+            f"rm -rf {dlt_meta_path}",
+            # Clone fresh copy
+            f"git clone -b 'feature/layer-terminology-update' https://github.com/girishchandriah/dlt-meta.git {dlt_meta_path}",
+            # Create virtual environment
+            f"python -m venv {dlt_meta_path}/.venv",
+            # Install dependencies using the venv python
+            f"{dlt_meta_path}/.venv/bin/pip install --upgrade pip",
+            f"{dlt_meta_path}/.venv/bin/pip install databricks-sdk",
+            f"{dlt_meta_path}/.venv/bin/pip install PyYAML",
+        ]
 
-                    command_queues[command_id] = input_queue
-                    response_queues[command_id] = output_queue
-                    run_command(command_id, c, input_queue, output_queue, False)
-                    print(f"complete setup command : {c}")
-                except Exception as e:
-                    logger.error(f"Error starting command: {str(e)}")
-                    print(f"Error starting command: {str(e)}")
-            print("Completed setting up dlt-meta environment")
+        print("Start setting up dlt-meta environment (pulling latest code and creating fresh environment)...")
+
+        for c in commands:
+            try:
+                command_id = str(time.time())
+
+                input_queue = queue.Queue()
+                output_queue = queue.Queue()
+
+                command_queues[command_id] = input_queue
+                response_queues[command_id] = output_queue
+                run_command(command_id, c, input_queue, output_queue, False)
+                print(f"complete setup command : {c}")
+            except Exception as e:
+                logger.error(f"Error starting command: {str(e)}")
+                print(f"Error starting command: {str(e)}")
+
+        # Update environment variables after successful setup
+        os.environ['PYTHONPATH'] = dlt_meta_path
+        os.environ['HOME'] = current_directory
+        os.environ['VIRTUAL_ENV'] = f"{dlt_meta_path}/.venv"
+        os.environ['PATH'] = f"{dlt_meta_path}/.venv/bin:{os.environ.get('PATH', '')}"
+
+        print(f"Completed setting up dlt-meta environment")
+        print(f"PYTHONPATH set to: {os.environ['PYTHONPATH']}")
 
     else:
         command_id = str(time.time())
