@@ -1,0 +1,202 @@
+[
+  {
+    "_template_instructions": "This is a template for DLT Meta onboarding configuration. Replace all <PLACEHOLDER> values with your actual values. Remove this instruction block when creating your configuration.",
+
+    "data_flow_id": "<FLOW_ID>",
+    "data_flow_group": "<GROUP_NAME>",
+    "source_system": "<SOURCE_SYSTEM_NAME>",
+    "source_format": "cloudFiles",
+
+    "source_details": {
+      "source_database": "<SOURCE_DATABASE>",
+      "source_table": "<SOURCE_TABLE_NAME>",
+      "source_path_nonprod": "s3a://<BUCKET>/nonprod/<PATH>/file-ingest",
+      "source_path_preprod": "s3a://<BUCKET>/preprod/<PATH>/file-ingest",
+      "source_path_prod": "s3a://<BUCKET>/prod/<PATH>/file-ingest",
+      "source_schema_path": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/schemas/<TABLE_NAME>.ddl"
+    },
+
+    "landing_catalog_nonprod": "dataservices_nonprod",
+    "landing_catalog_preprod": "dataservices_preprod",
+    "landing_catalog_prod": "dataservices_landing",
+    "landing_database_nonprod": "landing_nonprod",
+    "landing_database_preprod": "landing_preprod",
+    "landing_database_prod": "landing",
+    "landing_table": "<LANDING_TABLE_NAME>",
+    "landing_table_comment": "<DESCRIPTION_OF_LANDING_TABLE>",
+    "landing_reader_options": {
+      "cloudFiles.format": "<FORMAT>",
+      "header": "<true|false>",
+      "delimiter": "<DELIMITER>",
+      "cloudFiles.rescuedDataColumn": "_rescued_data"
+    },
+
+    "refinery_catalog_nonprod": "dataservices_nonprod",
+    "refinery_catalog_preprod": "dataservices_preprod",
+    "refinery_catalog_prod": "dataservices_refinery",
+    "refinery_database_nonprod": "refinery_nonprod",
+    "refinery_database_preprod": "refinery_preprod",
+    "refinery_database_prod": "refinery",
+    "refinery_table": "<REFINERY_TABLE_NAME>",
+    "refinery_table_comment": "<DESCRIPTION_OF_REFINERY_TABLE>",
+    "refinery_transformation_json_nonprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "refinery_transformation_json_preprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "refinery_transformation_json_prod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "refinery_cdc_apply_changes": {
+      "keys": [
+        "<PRIMARY_KEY_COLUMN>"
+      ],
+      "sequence_by": "<SEQUENCE_COLUMN>",
+      "scd_type": "1",
+      "stored_as_scd_type": "1",
+      "apply_as_deletes": "<DELETE_CONDITION>",
+      "except_column_list": [
+        "_rescued_data"
+      ]
+    },
+    "refinery_cluster_by": [
+      "<CLUSTER_COLUMN_1>",
+      "<CLUSTER_COLUMN_2>"
+    ],
+    "refinery_reader_options": {
+      "readChangeFeed": "true"
+    },
+
+    "treasury_catalog_nonprod": "dataservices_nonprod",
+    "treasury_catalog_preprod": "dataservices_preprod",
+    "treasury_catalog_prod": "dataservices_treasury",
+    "treasury_database_nonprod": "<TREASURY_DATABASE>_nonprod",
+    "treasury_database_preprod": "<TREASURY_DATABASE>_preprod",
+    "treasury_database_prod": "<TREASURY_DATABASE>",
+    "treasury_table": "<TREASURY_TABLE_NAME>",
+    "treasury_table_comment": "<DESCRIPTION_OF_TREASURY_TABLE>",
+    "treasury_transformation_json_nonprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "treasury_transformation_json_preprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "treasury_transformation_json_prod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "treasury_cluster_by": [
+      "<CLUSTER_COLUMN_1>",
+      "<CLUSTER_COLUMN_2>"
+    ],
+    "treasury_reader_options": {
+      "readChangeFeed": "true"
+    },
+    "treasury_cdc_apply_changes": {
+      "keys": [
+        "<COMPOSITE_KEY_1>",
+        "<COMPOSITE_KEY_2>"
+      ],
+      "sequence_by": "<SEQUENCE_COLUMN>",
+      "scd_type": "1",
+      "except_column_list": []
+    },
+
+    "version": "v2.0",
+    "_comment": "<DESCRIPTION_OF_PIPELINE_PURPOSE_AND_FLOW>"
+  },
+  {
+    "_template_instructions": "OPTIONAL: Include this configuration only if you need an intermediate processing step between refinery layers",
+
+    "data_flow_id": "<FLOW_ID>-intermediate",
+    "data_flow_group": "<GROUP_NAME>",
+    "source_system": "<SOURCE_SYSTEM_NAME>",
+    "source_format": "delta",
+
+    "source_details": {
+      "catalog_nonprod": "dataservices_nonprod",
+      "catalog_preprod": "dataservices_preprod",
+      "catalog_prod": "dataservices_refinery",
+      "database_nonprod": "refinery_nonprod",
+      "database_preprod": "refinery_preprod",
+      "database_prod": "refinery",
+      "table": "<SOURCE_REFINERY_TABLE>"
+    },
+
+    "refinery_catalog_nonprod": "dataservices_nonprod",
+    "refinery_catalog_preprod": "dataservices_preprod",
+    "refinery_catalog_prod": "dataservices_refinery",
+    "refinery_database_nonprod": "refinery_nonprod",
+    "refinery_database_preprod": "refinery_preprod",
+    "refinery_database_prod": "refinery",
+    "refinery_table": "<INTERMEDIATE_REFINERY_TABLE_NAME>",
+    "refinery_table_comment": "<DESCRIPTION_OF_INTERMEDIATE_PROCESSING>",
+    "refinery_transformation_json_nonprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "refinery_transformation_json_preprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "refinery_transformation_json_prod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "refinery_cdc_apply_changes": {
+      "keys": [
+        "<PRIMARY_KEY_COLUMN>"
+      ],
+      "sequence_by": "<SEQUENCE_COLUMN>",
+      "scd_type": "1",
+      "except_column_list": []
+    },
+    "refinery_reader_options": {
+      "readChangeFeed": "true"
+    },
+
+    "treasury_catalog_nonprod": "dataservices_nonprod",
+    "treasury_catalog_preprod": "dataservices_preprod",
+    "treasury_catalog_prod": "dataservices_treasury",
+    "treasury_database_nonprod": "<TREASURY_DATABASE>_nonprod",
+    "treasury_database_preprod": "<TREASURY_DATABASE>_preprod",
+    "treasury_database_prod": "<TREASURY_DATABASE>",
+    "treasury_table": "<TREASURY_TABLE_NAME>",
+    "treasury_table_comment": "<DESCRIPTION_OF_TREASURY_UPDATE>",
+    "treasury_transformation_json_nonprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "treasury_transformation_json_preprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "treasury_transformation_json_prod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "treasury_cdc_apply_changes": {
+      "keys": [
+        "<COMPOSITE_KEY>"
+      ],
+      "sequence_by": "<SEQUENCE_COLUMN>",
+      "scd_type": "1",
+      "except_column_list": []
+    },
+    "treasury_reader_options": {
+      "readChangeFeed": "true"
+    },
+
+    "_comment": "<DESCRIPTION_OF_INTERMEDIATE_FLOW_PURPOSE>"
+  },
+  {
+    "_template_instructions": "OPTIONAL: Include this configuration only if you need batch updates from another source table to your treasury layer",
+
+    "data_flow_id": "<FLOW_ID>-batch-update",
+    "data_flow_group": "<GROUP_NAME>",
+    "source_system": "<SOURCE_SYSTEM_NAME>",
+    "source_format": "delta",
+
+    "source_details": {
+      "catalog_nonprod": "dataservices_nonprod",
+      "catalog_preprod": "dataservices_nonprod",
+      "catalog_prod": "dataservices_refinery",
+      "database_nonprod": "refinery_nonprod",
+      "database_preprod": "refinery_preprod",
+      "database_prod": "refinery",
+      "table": "<BATCH_SOURCE_TABLE>"
+    },
+
+    "treasury_catalog_nonprod": "dataservices_nonprod",
+    "treasury_catalog_preprod": "dataservices_preprod",
+    "treasury_catalog_prod": "dataservices_treasury",
+    "treasury_database_nonprod": "<TREASURY_DATABASE>_nonprod",
+    "treasury_database_preprod": "<TREASURY_DATABASE>_preprod",
+    "treasury_database_prod": "<TREASURY_DATABASE>",
+    "treasury_table": "<TREASURY_TABLE_NAME>",
+    "treasury_table_comment": "<DESCRIPTION_OF_BATCH_UPDATE_PURPOSE>",
+    "treasury_cdc_apply_changes": {
+      "keys": [
+        "<COMPOSITE_KEY>"
+      ],
+      "scd_type": "1",
+      "except_column_list": []
+    },
+    "treasury_transformation_json_nonprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "treasury_transformation_json_preprod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+    "treasury_transformation_json_prod": "/Volumes/<CATALOG>/<SCHEMA>/<VOLUME>/dltmeta_conf/transformations/<TRANSFORMATION_FILE>.yaml",
+
+    "version": "v2.0",
+    "_comment": "<DESCRIPTION_OF_BATCH_UPDATE_PURPOSE_AND_FIELDS_UPDATED>"
+  }
+]
