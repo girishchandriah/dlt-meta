@@ -191,12 +191,23 @@ class DLTMeta:
     def copy_to_uc_volume(self, src, dst):
         main_dir = src.replace('file:', '')
         base_dir_name = os.path.basename(os.path.normpath(main_dir))
+        file_count = 0
+        error_count = 0
+        logger.info(f"Starting UC Volume copy from {main_dir} to {dst}")
         for root, dirs, files in os.walk(main_dir):
             for filename in files:
                 target_dir = root[root.index(main_dir) + len(main_dir):len(root)]
                 uc_volume_path = f"{dst}/{base_dir_name}/{target_dir}/{filename}".replace("//", "/")
-                contents = open(os.path.join(root, filename), "rb")
-                self._ws.files.upload(file_path=uc_volume_path, contents=contents, overwrite=True)
+                local_file_path = os.path.join(root, filename)
+                try:
+                    with open(local_file_path, "rb") as contents:
+                        self._ws.files.upload(file_path=uc_volume_path, contents=contents, overwrite=True)
+                    logger.info(f"✓ Uploaded: {local_file_path} → {uc_volume_path}")
+                    file_count += 1
+                except Exception as e:
+                    logger.error(f"✗ FAILED to upload {local_file_path} → {uc_volume_path}: {e}")
+                    error_count += 1
+        logger.info(f"UC Volume copy complete: {file_count} files uploaded, {error_count} errors")
 
     def copy_to_dbfs(self, src, dst):
         dst = dst.replace('//', '/')
@@ -209,16 +220,23 @@ class DLTMeta:
             base_dir_name = main_dir[main_dir.rfind('/') + 1:]
         else:
             base_dir_name = base_dir_name[base_dir_name.rfind('/') + 1:]
+        file_count = 0
+        error_count = 0
+        logger.info(f"Starting DBFS copy from {main_dir} to {dst}")
         for root, dirs, files in os.walk(main_dir):
             for filename in files:
                 target_dir = root[root.index(main_dir) + len(main_dir):len(root)]
                 dbfs_path = f"{dst}/{base_dir_name}/{target_dir}/{filename}"
-                contents = open(os.path.join(root, filename), "rb")
-                logger.info(
-                    f"local_path={os.path.join(root, filename)} "
-                    f"dbfs_path={dst}/{base_dir_name}/{target_dir}/{filename}"
-                )
-                self._ws.dbfs.upload(dbfs_path, contents, overwrite=True)
+                local_file_path = os.path.join(root, filename)
+                try:
+                    with open(local_file_path, "rb") as contents:
+                        self._ws.dbfs.upload(dbfs_path, contents, overwrite=True)
+                    logger.info(f"✓ Uploaded: {local_file_path} → {dbfs_path}")
+                    file_count += 1
+                except Exception as e:
+                    logger.error(f"✗ FAILED to upload {local_file_path} → {dbfs_path}: {e}")
+                    error_count += 1
+        logger.info(f"DBFS copy complete: {file_count} files uploaded, {error_count} errors")
 
     def create_uc_volume(self, uc_catalog_name, dlt_meta_schema):
         try:
