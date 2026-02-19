@@ -820,16 +820,21 @@ class DLTMeta:
 
     def update_ws_onboarding_paths(self, cmd: OnboardCommand):
         """Create onboarding file for cloudfiles as source."""
+        # Support both {placeholder} and <PLACEHOLDER> formats
         string_subs = {
-            "{uc_volume_path}": f"{cmd.uc_volume_path}/dltmeta_conf/",
-            "{uc_catalog_name}": cmd.uc_catalog_name,
-            "{landing_schema}": cmd.landing_schema,
-            "{refinery_schema}": cmd.refinery_schema,
+            "{uc_volume_path}": f"{cmd.uc_volume_path}dltmeta_conf/",
+            "{uc_catalog_name}": cmd.uc_catalog_name if cmd.uc_catalog_name else "",
+            "{landing_schema}": cmd.landing_schema if cmd.landing_schema else "",
+            "{refinery_schema}": cmd.refinery_schema if cmd.refinery_schema else "",
+            "{treasury_schema}": cmd.treasury_schema if cmd.treasury_schema else "",
+            "<CATALOG>": cmd.uc_catalog_name if cmd.uc_catalog_name else "",
+            "<LANDING_SCHEMA>": cmd.landing_schema if cmd.landing_schema else "",
+            "<REFINERY_SCHEMA>": cmd.refinery_schema if cmd.refinery_schema else "",
+            "<TREASURY_SCHEMA>": cmd.treasury_schema if cmd.treasury_schema else "",
         }
         with open(f"{cmd.onboarding_file_path}") as f:
             onboard_json = f.read()
             for key, val in string_subs.items():
-                val = "" if val is None else val  # Ensure val is a string
                 onboard_json = onboard_json.replace(key, val)
         onboarding_filename = os.path.basename(cmd.onboarding_file_path)
         updated_ob_file_path = cmd.onboarding_file_path.replace(onboarding_filename, "onboarding.json")
