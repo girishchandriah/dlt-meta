@@ -241,6 +241,13 @@ class DLTMeta:
             self.create_uc_schema(cmd.uc_catalog_name, cmd.dlt_meta_schema)
             cmd.uc_volume_path = self.create_uc_volume(cmd.uc_catalog_name, cmd.dlt_meta_schema)
             self.update_ws_onboarding_paths(cmd)
+            # Upload the specific onboarding.json file to the correct location
+            onboarding_json_filename = os.path.basename(cmd.onboarding_file_path)
+            onboarding_json_uc_path = f"{cmd.uc_volume_path}dltmeta_conf/{onboarding_json_filename}".replace("//", "/")
+            with open(cmd.onboarding_file_path, "rb") as onboarding_json_file:
+                self._ws.files.upload(file_path=onboarding_json_uc_path, contents=onboarding_json_file, overwrite=True)
+            logger.info(f"Uploaded onboarding file to {onboarding_json_uc_path}")
+            # Also copy all other files from the directory
             self.copy_to_uc_volume(cmd.onboarding_files_dir_path, cmd.uc_volume_path + "/dltmeta_conf/")
             logger.info(f"uploading to  {cmd.uc_volume_path}/dltmeta_conf complete!!!")
         else:
