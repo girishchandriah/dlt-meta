@@ -1,0 +1,91 @@
+transformation_id: pfocusdb_sales_ord_tran_3
+transformation_name: Sales Order Transaction Refinery Transformation
+description: "Step 2: Complex transformation from landing to refinery with business logic for DSN sales order transactions"
+sql_query: | 
+    with a as (select * from pfocusst_dsn_st_trans_dl_dlt where sales_ord_id is not null),
+            tmp as (
+              select d.system,  d._account,d.acctdate,d.trnum,d.vaxevid,d.tdate,d.vflag,d.vdate,d.vcode,d.void_optype,d.last_batch_id,d.last_run_id,
+                  case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.tran_amt end as tran_amt,d.void_used_opr_cd,d.mimic_flg,
+                  case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.tickets_purchased_qty end as tickets_purchased_qty,
+              case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.trans_face_val_amt end as trans_face_val_amt,
+              case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.trans_service_charge_amt end as trans_service_charge_amt,
+              case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.trans_service_tax_amt end as trans_service_tax_amt,
+              case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.trans_service_tax_2_amt end as trans_service_tax_2_amt,
+              case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.trans_set_tax_amt end as trans_set_tax_amt,
+              case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.trans_zone_charge_amt end as trans_zone_charge_amt,
+              case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.trans_fac_fee_amt end as trans_fac_fee_amt,
+              case when d.vdate = sales_ord_tran.sales_ord_tran_dt then 0 else sales_ord_tran.trans_exch_fee_amt end as trans_exch_fee_amt,
+              d.tkt_transfer_sent_flg as tkt_transfer_sent_flg,
+              d.tkt_transfer_rcvd_flg as tkt_transfer_rcvd_flg,
+              d.tkt_transfer_surrender_flg as tkt_transfer_surrender_flg,
+              initcap(lower(d.resale_status_nm)) as resale_status_nm
+              from a d join {treasury_catalog}.{treasury_database}.pfocusdb_sales_ord_tran_dlt sales_ord_tran
+                  on trim(upper(sales_ord_tran.host_sys_cd)) =  trim(upper(d.system ))
+                  and sales_ord_tran.host_vax_acct_num =  d._account
+                  and sales_ord_tran.host_acct_create_dt = d.acctdate
+                  and sales_ord_tran.event_id = d.vaxevid
+                  and sales_ord_tran.sales_ord_tran_id = d.trnum
+                  and sales_ord_tran.sales_ord_tran_dt  =  d.tdate
+                  and trim(upper(sales_ord_tran.tran_void_flg)) = 'F'
+                  and trim(upper(d.vflag)) = 'T')
+                  select
+                  tmp.void_optype as ovrrd_void_opr_type_cd     ,
+                  tmp.vdate as tran_void_dt     ,
+                  tmp.trans_face_val_amt  as trans_face_val_amt   ,
+                  tmp.trans_zone_charge_amt  as trans_zone_charge_amt   ,
+                  sales_ord_tran.ovrrd_tran_opr_type_cd     ,
+                  tmp.vcode as void_opr_cd     ,
+                  tmp.tkt_transfer_rcvd_flg as tkt_transfer_rcvd_flg    ,
+                  tmp.tkt_transfer_sent_flg  as tkt_transfer_sent_flg   ,
+                  sales_ord_tran.src_event_id     ,
+                  sales_ord_tran.tran_opr_id     ,
+                  sales_ord_tran.print_opr_id     ,
+                  sales_ord_tran.sales_ord_trans_lcl_dttm     ,
+                  tmp.trans_fac_fee_amt as trans_fac_fee_amt    ,
+                  null as last_run_id     ,
+                  tmp.tickets_purchased_qty as tickets_purchased_qty     ,
+                  tmp.tran_amt  as tran_amt   ,
+                  sales_ord_tran.expected_pmt_method_type_cd     ,
+                  tmp.vflag  as tran_void_flg   ,
+                  sales_ord_tran.event_id_src_sys_cd     ,
+                  sales_ord_tran.acct_mode_cd     ,
+                  sales_ord_tran.sales_ord_tran_dt     ,
+                  tmp.void_used_opr_cd   as void_used_opr_cd  ,
+                  sales_ord_tran.ovrrd_print_opr_type_cd     ,
+                  sales_ord_tran.upsell_flg     ,
+                  null as last_batch_id     ,
+                  sales_ord_tran.tkt_type_cnt     ,
+                  sales_ord_tran.sales_ord_id     ,
+                  sales_ord_tran.init_run_id     ,
+                  sales_ord_tran.dlvry_flg     ,
+                  sales_ord_tran.void_opr_id     ,
+                  tmp.mimic_flg   as mimic_flg  ,
+                  sales_ord_tran.host_sys_cd     ,
+                  tmp.tkt_transfer_surrender_flg as tkt_transfer_surrender_flg    ,
+                  tmp.resale_status_nm,
+                  sales_ord_tran.price_level_nm     ,
+                  sales_ord_tran.host_acct_create_dt     ,
+                  sales_ord_tran.print_flg     ,
+                  sales_ord_tran.expected_pmt_method_type_id     ,
+                  sales_ord_tran.sales_ord_tran_id     ,
+                  sales_ord_tran.print_opr_cd     ,
+                  tmp.trans_exch_fee_amt as trans_exch_fee_amt    ,
+                  sales_ord_tran.price_level_id     ,
+                  sales_ord_tran.event_id     ,
+                  sales_ord_tran.tran_opr_cd     ,
+                  tmp.trans_service_tax_2_amt  as trans_service_tax_2_amt   ,
+                  sales_ord_tran.host_vax_acct_num     ,
+                  sales_ord_tran.print_dt     ,
+                  tmp.trans_service_charge_amt  as trans_service_charge_amt   ,
+                  tmp.trans_service_tax_amt   as trans_service_tax_amt  ,
+                  tmp.trans_set_tax_amt as trans_set_tax_amt from {treasury_catalog}.{treasury_database}.pfocusdb_sales_ord_tran_dlt sales_ord_tran
+                  join
+                  tmp
+                  on
+                          trim(upper(sales_ord_tran.host_sys_cd)) =  trim(upper(tmp.system))
+                  and     sales_ord_tran.host_vax_acct_num =  tmp._account
+                  and     sales_ord_tran.host_acct_create_dt = tmp.acctdate
+                  and     sales_ord_tran.event_id = tmp.vaxevid
+                  and     sales_ord_tran.sales_ord_tran_id = tmp.trnum
+                  and     sales_ord_tran.sales_ord_tran_dt = tmp.tdate
+                  and     trim(upper(sales_ord_tran.tran_void_flg)) = 'F'
