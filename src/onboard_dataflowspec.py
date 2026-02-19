@@ -36,20 +36,43 @@ class OnboardDataflowspec:
         self.onboard_file_type = None
 
     def __initialize_paths(self, uc_enabled):
+        # Remove refinery and treasury params from landing dict
         if "refinery_dataflowspec_table" in self.landing_dict_obj:
             del self.landing_dict_obj["refinery_dataflowspec_table"]
         if "refinery_dataflowspec_path" in self.landing_dict_obj:
             del self.landing_dict_obj["refinery_dataflowspec_path"]
+        if "treasury_dataflowspec_table" in self.landing_dict_obj:
+            del self.landing_dict_obj["treasury_dataflowspec_table"]
+        if "treasury_dataflowspec_path" in self.landing_dict_obj:
+            del self.landing_dict_obj["treasury_dataflowspec_path"]
 
+        # Remove landing and treasury params from refinery dict
         if "landing_dataflowspec_table" in self.refinery_dict_obj:
             del self.refinery_dict_obj["landing_dataflowspec_table"]
         if "landing_dataflowspec_path" in self.refinery_dict_obj:
             del self.refinery_dict_obj["landing_dataflowspec_path"]
+        if "treasury_dataflowspec_table" in self.refinery_dict_obj:
+            del self.refinery_dict_obj["treasury_dataflowspec_table"]
+        if "treasury_dataflowspec_path" in self.refinery_dict_obj:
+            del self.refinery_dict_obj["treasury_dataflowspec_path"]
+
+        # Remove landing and refinery params from treasury dict
+        if "landing_dataflowspec_table" in self.treasury_dict_obj:
+            del self.treasury_dict_obj["landing_dataflowspec_table"]
+        if "landing_dataflowspec_path" in self.treasury_dict_obj:
+            del self.treasury_dict_obj["landing_dataflowspec_path"]
+        if "refinery_dataflowspec_table" in self.treasury_dict_obj:
+            del self.treasury_dict_obj["refinery_dataflowspec_table"]
+        if "refinery_dataflowspec_path" in self.treasury_dict_obj:
+            del self.treasury_dict_obj["refinery_dataflowspec_path"]
+
         if uc_enabled:
             if "landing_dataflowspec_path" in self.landing_dict_obj:
                 del self.landing_dict_obj["landing_dataflowspec_path"]
             if "refinery_dataflowspec_path" in self.refinery_dict_obj:
                 del self.refinery_dict_obj["refinery_dataflowspec_path"]
+            if "treasury_dataflowspec_path" in self.treasury_dict_obj:
+                del self.treasury_dict_obj["treasury_dataflowspec_path"]
 
     @staticmethod
     def __validate_dict_attributes(attributes, dict_obj):
@@ -108,6 +131,12 @@ class OnboardDataflowspec:
             "version",
             "overwrite",
         ]
+        # Remove treasury parameters if present (not supported yet in this method)
+        if "treasury_dataflowspec_table" in self.dict_obj:
+            del self.dict_obj["treasury_dataflowspec_table"]
+        if "treasury_dataflowspec_path" in self.dict_obj:
+            del self.dict_obj["treasury_dataflowspec_path"]
+
         if self.uc_enabled:
             if "landing_dataflowspec_path" in self.dict_obj:
                 del self.dict_obj["landing_dataflowspec_path"]

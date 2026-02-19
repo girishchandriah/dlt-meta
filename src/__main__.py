@@ -16,6 +16,8 @@ arguments = [
     "--landing_dataflowspec_path",
     "--refinery_dataflowspec_table",
     "--refinery_dataflowspec_path",
+    "--treasury_dataflowspec_table",
+    "--treasury_dataflowspec_path",
     "--import_author",
     "--version",
     "--overwrite",
@@ -50,17 +52,23 @@ def onboard_dataflowspecs(args):
             del onboarding_args_dict['landing_dataflowspec_path']
         if 'refinery_dataflowspec_path' in onboarding_args_dict:
             del onboarding_args_dict['refinery_dataflowspec_path']
+        if 'treasury_dataflowspec_path' in onboarding_args_dict:
+            del onboarding_args_dict['treasury_dataflowspec_path']
     spark = SparkSession.builder.appName("DLT-META_Onboarding_Task").getOrCreate()
     onboard_obj = OnboardDataflowspec(spark, onboarding_args_dict, uc_enabled=uc_enabled)
 
-    if onboard_layer.lower() == "landing_refinery":
+    if onboard_layer.lower() in ["landing_refinery_treasury", "landing_refinery"]:
         onboard_obj.onboard_dataflow_specs()
     elif onboard_layer.lower() == "landing":
         onboard_obj.onboard_landing_dataflow_spec()
     elif onboard_layer.lower() == "refinery":
         onboard_obj.onboard_refinery_dataflow_spec()
+    elif onboard_layer.lower() == "treasury":
+        # Treasury onboarding is not yet fully implemented
+        # For now, this will raise an error
+        raise NotImplementedError("Treasury-only onboarding is not yet implemented. Use 'landing_refinery_treasury' to onboard all layers including treasury.")
     else:
-        raise Exception("onboard_layer argument missing in commandline")
+        raise Exception("onboard_layer must be one of: landing, refinery, landing_refinery, treasury, landing_refinery_treasury")
 
 
 if __name__ == "__main__":
