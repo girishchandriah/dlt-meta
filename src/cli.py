@@ -360,20 +360,38 @@ class DLTMeta:
             named_parameters["onboarding_file_path"] = f"{cmd.uc_volume_path}/dltmeta_conf/{cmd.onboarding_file_path}"
         else:
             named_parameters["onboarding_file_path"] = f"{cmd.dbfs_path}/dltmeta_conf/{cmd.onboarding_file_path}"
-        if cmd.onboard_layer == "landing_refinery":
+
+        # Handle landing_refinery_treasury layer
+        if cmd.onboard_layer == "landing_refinery_treasury":
+            named_parameters["landing_dataflowspec_table"] = cmd.landing_dataflowspec_table
+            named_parameters["refinery_dataflowspec_table"] = cmd.refinery_dataflowspec_table
+            named_parameters["treasury_dataflowspec_table"] = cmd.treasury_dataflowspec_table
+            if not cmd.uc_enabled:
+                named_parameters["landing_dataflowspec_path"] = cmd.landing_dataflowspec_path
+                named_parameters["refinery_dataflowspec_path"] = cmd.refinery_dataflowspec_path
+                named_parameters["treasury_dataflowspec_path"] = cmd.treasury_dataflowspec_path
+        # Handle landing_refinery layer
+        elif cmd.onboard_layer == "landing_refinery":
             named_parameters["landing_dataflowspec_table"] = cmd.landing_dataflowspec_table
             named_parameters["refinery_dataflowspec_table"] = cmd.refinery_dataflowspec_table
             if not cmd.uc_enabled:
                 named_parameters["landing_dataflowspec_path"] = cmd.landing_dataflowspec_path
                 named_parameters["refinery_dataflowspec_path"] = cmd.refinery_dataflowspec_path
+        # Handle landing layer
         elif cmd.onboard_layer == "landing":
             named_parameters["landing_dataflowspec_table"] = cmd.landing_dataflowspec_table
             if not cmd.uc_enabled:
                 named_parameters["landing_dataflowspec_path"] = cmd.landing_dataflowspec_path
+        # Handle refinery layer
         elif cmd.onboard_layer == "refinery":
             named_parameters["refinery_dataflowspec_table"] = cmd.refinery_dataflowspec_table
             if not cmd.uc_enabled:
                 named_parameters["refinery_dataflowspec_path"] = cmd.refinery_dataflowspec_path
+        # Handle treasury layer
+        elif cmd.onboard_layer == "treasury":
+            named_parameters["treasury_dataflowspec_table"] = cmd.treasury_dataflowspec_table
+            if not cmd.uc_enabled:
+                named_parameters["treasury_dataflowspec_path"] = cmd.treasury_dataflowspec_path
         return named_parameters
 
     def _install_folder(self):
@@ -691,10 +709,15 @@ class DLTMeta:
             if not onboard_cmd_dict["uc_enabled"]:
                 onboard_cmd_dict["landing_dataflowspec_path"] = f'{self._install_folder()}/landing_dataflow_specs'
 
-        if onboard_cmd_dict["onboard_layer"] == "refinery" or onboard_cmd_dict["onboard_layer"] == "landing_refinery":
+        if onboard_cmd_dict["onboard_layer"] in ["refinery", "landing_refinery", "landing_refinery_treasury"]:
             onboard_cmd_dict["refinery_dataflowspec_table"] = form_data.get('refinery_table', 'refinery_dataflowspec')
             if not onboard_cmd_dict["uc_enabled"]:
                 onboard_cmd_dict["refinery_dataflowspec_path"] = f'{self._install_folder()}/refinery_dataflow_specs'
+
+        if onboard_cmd_dict["onboard_layer"] in ["treasury", "landing_refinery_treasury"]:
+            onboard_cmd_dict["treasury_dataflowspec_table"] = form_data.get('treasury_table', 'treasury_dataflowspec')
+            if not onboard_cmd_dict["uc_enabled"]:
+                onboard_cmd_dict["treasury_dataflowspec_path"] = f'{self._install_folder()}/treasury_dataflow_specs'
 
         # Get other settings
         onboard_cmd_dict["overwrite"] = True if form_data.get('overwrite') == "1" else False
