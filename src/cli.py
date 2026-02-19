@@ -356,10 +356,12 @@ class DLTMeta:
             "env": cmd.env,
             "uc_enabled": "True" if cmd.uc_enabled else "False"
         }
+        # Extract just the filename from the onboarding_file_path
+        onboarding_filename = os.path.basename(cmd.onboarding_file_path)
         if cmd.uc_enabled:
-            named_parameters["onboarding_file_path"] = f"{cmd.uc_volume_path}/dltmeta_conf/{cmd.onboarding_file_path}"
+            named_parameters["onboarding_file_path"] = f"{cmd.uc_volume_path}/dltmeta_conf/{onboarding_filename}"
         else:
-            named_parameters["onboarding_file_path"] = f"{cmd.dbfs_path}/dltmeta_conf/{cmd.onboarding_file_path}"
+            named_parameters["onboarding_file_path"] = f"{cmd.dbfs_path}/dltmeta_conf/{onboarding_filename}"
 
         # Handle landing_refinery_treasury layer
         if cmd.onboard_layer == "landing_refinery_treasury":
