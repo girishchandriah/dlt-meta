@@ -460,12 +460,13 @@ def handle_onboard_form():
     def is_executable(path):
         return os.path.isfile(path) and os.access(path, os.X_OK)
 
-    if is_executable(venv_python3):
-        python_cmd = venv_python3
-        venv_python_used = venv_python3
-    elif is_executable(venv_python):
+    # Prefer python over python3 (python is more reliable in venvs with pip)
+    if is_executable(venv_python):
         python_cmd = venv_python
         venv_python_used = venv_python
+    elif is_executable(venv_python3):
+        python_cmd = venv_python3
+        venv_python_used = venv_python3
     else:
         python_cmd = "python3"
         venv_python_used = None
@@ -664,12 +665,13 @@ def run_demo():
     def is_executable(path):
         return os.path.isfile(path) and os.access(path, os.X_OK)
 
-    if is_executable(venv_python3):
-        python_cmd = venv_python3
-        venv_python_used = venv_python3
-    elif is_executable(venv_python):
+    # Prefer python over python3 (python is more reliable in venvs with pip)
+    if is_executable(venv_python):
         python_cmd = venv_python
         venv_python_used = venv_python
+    elif is_executable(venv_python3):
+        python_cmd = venv_python3
+        venv_python_used = venv_python3
     else:
         python_cmd = "python3"
         venv_python_used = None
