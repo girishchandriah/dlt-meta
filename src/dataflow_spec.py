@@ -411,6 +411,12 @@ class DataflowSpecUtils:
             json_apply_changes_from_snapshot,
             DataflowSpecUtils.additional_apply_changes_from_snapshot_columns
         )
+
+        # Handle legacy field name: stored_as_scd_type -> scd_type
+        if "stored_as_scd_type" in json_apply_changes_from_snapshot and "scd_type" not in json_apply_changes_from_snapshot:
+            json_apply_changes_from_snapshot["scd_type"] = json_apply_changes_from_snapshot.pop("stored_as_scd_type")
+            logger.info("Normalized 'stored_as_scd_type' to 'scd_type' for backwards compatibility")
+
         return ApplyChangesFromSnapshot(**json_apply_changes_from_snapshot)
 
     @staticmethod
@@ -444,6 +450,12 @@ class DataflowSpecUtils:
             json_cdc_apply_changes,
             DataflowSpecUtils.additional_cdc_apply_changes_columns
         )
+
+        # Handle legacy field name: stored_as_scd_type -> scd_type
+        if "stored_as_scd_type" in json_cdc_apply_changes and "scd_type" not in json_cdc_apply_changes:
+            json_cdc_apply_changes["scd_type"] = json_cdc_apply_changes.pop("stored_as_scd_type")
+            logger.info("Normalized 'stored_as_scd_type' to 'scd_type' for backwards compatibility")
+
         return CDCApplyChanges(**json_cdc_apply_changes)
 
     @staticmethod
