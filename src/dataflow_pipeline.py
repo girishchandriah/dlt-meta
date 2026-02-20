@@ -104,11 +104,13 @@ class DataflowPipeline:
             self.cdcApplyChanges = DataflowSpecUtils.get_cdc_apply_changes(self.dataflowSpec.cdcApplyChanges)
         else:
             self.cdcApplyChanges = None
-        if dataflow_spec.appendFlows:
+        # appendFlows only exists for Landing and Refinery layers
+        if hasattr(dataflow_spec, 'appendFlows') and dataflow_spec.appendFlows:
             self.appendFlows = DataflowSpecUtils.get_append_flows(dataflow_spec.appendFlows)
         else:
             self.appendFlows = None
-        if dataflow_spec.applyChangesFromSnapshot:
+        # applyChangesFromSnapshot only exists for Landing and Refinery layers
+        if hasattr(dataflow_spec, 'applyChangesFromSnapshot') and dataflow_spec.applyChangesFromSnapshot:
             self.applyChangesFromSnapshot = DataflowSpecUtils.get_apply_changes_from_snapshot(
                 self.dataflowSpec.applyChangesFromSnapshot
             )
@@ -176,8 +178,8 @@ class DataflowPipeline:
             self.read_append_flows()
 
     def read_append_flows(self):
-        if self.dataflowSpec.appendFlows:
-            append_flows_schema_map = self.dataflowSpec.appendFlowsSchemas
+        if hasattr(self.dataflowSpec, 'appendFlows') and self.dataflowSpec.appendFlows:
+            append_flows_schema_map = getattr(self.dataflowSpec, 'appendFlowsSchemas', None)
             for append_flow in self.appendFlows:
                 flow_schema = None
                 if append_flows_schema_map:
@@ -309,7 +311,7 @@ class DataflowPipeline:
 
     def _handle_append_flows(self):
         """Handle append flows if they exist."""
-        if self.dataflowSpec.appendFlows:
+        if hasattr(self.dataflowSpec, 'appendFlows') and self.dataflowSpec.appendFlows:
             self.write_append_flows()
 
     def write_landing(self):
@@ -747,7 +749,7 @@ class DataflowPipeline:
                 dlt.table(
                     self.write_to_delta,
                     name=f"{quarantine_table_name}",
-                    table_properties=self.dataflowSpec.quarantineTableProperties,
+                    table_properties=getattr(self.dataflowSpec, 'quarantineTableProperties', None),
                     partition_cols=q_partition_cols,
                     cluster_by=q_cluster_by,
                     path=quarantine_path,
