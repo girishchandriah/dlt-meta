@@ -43,7 +43,6 @@
       ],
       "sequence_by": "tdate",
       "scd_type": "1",
-      "stored_as_scd_type": "1",
       "apply_as_deletes": "processed is true",
       "except_column_list": [
         "_rescued_data"
