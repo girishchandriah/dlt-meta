@@ -1041,6 +1041,11 @@ class DataflowPipeline:
                 quarantine_input_view_name = quarantine_input_view_name.replace(".", "").lower()
             else:
                 logger.info("quarantine_input_view_name set to None")
+            # Skip dataflowSpecs with None database (flows without this layer)
+            if dataflowSpec.targetDetails.get('database') is None:
+                logger.info(f"Skipping {layer} layer for dataFlowId={dataflowSpec.dataFlowId} (no database configured)")
+                continue
+
             target_cl = dataflowSpec.targetDetails.get('catalog', None)
             target_cl_str = f"{target_cl}_" if target_cl is not None else ''
             target_db = dataflowSpec.targetDetails['database'].replace('.', '_')
