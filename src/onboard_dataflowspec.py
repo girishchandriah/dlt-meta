@@ -495,8 +495,12 @@ class OnboardDataflowspec:
 
     def __validate_mandatory_fields(self, onboarding_row, mandatory_fields):
         for field in mandatory_fields:
-            if not onboarding_row[field]:
+            # Allow None/null values for optional layers (e.g., flows without landing layer)
+            # Only raise exception if field is missing or is an empty string (but not None)
+            if field not in onboarding_row:
                 raise Exception(f"Missing field={field} in onboarding_row")
+            if onboarding_row[field] == "":
+                raise Exception(f"Missing field={field} in onboarding_row (empty string)")
 
     def __get_landing_dataflow_spec_dataframe(self, onboarding_df, env):
         """Get landing dataflow spec method will convert onboarding dataframe to landing Dataflowspec dataframe.
