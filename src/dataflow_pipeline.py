@@ -831,6 +831,12 @@ class DataflowPipeline:
             sequence_cols = [col.strip() for col in sequence_by.split(',')]
             sequence_by = struct(*sequence_cols)  # Use struct() from pyspark.sql.functions
 
+        # Auto-generate unique flow name if not provided (needed when multiple flows target same table)
+        flow_name = cdc_apply_changes.flow_name
+        if not flow_name:
+            data_flow_id = str(self.dataflowSpec.dataFlowId).replace('-', '_').replace('.', '_')
+            flow_name = f"{target_table_name}_{data_flow_id}_flow"
+
         dlt.create_auto_cdc_flow(
             target=target_table,
             source=self.view_name,
@@ -845,7 +851,7 @@ class DataflowPipeline:
             stored_as_scd_type=cdc_apply_changes.scd_type,
             track_history_column_list=cdc_apply_changes.track_history_column_list,
             track_history_except_column_list=cdc_apply_changes.track_history_except_column_list,
-            flow_name=cdc_apply_changes.flow_name,
+            flow_name=flow_name,
             once=cdc_apply_changes.once,
             ignore_null_updates_column_list=cdc_apply_changes.ignore_null_updates_column_list,
             ignore_null_updates_except_column_list=cdc_apply_changes.ignore_null_updates_except_column_list
