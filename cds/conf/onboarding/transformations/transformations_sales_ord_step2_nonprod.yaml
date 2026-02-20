@@ -4,7 +4,7 @@ description: "Step 2: Complex transformation from landing to refinery with busin
 sql_query: |
   with tgt as (
     select distinct sales_ord_id
-    from {treasury_catalog}.{treasury_database}.pfocusdb_sales_ord_tran_dlt
+    from dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord_tran_dlt
   ),
   unprocessed_records as (
     select
@@ -55,7 +55,7 @@ sql_query: |
       up.init_run_id,
       if(tgt.sales_ord_id is not null, true, false) as processed,
       up.landing_insert_ts
-    from {refinery_catalog}.{refinery_database}.pfocusst_dsn_st_trans_dl_dlt up
+    from dataservices_nonprod.refinery_nonprod.pfocusst_dsn_st_trans_dl_dlt up
     left join tgt on up.sales_ord_id = tgt.sales_ord_id
   ),
   q_extract as (
@@ -72,7 +72,7 @@ sql_query: |
       end as facility_fee,
       if(
         substring(f.accountdate FROM -2) >
-        (select int(value) from {refinery_catalog}.{refinery_database}.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
         add_months(to_date(f.accountdate,'M/d/yy'), -1200),
         to_date(f.accountdate, 'M/d/yy')
       ) as acctdate,
@@ -168,21 +168,21 @@ sql_query: |
       q_extract.trnum,
       if(
         substring(q_extract.tdate FROM -2) >
-        (select int(value) from {refinery_catalog}.{refinery_database}.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
         add_months(to_date(q_extract.tdate,'M/d/yy'), -1200),
         to_date(q_extract.tdate, 'M/d/yy')
       ) as tdate,
       q_extract.tcode,
       if(
         substring(q_extract.pdate FROM -2) >
-        (select int(value) from {refinery_catalog}.{refinery_database}.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
         add_months(to_date(q_extract.pdate,'M/d/yy'), -1200),
         to_date(q_extract.pdate, 'M/d/yy')
       ) as pdate,
       q_extract.pcode,
       if(
         substring(q_extract.vdate FROM -2) >
-        (select int(value) from {refinery_catalog}.{refinery_database}.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
         add_months(to_date(q_extract.vdate,'M/d/yy'), -1200),
         to_date(q_extract.vdate, 'M/d/yy')
       ) as vdate,
@@ -299,7 +299,7 @@ sql_query: |
       a.void_optype, a.acmode, a.pcode, a.tdate, a.tcode, a.init_run_id,
       a.processed, a.landing_insert_ts
     from all_unprocessed a
-    left join {treasury_catalog}.{treasury_database}.pfocusdb_sales_ord o
+    left join dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord o
       on trim(upper(a.system)) = trim(upper(o.host_sys_cd))
       and a.acctdate = o.host_acct_create_dt
       and a._account = o.host_vax_acct_num

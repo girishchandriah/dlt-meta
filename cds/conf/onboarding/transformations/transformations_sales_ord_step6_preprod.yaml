@@ -6,7 +6,7 @@ sql_query: |
                                 host_sys_cd,
                                 cast(host_acct_create_dt as date) host_acct_create_dt,
                                 event_id,is_upsell,is_delivery, update_ts
-                                from {refinery_catalog}.{refinery_database}.pfocusst_mdb_st_order_events_0208_dl
+                                from dataservices_preprod.refinery_nonprod.pfocusst_mdb_st_order_events_0208_dl
                                 where cast(src_last_mod_ts as date) >= current_date()-7),
             update_2 as (
                         select  a.sales_ord_id,
@@ -59,7 +59,7 @@ sql_query: |
                         a.expected_pmt_method_type_id,
                         a.expected_pmt_method_type_cd,
                         a.tkt_type_cnt
-                        from {treasury_catalog}.{treasury_database}.pfocusdb_sales_ord_tran_dlt a
+                        from dataservices_preprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord_tran_dlt a
                         inner join src on
                         a.event_id = src.event_id and
                         trim(a.host_sys_cd) = trim(src.host_sys_cd) and

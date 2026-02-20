@@ -1,0 +1,307 @@
+target_table: pfocusst_dsn_st_trans_dl_dlt
+transformation_name: Sales Order Transaction Refinery Transformation
+description: "Step 2: Complex transformation from landing to refinery with business logic for DSN sales order transactions"
+sql_query: |
+  with tgt as (
+    select distinct sales_ord_id
+    from dataservices_treasury.treasury_teradata_base.pfocusdb_sales_ord_tran_dlt
+  ),
+  unprocessed_records as (
+    select
+      up.pfocusst_dsn_st_trans_dl_id,
+      up.sales_ord_id,
+      up.system,
+      up.facility_fee,
+      up.acctdate,
+      up.mimic_flg,
+      up.tkt_transfer_rcvd_flg,
+      up.tkt_transfer_surrender_flg,
+      up.firstqual,
+      up.distance_charge,
+      up.tkt_transfer_sent_flg,
+      up.resale_status_nm,
+      up.print_optype,
+      up.serchg,
+      up.expmopname,
+      up.vcode,
+      up.exchangee_fee,
+      up.last_run_id,
+      up.ser_chrg_tax,
+      up.tsale,
+      up.vflag,
+      up.vdate,
+      up._account,
+      up.set_tax,
+      up.vaxevid,
+      up.price_level,
+      up.tqty,
+      up.seatloc,
+      up.ticket_value,
+      up.ser_chrg_tax2,
+      up.expmop,
+      up.trnum,
+      up.num_stypes,
+      up.void_used_opr_cd,
+      up.pflag,
+      up.price_level_name,
+      up.tran_optype,
+      up.last_batch_id,
+      up.pdate,
+      up.void_optype,
+      up.acmode,
+      up.pcode,
+      up.tdate,
+      up.tcode,
+      up.init_run_id,
+      if(tgt.sales_ord_id is not null, true, false) as processed,
+      up.landing_insert_ts
+    from dataservices_refinery.refinery.pfocusst_dsn_st_trans_dl_dlt up
+    left join tgt on up.sales_ord_id = tgt.sales_ord_id
+  ),
+  q_extract as (
+    select
+      case
+        when f.system = 'AU1' then 'AUS'
+        when f.system = 'LON' then 'UK1'
+        when f.system = 'INT' then 'UK2'
+        else upper(f.system)
+      end as system,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0.0000
+        else f.facilityfee
+      end as facility_fee,
+      if(
+        substring(f.accountdate FROM -2) >
+        (select int(value) from dataservices_refinery.refinery.jobs_configurations where key='century_year'),
+        add_months(to_date(f.accountdate,'M/d/yy'), -1200),
+        to_date(f.accountdate, 'M/d/yy')
+      ) as acctdate,
+      f.mimic_flag as mimic_flg,
+      if(f.tkt_transfer_rcvd_flg=1, 'Y', if(f.tkt_transfer_rcvd_flg=0, 'N', null)) as tkt_transfer_rcvd_flg,
+      if(f.tkt_transfer_surrender_flg=1, 'Y', if(f.tkt_transfer_surrender_flg=0, 'N', null)) as tkt_transfer_surrender_flg,
+      f.firstqualifier as firstqual,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0.0000
+        else f.zonecharge
+      end as distance_charge,
+      if(f.tkt_transfer_sent_flg=1, 'Y', if(f.tkt_transfer_sent_flg=0, 'N', null)) as tkt_transfer_sent_flg,
+      if(f.resale_status_nm=1, 'Available',
+        if(f.resale_status_nm=2, 'Purchased',
+          if(f.resale_status_nm=3, 'Sold', null))) as resale_status_nm,
+      null as print_optype,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0.0000
+        else f.servicedollars
+      end as serchg,
+      f.exmopname as expmopname,
+      case
+        when (trim(upper(f.voidflag)) = 'F' and (f.voidopcode IS null or f.voidopcode = '')) then 'NOT APPLICABLE'
+        when (f.voidopcode IS null or f.voidopcode = '') then 'UNKNOWN'
+        else f.voidopcode
+      end as vcode,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0.0000
+        else f.exchangefee
+      end as exchangee_fee,
+      null as last_run_id,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0.0000
+        else f.servicetax
+      end as ser_chrg_tax,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0.0000
+        else f.totaldollars
+      end as tsale,
+      trim(upper(f.voidflag)) as vflag,
+      f.voiddate as vdate,
+      f.vaxacct as _account,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0.0000
+        else f.tax
+      end as set_tax,
+      f.vaxevid as vaxevid,
+      f.pricelevelid as price_level,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0
+        else f.tickets
+      end as tqty,
+      f.firstqualifier as seatloc,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0.0000
+        else f.ticketvalue
+      end as ticket_value,
+      case
+        when trim(upper(f.voidflag)) = 'T' then 0.0000
+        else f.servicetax2
+      end as ser_chrg_tax2,
+      f.exmopid as expmop,
+      f.transnum as trnum,
+      f.seattypes as num_stypes,
+      f.vcode_used as void_used_opr_cd,
+      f.printflag as pflag,
+      f.pricelevelname as price_level_name,
+      null as tran_optype,
+      null as last_batch_id,
+      f.printdate as pdate,
+      null as void_optype,
+      f.acmode as acmode,
+      case
+        when (upper(trim(f.printflag)) = 'F' and (f.printopcode IS null or f.printopcode = '')) then 'NOT APPLICABLE'
+        when (f.printopcode IS null or f.printopcode = '') then 'UNKNOWN'
+        else f.printopcode
+      end as pcode,
+      f.transdate as tdate,
+      case
+        when f.transopcode IS null or f.transopcode = '' then 'UNKNOWN'
+        else f.transopcode
+      end as tcode,
+      null as init_run_id,
+      f.insert_ts as landing_insert_ts
+    from source_204 f
+  ),
+  query as (
+    select
+      q_extract.system,
+      q_extract._account,
+      q_extract.acctdate,
+      q_extract.vaxevid,
+      q_extract.trnum,
+      if(
+        substring(q_extract.tdate FROM -2) >
+        (select int(value) from dataservices_refinery.refinery.jobs_configurations where key='century_year'),
+        add_months(to_date(q_extract.tdate,'M/d/yy'), -1200),
+        to_date(q_extract.tdate, 'M/d/yy')
+      ) as tdate,
+      q_extract.tcode,
+      if(
+        substring(q_extract.pdate FROM -2) >
+        (select int(value) from dataservices_refinery.refinery.jobs_configurations where key='century_year'),
+        add_months(to_date(q_extract.pdate,'M/d/yy'), -1200),
+        to_date(q_extract.pdate, 'M/d/yy')
+      ) as pdate,
+      q_extract.pcode,
+      if(
+        substring(q_extract.vdate FROM -2) >
+        (select int(value) from dataservices_refinery.refinery.jobs_configurations where key='century_year'),
+        add_months(to_date(q_extract.vdate,'M/d/yy'), -1200),
+        to_date(q_extract.vdate, 'M/d/yy')
+      ) as vdate,
+      q_extract.vcode,
+      q_extract.pflag,
+      q_extract.vflag,
+      q_extract.tqty,
+      q_extract.num_stypes,
+      q_extract.tsale,
+      q_extract.ticket_value,
+      q_extract.serchg,
+      q_extract.facility_fee,
+      q_extract.exchangee_fee,
+      q_extract.expmop,
+      q_extract.expmopname,
+      q_extract.firstqual,
+      q_extract.seatloc,
+      q_extract.acmode,
+      q_extract.price_level,
+      q_extract.price_level_name,
+      q_extract.set_tax,
+      q_extract.distance_charge,
+      q_extract.ser_chrg_tax,
+      q_extract.ser_chrg_tax2,
+      q_extract.last_batch_id,
+      q_extract.init_run_id,
+      q_extract.last_run_id,
+      q_extract.mimic_flg,
+      q_extract.tkt_transfer_rcvd_flg,
+      q_extract.tkt_transfer_surrender_flg,
+      q_extract.tkt_transfer_sent_flg,
+      q_extract.resale_status_nm,
+      q_extract.void_used_opr_cd,
+      cdsudf_getoptype(q_extract.vcode, q_extract.system, q_extract.acctdate) as void_optype,
+      cdsudf_getoptype(q_extract.tcode, q_extract.system, q_extract.acctdate) as tran_optype,
+      cdsudf_getoptype(q_extract.pcode, q_extract.system, q_extract.acctdate) as print_optype,
+      q_extract.landing_insert_ts
+    from q_extract
+  ),
+  new_records as (
+    select
+      uuid() as pfocusst_dsn_st_trans_dl_id,
+      system, facility_fee, acctdate, mimic_flg, tkt_transfer_rcvd_flg,
+      tkt_transfer_surrender_flg, firstqual, distance_charge, tkt_transfer_sent_flg,
+      resale_status_nm, print_optype, serchg, expmopname, vcode, exchangee_fee,
+      last_run_id, ser_chrg_tax, tsale, vflag, vdate, _account, set_tax,
+      vaxevid, price_level, tqty, seatloc, ticket_value, ser_chrg_tax2,
+      expmop, trnum, num_stypes, void_used_opr_cd, pflag, price_level_name,
+      tran_optype, last_batch_id, pdate, void_optype, acmode, pcode, tdate,
+      tcode, init_run_id, landing_insert_ts
+    from query
+  ),
+  all_unprocessed as (
+    select
+      if(s.system is not null, s.pfocusst_dsn_st_trans_dl_id, ex.pfocusst_dsn_st_trans_dl_id) as pfocusst_dsn_st_trans_dl_id,
+      if(s.system is not null, s.system, ex.system) as system,
+      if(s.system is not null, s.facility_fee, ex.facility_fee) as facility_fee,
+      if(s.system is not null, s.acctdate, ex.acctdate) as acctdate,
+      if(s.system is not null, s.mimic_flg, ex.mimic_flg) as mimic_flg,
+      if(s.system is not null, s.tkt_transfer_rcvd_flg, ex.tkt_transfer_rcvd_flg) as tkt_transfer_rcvd_flg,
+      if(s.system is not null, s.tkt_transfer_surrender_flg, ex.tkt_transfer_surrender_flg) as tkt_transfer_surrender_flg,
+      if(s.system is not null, s.firstqual, ex.firstqual) as firstqual,
+      if(s.system is not null, s.distance_charge, ex.distance_charge) as distance_charge,
+      if(s.system is not null, s.tkt_transfer_sent_flg, ex.tkt_transfer_sent_flg) as tkt_transfer_sent_flg,
+      if(s.system is not null, s.resale_status_nm, ex.resale_status_nm) as resale_status_nm,
+      if(s.system is not null, s.print_optype, ex.print_optype) as print_optype,
+      if(s.system is not null, s.serchg, ex.serchg) as serchg,
+      if(s.system is not null, s.expmopname, ex.expmopname) as expmopname,
+      if(s.system is not null, s.vcode, ex.vcode) as vcode,
+      if(s.system is not null, s.exchangee_fee, ex.exchangee_fee) as exchangee_fee,
+      if(s.system is not null, s.last_run_id, ex.last_run_id) as last_run_id,
+      if(s.system is not null, s.ser_chrg_tax, ex.ser_chrg_tax) as ser_chrg_tax,
+      if(s.system is not null, s.tsale, ex.tsale) as tsale,
+      if(s.system is not null, s.vflag, ex.vflag) as vflag,
+      if(s.system is not null, s.vdate, ex.vdate) as vdate,
+      if(s.system is not null, s._account, ex._account) as _account,
+      if(s.system is not null, s.set_tax, ex.set_tax) as set_tax,
+      if(s.system is not null, s.vaxevid, ex.vaxevid) as vaxevid,
+      if(s.system is not null, s.price_level, ex.price_level) as price_level,
+      if(s.system is not null, s.tqty, ex.tqty) as tqty,
+      if(s.system is not null, s.seatloc, ex.seatloc) as seatloc,
+      if(s.system is not null, s.ticket_value, ex.ticket_value) as ticket_value,
+      if(s.system is not null, s.ser_chrg_tax2, ex.ser_chrg_tax2) as ser_chrg_tax2,
+      if(s.system is not null, s.expmop, ex.expmop) as expmop,
+      if(s.system is not null, s.trnum, ex.trnum) as trnum,
+      if(s.system is not null, s.num_stypes, ex.num_stypes) as num_stypes,
+      if(s.system is not null, s.void_used_opr_cd, ex.void_used_opr_cd) as void_used_opr_cd,
+      if(s.system is not null, s.pflag, ex.pflag) as pflag,
+      if(s.system is not null, s.price_level_name, ex.price_level_name) as price_level_name,
+      if(s.system is not null, s.tran_optype, ex.tran_optype) as tran_optype,
+      if(s.system is not null, s.last_batch_id, ex.last_batch_id) as last_batch_id,
+      if(s.system is not null, s.pdate, ex.pdate) as pdate,
+      if(s.system is not null, s.void_optype, ex.void_optype) as void_optype,
+      if(s.system is not null, s.acmode, ex.acmode) as acmode,
+      if(s.system is not null, s.pcode, ex.pcode) as pcode,
+      if(s.system is not null, s.tdate, ex.tdate) as tdate,
+      if(s.system is not null, s.tcode, ex.tcode) as tcode,
+      if(s.system is not null, s.init_run_id, ex.init_run_id) as init_run_id,
+      if(s.system is not null, false, ex.processed) as processed,
+      if(s.system is not null, s.landing_insert_ts, ex.landing_insert_ts) as landing_insert_ts
+    from new_records s
+    full outer join unprocessed_records ex on s.pfocusst_dsn_st_trans_dl_id = ex.pfocusst_dsn_st_trans_dl_id
+  ),
+  all_new_records as (
+    select
+      a.pfocusst_dsn_st_trans_dl_id, o.sales_ord_id, a.system, a.facility_fee,
+      a.acctdate, a.mimic_flg, a.tkt_transfer_rcvd_flg, a.tkt_transfer_surrender_flg,
+      a.firstqual, a.distance_charge, a.tkt_transfer_sent_flg, a.resale_status_nm,
+      a.print_optype, a.serchg, a.expmopname, a.vcode, a.exchangee_fee,
+      a.last_run_id, a.ser_chrg_tax, a.tsale, a.vflag, a.vdate, a._account,
+      a.set_tax, a.vaxevid, a.price_level, a.tqty, a.seatloc, a.ticket_value,
+      a.ser_chrg_tax2, a.expmop, a.trnum, a.num_stypes, a.void_used_opr_cd,
+      a.pflag, a.price_level_name, a.tran_optype, a.last_batch_id, a.pdate,
+      a.void_optype, a.acmode, a.pcode, a.tdate, a.tcode, a.init_run_id,
+      a.processed, a.landing_insert_ts
+    from all_unprocessed a
+    left join dataservices_treasury.treasury_teradata_base.pfocusdb_sales_ord o
+      on trim(upper(a.system)) = trim(upper(o.host_sys_cd))
+      and a.acctdate = o.host_acct_create_dt
+      and a._account = o.host_vax_acct_num
+  )
+  select * from all_new_records

@@ -440,6 +440,32 @@ class DataflowPipeline:
             if not database:
                 database = self.spark.conf.get(f"{layer_name}.database", None)
 
+            # Final fallback: use environment-based naming convention for cross-layer references
+            # This handles cases where refinery SQL references treasury tables
+            if not catalog or not database:
+                # Try to infer from current dataflowspec's naming pattern
+                current_target = self.dataflowSpec.targetDetails if hasattr(self.dataflowSpec, 'targetDetails') else {}
+                if current_target:
+                    current_catalog = current_target.get('catalog', '')
+                    current_database = current_target.get('database', '')
+
+                    # For nonprod/preprod/prod environments, apply common naming patterns
+                    if 'nonprod' in str(current_catalog).lower() or 'nonprod' in str(current_database).lower():
+                        if not catalog and layer_name == 'treasury':
+                            catalog = 'dataservices_nonprod'
+                        if not database and layer_name == 'treasury':
+                            database = 'treasury_teradata_base_nonprod'
+                    elif 'preprod' in str(current_catalog).lower() or 'preprod' in str(current_database).lower():
+                        if not catalog and layer_name == 'treasury':
+                            catalog = 'dataservices_preprod'
+                        if not database and layer_name == 'treasury':
+                            database = 'treasury_teradata_base_preprod'
+                    elif 'prod' in str(current_catalog).lower() or 'prod' in str(current_database).lower():
+                        if not catalog and layer_name == 'treasury':
+                            catalog = 'dataservices_treasury'
+                        if not database and layer_name == 'treasury':
+                            database = 'treasury_teradata_base'
+
             return catalog, database
 
         # Get landing catalog/database

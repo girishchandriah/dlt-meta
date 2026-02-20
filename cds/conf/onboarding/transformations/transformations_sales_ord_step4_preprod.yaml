@@ -53,7 +53,7 @@ sql_query: |
             s.landing_insert_ts
             from
             tmp s
-            left outer join {treasury_catalog}.{treasury_database}.pfocusdb_sales_ord_tran_dlt t
+            left outer join dataservices_preprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord_tran_dlt t
             on trim(upper(s.system)) = trim(upper(t.host_sys_cd))
             and s._account = t.host_vax_acct_num
             and s.acctdate = t.host_acct_create_dt

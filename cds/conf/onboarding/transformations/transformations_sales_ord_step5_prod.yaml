@@ -1,0 +1,170 @@
+target_table: pfocusdb_sales_ord_tran_dlt
+transformation_name: Sales Order Transaction Refinery Transformation
+description: "Step 5: Complex transformation from landing to refinery with business logic for DSN sales order transactions"
+sql_query: |
+            with tmp as (
+                    select  st.vaxevid as event_id,
+                    st.trnum as sales_ord_tran_id,  st.sales_ord_id ,
+                    st.acctdate  as host_acct_create_dt,  st._account as host_vax_acct_num ,
+                    st.system as host_sys_cd,  st.tdate as sales_ord_tran_dt,
+                    coalesce(st.tsale,0) as tran_amt,  st.acmode as acct_mode_cd,
+                    coalesce(st.tqty,0) as tickets_purchased_qty ,  st.pflag as print_flg,
+                    st.pdate as print_dt,  st.vflag as tran_void_flg,
+                    st.vdate as tran_void_dt,  st.pcode as print_opr_cd,
+                    st.tcode as tran_opr_cd,  st.vcode as void_opr_cd,
+                    coalesce(st.ticket_value,0) as trans_face_val_amt ,
+                    coalesce(st.serchg,0) as trans_service_charge_amt,
+                    coalesce(st.ser_chrg_tax,0) as trans_service_tax_amt,
+                    coalesce(st.ser_chrg_tax2,0) as trans_service_tax_2_amt,
+                    coalesce(st.set_tax,0) as trans_set_tax_amt,
+                    coalesce(st.distance_charge,0) as trans_zone_charge_amt,
+                    coalesce(st.facility_fee,0) as trans_fac_fee_amt,
+                    coalesce(st.exchangee_fee,0) as trans_exch_fee_amt ,
+                    st.last_batch_id ,  st.last_run_id,
+                    st.void_optype as ovrrd_void_opr_type_cd,
+                    st.tran_optype as ovrrd_tran_opr_type_cd,
+                    st.print_optype as ovrrd_print_opr_type_cd,
+                    st.tkt_transfer_sent_flg as tkt_transfer_sent_flg,
+                    st.tkt_transfer_rcvd_flg as tkt_transfer_rcvd_flg,
+                    st.tkt_transfer_surrender_flg as tkt_transfer_surrender_flg,
+                    initcap(lower(st.resale_status_nm)) as resale_status_nm,
+                    st.void_used_opr_cd, st.mimic_flg,
+                    st.expmop, st.expmopname,st.num_stypes,
+                    st.price_level, st.price_level_name
+                    from source_204-batch-update st
+                    where
+                    coalesce(upper(trim(st.vflag)),'' ) <>'T'
+                    and update_ts = (select max(update_ts) from source_204-batch-update)
+                    qualify row_number() over (
+                    partition by st.system,st.vaxevid,st._account,st.trnum,st.acctdate,st.tdate
+                    order by coalesce(st.landing_insert_ts,st.pdate,st.update_ts) desc) = 1
+                    ),
+            update_1 as (select
+                    z.sales_ord_id  ,
+                    z.host_sys_cd  ,
+                    z.host_vax_acct_num  ,
+                    z.host_acct_create_dt  ,
+                    z.event_id  ,
+                    z.event_id_src_sys_cd  ,
+                    z.src_event_id  ,
+                    z.sales_ord_tran_id  ,
+                    z.sales_ord_tran_dt  ,
+                    z.sales_ord_trans_lcl_dttm  ,
+                    tmp.tran_amt  as tran_amt,
+                    tmp.acct_mode_cd  as acct_mode_cd,
+                    tmp.tickets_purchased_qty as tickets_purchased_qty  ,
+                    tmp.print_flg   as  print_flg,
+                    tmp.print_dt    as print_dt,
+                    tmp.tran_void_flg  as tran_void_flg,
+                    tmp.tran_void_dt as tran_void_dt  ,
+                    z.print_opr_id  ,
+                    tmp.print_opr_cd   as  print_opr_cd,
+                    tmp.ovrrd_print_opr_type_cd  as ovrrd_print_opr_type_cd ,
+                    z.tran_opr_id  ,
+                    tmp.tran_opr_cd  as tran_opr_cd,
+                    tmp.ovrrd_tran_opr_type_cd   as ovrrd_tran_opr_type_cd ,
+                    z.void_opr_id  ,
+                    tmp.void_opr_cd as void_opr_cd  ,
+                    tmp.ovrrd_void_opr_type_cd as ovrrd_void_opr_type_cd  ,
+                    tmp.trans_face_val_amt  as trans_face_val_amt,
+                    tmp.trans_service_charge_amt  as trans_service_charge_amt,
+                    tmp.trans_service_tax_amt   as trans_service_tax_amt ,
+                    tmp.trans_service_tax_2_amt  as trans_service_tax_2_amt,
+                    tmp.trans_set_tax_amt as trans_set_tax_amt,
+                    tmp.trans_zone_charge_amt  as trans_zone_charge_amt,
+                    tmp.trans_fac_fee_amt as trans_fac_fee_amt ,
+                    tmp.trans_exch_fee_amt as trans_exch_fee_amt ,
+                    null as last_run_id  ,
+                    null as init_run_id,
+                    null as last_batch_id,
+                    tmp.tkt_transfer_sent_flg  as tkt_transfer_sent_flg,
+                    tmp.tkt_transfer_rcvd_flg as tkt_transfer_rcvd_flg ,
+                    tmp.tkt_transfer_surrender_flg as tkt_transfer_surrender_flg ,
+                    initcap(lower(tmp.resale_status_nm))  as resale_status_nm,
+                    z.upsell_flg  ,
+                    z.dlvry_flg  ,
+                    tmp.void_used_opr_cd   as void_used_opr_cd ,
+                    z.mimic_flg   as mimic_flg ,
+                    tmp.price_level as price_level_id,
+                    tmp.price_level_name as price_level_nm  ,
+                    tmp.expmop as expected_pmt_method_type_id  ,
+                    tmp.expmopname as expected_pmt_method_type_cd  ,
+                    tmp.num_stypes as tkt_type_cnt
+                    from dataservices_treasury.treasury_teradata_base.pfocusdb_sales_ord_tran_dlt z
+                    join
+                    tmp
+                    on tmp.sales_ord_id = z.sales_ord_id
+                    and  tmp.event_id = z.event_id
+                    and  tmp.sales_ord_tran_id = z.sales_ord_tran_id
+                    and  tmp.sales_ord_tran_dt = z.sales_ord_tran_dt  ),
+                    insert_1 as (select
+                    z.sales_ord_id ,
+                    z.system as host_sys_cd,
+                    z._account as host_vax_acct_num ,
+                    z.acctdate  as host_acct_create_dt,
+                    z.vaxevid as event_id,
+                    'EVENTDB' as event_id_src_sys_cd,
+                    null as src_event_id,
+                    z.trnum as sales_ord_tran_id,
+                    z.tdate as sales_ord_tran_dt,
+                    null as sales_ord_trans_lcl_dttm,
+                    coalesce(z.tsale,0) as tran_amt,
+                    z.acmode as acct_mode_cd,
+                    coalesce(z.tqty,0) as tickets_purchased_qty ,
+                    z.pflag as print_flg,
+                    z.pdate as print_dt,
+                    z.vflag as tran_void_flg,
+                    z.vdate as tran_void_dt,
+                    null as print_opr_id,
+                    z.pcode as print_opr_cd,
+                    z.print_optype as ovrrd_print_opr_type_cd,
+                    null as tran_opr_id,
+                    z.tcode as tran_opr_cd,
+                    z.tran_optype as ovrrd_tran_opr_type_cd,
+                    null as void_opr_id,
+                    z.vcode as void_opr_cd,
+                    z.void_optype as ovrrd_void_opr_type_cd,
+                    coalesce(z.ticket_value,0) as trans_face_val_amt ,
+                    coalesce(z.serchg,0) as trans_service_charge_amt,
+                    coalesce(z.ser_chrg_tax,0) as trans_service_tax_amt,
+                    coalesce(z.ser_chrg_tax2,0) as trans_service_tax_2_amt,
+                    coalesce(z.set_tax,0) as trans_set_tax_amt,
+                    coalesce(z.distance_charge,0) as trans_zone_charge_amt,
+                    coalesce(z.facility_fee,0) as trans_fac_fee_amt,
+                    coalesce(z.exchangee_fee,0) as trans_exch_fee_amt ,
+                    null as last_batch_id,
+                    null as init_run_id,
+                    null as last_run_id,
+                    z.tkt_transfer_sent_flg,
+                    z.tkt_transfer_rcvd_flg,
+                    z.tkt_transfer_surrender_flg,
+                    initcap(lower(z.resale_status_nm)),
+                    null as upsell_flg,
+                    null as dlvry_flg,
+                    z.void_used_opr_cd,z.mimic_flg,
+                    z.price_level as price_level_id,
+                    z.price_level_name as price_level_nm,
+                    z.expmop as expected_pmt_method_type_id,
+                    z.expmopname as expected_pmt_method_type_cd,
+                    z.num_stypes as tkt_type_cnt
+                    from source_204-batch-update z
+                    where not exists (select 1 from dataservices_treasury.treasury_teradata_base.pfocusdb_sales_ord_tran_dlt t
+                    where trim(upper(t.host_sys_cd)) = trim(upper(z.system))
+                    and t.host_vax_acct_num =  z._account
+                    and t.host_acct_create_dt = z.acctdate
+                    and t.event_id = z.vaxevid
+                    and t.sales_ord_tran_id = z.trnum
+                    and t.sales_ord_tran_dt = z.tdate )
+                    qualify row_number() over (
+                        partition by z.vaxevid,
+                        z._account,
+                        z.trnum,
+                        z.acctdate,
+                        z.tdate
+                        order by
+                          coalesce(z.landing_insert_ts,z.pdate, z.update_ts) desc
+                      ) = 1
+                    )
+                select * from update_1
+                union
+                select * from insert_1
