@@ -270,28 +270,37 @@ def start_command():
 
             # Create virtual environment
             print("Step 4: Creating virtual environment...")
-            subprocess.run(f"python3 -m venv {dlt_meta_path}/.venv --copies", shell=True, check=True, capture_output=True, text=True)
+            # Use 'python' not 'python3' as the container may not have python3 command
+            subprocess.run(f"python -m venv {dlt_meta_path}/.venv", shell=True, check=True, capture_output=True, text=True)
             print("✓ Virtual environment created")
 
-            # Determine which python exists in venv (python or python3)
-            venv_python_cmd = f"{dlt_meta_path}/.venv/bin/python3" if os.path.exists(f"{dlt_meta_path}/.venv/bin/python3") else f"{dlt_meta_path}/.venv/bin/python"
-            print(f"Using venv python: {venv_python_cmd}")
+            # Verify pip exists in venv
+            venv_pip = f"{dlt_meta_path}/.venv/bin/pip"
+            venv_python = f"{dlt_meta_path}/.venv/bin/python"
 
-            # Install dependencies using python -m pip (more reliable than calling pip directly)
+            if not os.path.exists(venv_pip):
+                print("⚠ Warning: pip not found in venv, attempting to install it...")
+                # Try to bootstrap pip
+                subprocess.run(f"curl https://bootstrap.pypa.io/get-pip.py | {venv_python}",
+                             shell=True, capture_output=True, text=True)
+
+            print(f"Using venv pip: {venv_pip}")
+
+            # Install dependencies using pip directly (not python -m pip)
             print("Step 5: Installing dependencies...")
-            subprocess.run(f"{venv_python_cmd} -m pip install --upgrade pip", shell=True, check=True, capture_output=True, text=True)
+            subprocess.run(f"{venv_pip} install --upgrade pip", shell=True, check=True, capture_output=True, text=True)
             print("✓ Pip upgraded")
 
-            subprocess.run(f"{venv_python_cmd} -m pip install databricks-sdk", shell=True, check=True, capture_output=True, text=True)
+            subprocess.run(f"{venv_pip} install databricks-sdk", shell=True, check=True, capture_output=True, text=True)
             print("✓ databricks-sdk installed")
 
-            subprocess.run(f"{venv_python_cmd} -m pip install PyYAML", shell=True, check=True, capture_output=True, text=True)
+            subprocess.run(f"{venv_pip} install PyYAML", shell=True, check=True, capture_output=True, text=True)
             print("✓ PyYAML installed")
 
             # Verify installations
             print("Step 6: Verifying installations...")
             verify_result = subprocess.run(
-                f"{venv_python_cmd} -c 'import databricks.sdk; import yaml; print(\"All packages verified\")'",
+                f"{venv_python} -c 'import databricks.sdk; import yaml; print(\"All packages verified\")'",
                 shell=True, capture_output=True, text=True
             )
             if verify_result.returncode == 0:
