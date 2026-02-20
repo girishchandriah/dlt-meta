@@ -303,10 +303,9 @@ class OnboardDataflowspec:
 
         # Create a DataFrame from the SQL queries map and join it
         # This works on serverless compute (no broadcast needed)
-        from pyspark.sql.types import StructType, StructField, StringType as ST
         sql_map_schema = StructType([
-            StructField("dataFlowId", ST(), False),
-            StructField("sqlQuery", ST(), False)
+            StructField("dataFlowId", StringType(), False),
+            StructField("sqlQuery", StringType(), False)
         ])
         sql_map_data = [(flow_id, sql_query) for flow_id, sql_query in sql_queries_map.items()]
         sql_map_df = self.spark.createDataFrame(sql_map_data, schema=sql_map_schema)
@@ -463,10 +462,9 @@ class OnboardDataflowspec:
 
         # Create a DataFrame from the SQL queries map and join it
         # This works on serverless compute (no broadcast needed)
-        from pyspark.sql.types import StructType, StructField, StringType as ST
         sql_map_schema = StructType([
-            StructField("dataFlowId", ST(), False),
-            StructField("sqlQuery", ST(), False)
+            StructField("dataFlowId", StringType(), False),
+            StructField("sqlQuery", StringType(), False)
         ])
         sql_map_data = [(flow_id, sql_query) for flow_id, sql_query in sql_queries_map.items()]
         sql_map_df = self.spark.createDataFrame(sql_map_data, schema=sql_map_schema)
