@@ -252,6 +252,17 @@ class DLTMeta:
 
     def onboard(self, cmd: OnboardCommand):
         """launch the onboarding job."""
+        # Validate onboarding file exists
+        if not os.path.exists(cmd.onboarding_file_path):
+            error_msg = f"Onboarding file not found: {cmd.onboarding_file_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
+
+        # Log file info for debugging
+        logger.info(f"Onboarding file path: {cmd.onboarding_file_path}")
+        logger.info(f"File exists: {os.path.exists(cmd.onboarding_file_path)}")
+        logger.info(f"File size: {os.path.getsize(cmd.onboarding_file_path)} bytes")
+
         onboarding_filename = os.path.basename(cmd.onboarding_file_path)
         ob_file = open(cmd.onboarding_file_path, "rb")
 
@@ -850,15 +861,48 @@ class DLTMeta:
             "<REFINERY_SCHEMA>": cmd.refinery_schema if cmd.refinery_schema else "",
             "<TREASURY_SCHEMA>": cmd.treasury_schema if cmd.treasury_schema else "",
         }
-        with open(f"{cmd.onboarding_file_path}") as f:
-            onboard_json = f.read()
+        try:
+            # Read the onboarding file
+            logger.info(f"Reading onboarding file from: {cmd.onboarding_file_path}")
+            with open(f"{cmd.onboarding_file_path}") as f:
+                onboard_json = f.read()
+
+            # Log file size and beginning
+            logger.info(f"File size: {len(onboard_json)} bytes")
+            logger.info(f"File starts with: {onboard_json[:100]}")
+
+            # Perform placeholder replacements
             for key, val in string_subs.items():
-                onboard_json = onboard_json.replace(key, val)
-        onboarding_filename = os.path.basename(cmd.onboarding_file_path)
-        updated_ob_file_path = cmd.onboarding_file_path.replace(onboarding_filename, "onboarding.json")
-        with open(updated_ob_file_path, "w") as onboarding_file:
-            json.dump(json.loads(onboard_json), onboarding_file, indent=4)
-        cmd.onboarding_file_path = updated_ob_file_path
+                if key in onboard_json:
+                    onboard_json = onboard_json.replace(key, val)
+                    logger.info(f"Replaced placeholder {key} with {val}")
+
+            # Validate it's valid JSON before writing
+            try:
+                parsed_json = json.loads(onboard_json)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in onboarding file after placeholder replacement!")
+                logger.error(f"Error at position {e.pos}: {e.msg}")
+                logger.error(f"Content around error: {onboard_json[max(0, e.pos-50):min(len(onboard_json), e.pos+50)]}")
+                raise ValueError(f"Onboarding file is not valid JSON: {e.msg} at position {e.pos}")
+
+            # Write the updated file
+            onboarding_filename = os.path.basename(cmd.onboarding_file_path)
+            updated_ob_file_path = cmd.onboarding_file_path.replace(onboarding_filename, "onboarding.json")
+            logger.info(f"Writing updated onboarding file to: {updated_ob_file_path}")
+
+            with open(updated_ob_file_path, "w") as onboarding_file:
+                json.dump(parsed_json, onboarding_file, indent=4)
+
+            cmd.onboarding_file_path = updated_ob_file_path
+            logger.info(f"Successfully created updated onboarding file")
+
+        except FileNotFoundError as e:
+            logger.error(f"Onboarding file not found: {cmd.onboarding_file_path}")
+            raise ValueError(f"Onboarding file not found: {cmd.onboarding_file_path}")
+        except Exception as e:
+            logger.error(f"Failed to process onboarding file: {str(e)}")
+            raise
 
 
 def onboard(dltmeta: DLTMeta):

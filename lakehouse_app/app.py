@@ -207,9 +207,14 @@ def index():
 
 @app.route('/start_command', methods=['POST'])
 def start_command():
-    print("here")
-    data = request.json
-    command = data.get('command')
+    try:
+        print("here")
+        data = request.json
+        command = data.get('command')
+    except Exception as e:
+        error_msg = f"Failed to parse request: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({'error': error_msg, 'status': 'failed'}), 400
 
     if command == 'setup':
         try:
@@ -283,12 +288,12 @@ def start_command():
             error_msg = f"Setup failed at command: {e.cmd}\nError: {e.stderr}\nOutput: {e.stdout}"
             logger.error(error_msg)
             print(error_msg)
-            raise
+            return jsonify({'command_id': None, 'error': error_msg, 'status': 'failed'})
         except Exception as e:
             error_msg = f"Setup failed: {str(e)}"
             logger.error(error_msg)
             print(error_msg)
-            raise
+            return jsonify({'command_id': None, 'error': error_msg, 'status': 'failed'})
 
         # Update environment variables after successful setup
         os.environ['PYTHONPATH'] = dlt_meta_path
@@ -305,13 +310,14 @@ def start_command():
             print(f"✓ Installation verified - src directory and venv found")
             # List key directories
             try:
-                import os
                 dirs = os.listdir(dlt_meta_path)
                 print(f"✓ Directories in dlt-meta: {', '.join(dirs)}")
             except:
                 pass
+            return jsonify({'command_id': 'setup_complete', 'status': 'success', 'message': 'Setup completed successfully'})
         else:
             print(f"⚠ Warning: Installation may be incomplete")
+            return jsonify({'command_id': 'setup_incomplete', 'status': 'warning', 'message': 'Installation may be incomplete - src or venv not found'})
 
     else:
         command_id = str(time.time())
@@ -322,7 +328,7 @@ def start_command():
         thread = threading.Thread(target=run_command, args=(command_id, command, input_queue, output_queue))
         thread.daemon = True
         thread.start()
-    return jsonify({'command_id': command_id})
+        return jsonify({'command_id': command_id})
 
 
 @app.route('/send_input', methods=['POST'])
