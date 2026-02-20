@@ -19,7 +19,7 @@ sql_query: |
               d.tkt_transfer_rcvd_flg as tkt_transfer_rcvd_flg,
               d.tkt_transfer_surrender_flg as tkt_transfer_surrender_flg,
               initcap(lower(d.resale_status_nm)) as resale_status_nm
-              from a d join dataservices_treasury.treasury_teradata_base.pfocusdb_sales_ord_tran_dlt sales_ord_tran
+              from a d join pfocusdb_sales_ord_tran_dlt sales_ord_tran
                   on trim(upper(sales_ord_tran.host_sys_cd)) =  trim(upper(d.system ))
                   and sales_ord_tran.host_vax_acct_num =  d._account
                   and sales_ord_tran.host_acct_create_dt = d.acctdate
@@ -78,7 +78,7 @@ sql_query: |
                   sales_ord_tran.print_dt     ,
                   tmp.trans_service_charge_amt  as trans_service_charge_amt   ,
                   tmp.trans_service_tax_amt   as trans_service_tax_amt  ,
-                  tmp.trans_set_tax_amt as trans_set_tax_amt from dataservices_treasury.treasury_teradata_base.pfocusdb_sales_ord_tran_dlt sales_ord_tran
+                  tmp.trans_set_tax_amt as trans_set_tax_amt from pfocusdb_sales_ord_tran_dlt sales_ord_tran
                   join
                   tmp
                   on

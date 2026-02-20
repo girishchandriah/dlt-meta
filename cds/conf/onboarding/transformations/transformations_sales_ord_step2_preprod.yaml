@@ -4,7 +4,7 @@ description: "Step 2: Complex transformation from landing to refinery with busin
 sql_query: |
   with tgt as (
     select distinct sales_ord_id
-    from dataservices_preprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord_tran_dlt
+    from pfocusdb_sales_ord_tran_dlt
   ),
   unprocessed_records as (
     select
