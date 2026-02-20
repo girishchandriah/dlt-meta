@@ -195,6 +195,7 @@
       "keys": [
         "sales_ord_id,event_id,sales_ord_tran_id,sales_ord_tran_dt"
       ],
+      "sequence_by": "sales_ord_tran_dt",
       "scd_type": "1",
       "except_column_list": []
     },
