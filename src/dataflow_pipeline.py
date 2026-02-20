@@ -1036,8 +1036,10 @@ class DataflowPipeline:
                 qrt_cl_str = f"{qrt_cl}_" if qrt_cl is not None else ''
                 qrt_db = dataflowSpec.quarantineTargetDetails['database'].replace('.', '_')
                 qrt_table = dataflowSpec.quarantineTargetDetails['table']
+                # Include dataFlowId to make quarantine view name unique
+                qrt_data_flow_id = str(dataflowSpec.dataFlowId).replace('-', '_').replace('.', '_')
                 quarantine_input_view_name = (
-                    f"{qrt_cl_str}{qrt_db}_{qrt_table}"
+                    f"{qrt_cl_str}{qrt_db}_{qrt_table}_{qrt_data_flow_id}"
                     f"_{layer}_quarantine_inputview"
                 )
                 quarantine_input_view_name = quarantine_input_view_name.replace(".", "").lower()
@@ -1052,7 +1054,9 @@ class DataflowPipeline:
             target_cl_str = f"{target_cl}_" if target_cl is not None else ''
             target_db = dataflowSpec.targetDetails['database'].replace('.', '_')
             target_table = dataflowSpec.targetDetails['table']
-            target_view_name = f"{target_cl_str}{target_db}_{target_table}_{layer}_inputview"
+            # Include dataFlowId to make view name unique when multiple flows target the same table
+            data_flow_id = str(dataflowSpec.dataFlowId).replace('-', '_').replace('.', '_')
+            target_view_name = f"{target_cl_str}{target_db}_{target_table}_{data_flow_id}_{layer}_inputview"
             target_view_name = target_view_name.replace(".", "").lower()
             dlt_data_flow = DataflowPipeline(
                 spark,
