@@ -222,15 +222,20 @@ def start_command():
             current_directory = os.getcwd()
 
         command_id = None
-        dlt_meta_path = f"{current_directory}/dlt-meta"
+
+        # Always use /app/python/source_code as base directory to avoid nested directories
+        source_code_dir = "/app/python/source_code"
+        dlt_meta_path = f"{source_code_dir}/dlt-meta"
 
         # Always perform setup - remove old installation if exists and setup fresh
         commands = [
             "pip install databricks-cli",
-            # Remove existing dlt-meta directory if it exists
+            # Create source_code directory if it doesn't exist
+            f"mkdir -p {source_code_dir}",
+            # Remove existing dlt-meta directory and any nested duplicates
             f"rm -rf {dlt_meta_path}",
-            # Clone fresh copy
-            f"git clone -b 'feature/layer-terminology-update' https://github.com/girishchandriah/dlt-meta.git {dlt_meta_path}",
+            # Change to source_code directory and clone fresh copy
+            f"cd {source_code_dir} && git clone -b 'feature/layer-terminology-update' https://github.com/girishchandriah/dlt-meta.git",
             # Create virtual environment
             f"python -m venv {dlt_meta_path}/.venv",
             # Install dependencies using the venv python
@@ -258,12 +263,13 @@ def start_command():
 
         # Update environment variables after successful setup
         os.environ['PYTHONPATH'] = dlt_meta_path
-        os.environ['HOME'] = current_directory
+        os.environ['HOME'] = source_code_dir
         os.environ['VIRTUAL_ENV'] = f"{dlt_meta_path}/.venv"
         os.environ['PATH'] = f"{dlt_meta_path}/.venv/bin:{os.environ.get('PATH', '')}"
 
-        print(f"Completed setting up dlt-meta environment")
+        print(f"Completed setting up dlt-meta environment at: {dlt_meta_path}")
         print(f"PYTHONPATH set to: {os.environ['PYTHONPATH']}")
+        print(f"HOME set to: {os.environ['HOME']}")
 
     else:
         command_id = str(time.time())
