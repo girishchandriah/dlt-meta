@@ -573,8 +573,18 @@ def handle_deploy_form():
         json_string = json.dumps(json_data)
 
         # Use virtual environment python if it exists, otherwise fall back to python3
-        venv_python = f"{current_directory}/.venv/bin/python3"
-        python_cmd = venv_python if os.path.exists(venv_python) else "python3"
+        # Check for both python3 and python in venv
+        venv_python3 = f"{current_directory}/.venv/bin/python3"
+        venv_python = f"{current_directory}/.venv/bin/python"
+
+        if os.path.exists(venv_python3):
+            python_cmd = venv_python3
+        elif os.path.exists(venv_python):
+            python_cmd = venv_python
+        else:
+            python_cmd = "python3"
+
+        print(f"DEBUG Deploy: Using python_cmd = {python_cmd}")
 
         result = subprocess.run(f"{python_cmd} {current_directory}/src/cli.py '{json_string}'",
                                 shell=True,
