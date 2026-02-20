@@ -585,6 +585,11 @@ class OnboardDataflowspec:
             # "landing_reader_options",
         ]  # , f"landing_table_path_{env}"
         for onboarding_row in onboarding_rows:
+            # Skip flows without landing layer (null landing_database)
+            if onboarding_row.get(f"landing_database_{env}") is None:
+                logger.info(f"Skipping landing layer for data_flow_id={onboarding_row['data_flow_id']} (no landing_database)")
+                continue
+
             try:
                 self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
             except ValueError:
@@ -1175,6 +1180,11 @@ class OnboardDataflowspec:
         ]  # f"refinery_table_path_{env}",
 
         for onboarding_row in onboarding_rows:
+            # Skip flows without refinery layer (null refinery_database)
+            if onboarding_row.get(f"refinery_database_{env}") is None:
+                logger.info(f"Skipping refinery layer for data_flow_id={onboarding_row['data_flow_id']} (no refinery_database)")
+                continue
+
             try:
                 self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
             except ValueError:
