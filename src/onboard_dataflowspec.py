@@ -255,52 +255,54 @@ class OnboardDataflowspec:
 
         emp_rdd = []
         env = dict_obj["env"]
-        refinery_transformation_json_df = self.spark.createDataFrame(
-            data=emp_rdd, schema=columns
-        )
-        refinery_transformation_json_file = onboarding_df.select(
-            f"refinery_transformation_json_{env}"
-        ).dropDuplicates()
 
-        refinery_transformation_json_files = refinery_transformation_json_file.collect()
-        for row in refinery_transformation_json_files:
-            trans_file_path = row[f"refinery_transformation_json_{env}"]
+        # Process each flow individually with its specific transformation file
+        # This prevents cartesian joins when multiple flows target the same table
+        refinery_flow_rows = refinery_data_flow_spec_df.collect()
+        refinery_final_rows = []
+
+        for flow_row in refinery_flow_rows:
+            flow_df = onboarding_df.filter(f.col("data_flow_id") == flow_row["dataFlowId"])
+            trans_file_row = flow_df.select(f"refinery_transformation_json_{env}").first()
+
+            if not trans_file_row:
+                logger.warning(f"No transformation file found for flow {flow_row['dataFlowId']}")
+                continue
+
+            trans_file_path = trans_file_row[f"refinery_transformation_json_{env}"]
+
             # Skip if transformation file path is None
             if not trans_file_path:
+                logger.warning(f"Null transformation file for flow {flow_row['dataFlowId']}")
                 continue
-            # Check if file is YAML or JSON based on extension
-            if trans_file_path.endswith(('.yaml', '.yml')):
-                # Read YAML file and convert to JSON-like format
-                yaml_content = self.spark.read.text(trans_file_path, wholetext=True).collect()[0]["value"]
-                yaml_data = yaml.safe_load(yaml_content)
-                # Create a single-row dataframe from the YAML data
-                trans_data = [(
-                    yaml_data.get('sql_query', ''),
-                    yaml_data.get('target_partition_cols', []),
-                    yaml_data.get('target_table', '')
-                )]
-                trans_df = self.spark.createDataFrame(trans_data, schema=columns)
-                refinery_transformation_json_df = refinery_transformation_json_df.union(trans_df)
-            else:
-                # Read as JSON
-                refinery_transformation_json_df = refinery_transformation_json_df.union(
-                    self.spark.read.option("multiline", "true")
-                    .schema(columns)
-                    .json(trans_file_path)
-                )
 
-        logger.info(refinery_transformation_json_file)
+            # Read the transformation file (YAML or JSON)
+            try:
+                if trans_file_path.endswith(('.yaml', '.yml')):
+                    # Read YAML file
+                    yaml_content = self.spark.read.text(trans_file_path, wholetext=True).collect()[0]["value"]
+                    yaml_data = yaml.safe_load(yaml_content)
+                    sql_query = yaml_data.get('sql_query', '')
+                else:
+                    # Read JSON file
+                    json_data = self.spark.read.option("multiline", "true").json(trans_file_path).first()
+                    sql_query = json_data['sql_query'] if json_data else ''
 
-        refinery_data_flow_spec_df = refinery_transformation_json_df.join(
-            refinery_data_flow_spec_df,
-            refinery_transformation_json_df.target_table
-            == refinery_data_flow_spec_df.targetDetails["table"],
-        )
-        refinery_dataflow_spec_df = (
-            refinery_data_flow_spec_df.drop("target_table")
-            .drop("target_partition_cols")
-            .withColumnRenamed("sql_query", "sqlQuery")
-        )
+                # Create row with transformation SQL merged with flow spec
+                flow_dict = flow_row.asDict()
+                flow_dict['sqlQuery'] = sql_query
+                refinery_final_rows.append(flow_dict)
+
+            except Exception as e:
+                logger.error(f"Error reading transformation file {trans_file_path} for flow {flow_row['dataFlowId']}: {e}")
+                continue
+
+        # Convert back to dataframe
+        if refinery_final_rows:
+            refinery_dataflow_spec_df = self.spark.createDataFrame(refinery_final_rows)
+        else:
+            logger.warning("No refinery flows were processed successfully")
+            return
 
         refinery_dataflow_spec_df = self.__add_audit_columns(
             refinery_dataflow_spec_df,
@@ -399,52 +401,54 @@ class OnboardDataflowspec:
 
         emp_rdd = []
         env = dict_obj["env"]
-        treasury_transformation_json_df = self.spark.createDataFrame(
-            data=emp_rdd, schema=columns
-        )
-        treasury_transformation_json_file = onboarding_df.select(
-            f"treasury_transformation_json_{env}"
-        ).dropDuplicates()
 
-        treasury_transformation_json_files = treasury_transformation_json_file.collect()
-        for row in treasury_transformation_json_files:
-            trans_file_path = row[f"treasury_transformation_json_{env}"]
+        # Process each flow individually with its specific transformation file
+        # This prevents cartesian joins when multiple flows target the same table
+        treasury_flow_rows = treasury_data_flow_spec_df.collect()
+        treasury_final_rows = []
+
+        for flow_row in treasury_flow_rows:
+            flow_df = onboarding_df.filter(f.col("data_flow_id") == flow_row["dataFlowId"])
+            trans_file_row = flow_df.select(f"treasury_transformation_json_{env}").first()
+
+            if not trans_file_row:
+                logger.warning(f"No transformation file found for flow {flow_row['dataFlowId']}")
+                continue
+
+            trans_file_path = trans_file_row[f"treasury_transformation_json_{env}"]
+
             # Skip if transformation file path is None
             if not trans_file_path:
+                logger.warning(f"Null transformation file for flow {flow_row['dataFlowId']}")
                 continue
-            # Check if file is YAML or JSON based on extension
-            if trans_file_path.endswith(('.yaml', '.yml')):
-                # Read YAML file and convert to JSON-like format
-                yaml_content = self.spark.read.text(trans_file_path, wholetext=True).collect()[0]["value"]
-                yaml_data = yaml.safe_load(yaml_content)
-                # Create a single-row dataframe from the YAML data
-                trans_data = [(
-                    yaml_data.get('sql_query', ''),
-                    yaml_data.get('target_partition_cols', []),
-                    yaml_data.get('target_table', '')
-                )]
-                trans_df = self.spark.createDataFrame(trans_data, schema=columns)
-                treasury_transformation_json_df = treasury_transformation_json_df.union(trans_df)
-            else:
-                # Read as JSON
-                treasury_transformation_json_df = treasury_transformation_json_df.union(
-                    self.spark.read.option("multiline", "true")
-                    .schema(columns)
-                    .json(trans_file_path)
-                )
 
-        logger.info(treasury_transformation_json_file)
+            # Read the transformation file (YAML or JSON)
+            try:
+                if trans_file_path.endswith(('.yaml', '.yml')):
+                    # Read YAML file
+                    yaml_content = self.spark.read.text(trans_file_path, wholetext=True).collect()[0]["value"]
+                    yaml_data = yaml.safe_load(yaml_content)
+                    sql_query = yaml_data.get('sql_query', '')
+                else:
+                    # Read JSON file
+                    json_data = self.spark.read.option("multiline", "true").json(trans_file_path).first()
+                    sql_query = json_data['sql_query'] if json_data else ''
 
-        treasury_data_flow_spec_df = treasury_transformation_json_df.join(
-            treasury_data_flow_spec_df,
-            treasury_transformation_json_df.target_table
-            == treasury_data_flow_spec_df.targetDetails["table"],
-        )
-        treasury_dataflow_spec_df = (
-            treasury_data_flow_spec_df.drop("target_table")
-            .drop("target_partition_cols")
-            .withColumnRenamed("sql_query", "sqlQuery")
-        )
+                # Create row with transformation SQL merged with flow spec
+                flow_dict = flow_row.asDict()
+                flow_dict['sqlQuery'] = sql_query
+                treasury_final_rows.append(flow_dict)
+
+            except Exception as e:
+                logger.error(f"Error reading transformation file {trans_file_path} for flow {flow_row['dataFlowId']}: {e}")
+                continue
+
+        # Convert back to dataframe
+        if treasury_final_rows:
+            treasury_dataflow_spec_df = self.spark.createDataFrame(treasury_final_rows)
+        else:
+            logger.warning("No treasury flows were processed successfully")
+            return
 
         treasury_dataflow_spec_df = self.__add_audit_columns(
             treasury_dataflow_spec_df,
