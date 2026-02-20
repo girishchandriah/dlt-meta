@@ -270,7 +270,7 @@ def start_command():
 
             # Create virtual environment
             print("Step 4: Creating virtual environment...")
-            subprocess.run(f"python -m venv {dlt_meta_path}/.venv", shell=True, check=True, capture_output=True, text=True)
+            subprocess.run(f"python3 -m venv {dlt_meta_path}/.venv", shell=True, check=True, capture_output=True, text=True)
             print("✓ Virtual environment created")
 
             # Install dependencies
@@ -435,7 +435,7 @@ def handle_onboard_form():
     }
 
     json_string = json.dumps(json_data)
-    result = subprocess.run(f"python {current_directory}/src/cli.py '{json_string}'",
+    result = subprocess.run(f"python3 {current_directory}/src/cli.py '{json_string}'",
                             shell=True,
                             capture_output=True,
                             text=True
@@ -506,7 +506,7 @@ def handle_deploy_form():
         }
 
         json_string = json.dumps(json_data)
-        result = subprocess.run(f"python {current_directory}/src/cli.py '{json_string}'",
+        result = subprocess.run(f"python3 {current_directory}/src/cli.py '{json_string}'",
                                 shell=True,
                                 capture_output=True,
                                 text=True
@@ -572,7 +572,7 @@ def run_demo():
     if code_to_run == 'demo_dabs':
 
         # Step 1: Generate Databricks resources
-        subprocess.run(f"python {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
+        subprocess.run(f"python3 {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
                        f"--source=cloudfiles --profile DEFAULT",
                        shell=True,
                        capture_output=True,
@@ -606,7 +606,7 @@ def run_demo():
                                 )
         print(f"execution of pipeline completed: {result.stdout}")
     else:
-        result = subprocess.run(f"python {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
+        result = subprocess.run(f"python3 {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
                                 f"--profile DEFAULT",
                                 shell=True,
                                 capture_output=True,
