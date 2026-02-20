@@ -435,7 +435,12 @@ def handle_onboard_form():
     }
 
     json_string = json.dumps(json_data)
-    result = subprocess.run(f"python3 {current_directory}/src/cli.py '{json_string}'",
+
+    # Use virtual environment python if it exists, otherwise fall back to python3
+    venv_python = f"{current_directory}/.venv/bin/python3"
+    python_cmd = venv_python if os.path.exists(venv_python) else "python3"
+
+    result = subprocess.run(f"{python_cmd} {current_directory}/src/cli.py '{json_string}'",
                             shell=True,
                             capture_output=True,
                             text=True
@@ -506,7 +511,12 @@ def handle_deploy_form():
         }
 
         json_string = json.dumps(json_data)
-        result = subprocess.run(f"python3 {current_directory}/src/cli.py '{json_string}'",
+
+        # Use virtual environment python if it exists, otherwise fall back to python3
+        venv_python = f"{current_directory}/.venv/bin/python3"
+        python_cmd = venv_python if os.path.exists(venv_python) else "python3"
+
+        result = subprocess.run(f"{python_cmd} {current_directory}/src/cli.py '{json_string}'",
                                 shell=True,
                                 capture_output=True,
                                 text=True
@@ -569,10 +579,14 @@ def run_demo():
     demo_file = demo_dict.get(code_to_run, None)
     uc_name = request.json.get('uc_name', '')
 
+    # Use virtual environment python if it exists, otherwise fall back to python3
+    venv_python = f"{current_directory}/.venv/bin/python3"
+    python_cmd = venv_python if os.path.exists(venv_python) else "python3"
+
     if code_to_run == 'demo_dabs':
 
         # Step 1: Generate Databricks resources
-        subprocess.run(f"python3 {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
+        subprocess.run(f"{python_cmd} {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
                        f"--source=cloudfiles --profile DEFAULT",
                        shell=True,
                        capture_output=True,
@@ -606,7 +620,7 @@ def run_demo():
                                 )
         print(f"execution of pipeline completed: {result.stdout}")
     else:
-        result = subprocess.run(f"python3 {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
+        result = subprocess.run(f"{python_cmd} {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
                                 f"--profile DEFAULT",
                                 shell=True,
                                 capture_output=True,
