@@ -802,7 +802,11 @@ class DataflowPipeline:
 
         target_path = None if self.uc_enabled else self.dataflowSpec.targetDetails["path"]
 
-        self.create_streaming_table(struct_schema, target_path)
+        # Only create streaming table for landing/refinery (streaming mode)
+        # Treasury uses batch mode, and create_auto_cdc_flow creates the table automatically
+        is_treasury = isinstance(self.dataflowSpec, TreasuryDataflowSpec)
+        if not is_treasury:
+            self.create_streaming_table(struct_schema, target_path)
 
         apply_as_deletes = None
         if cdc_apply_changes.apply_as_deletes:
