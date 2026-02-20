@@ -264,11 +264,27 @@ class OnboardDataflowspec:
 
         refinery_transformation_json_files = refinery_transformation_json_file.collect()
         for row in refinery_transformation_json_files:
-            refinery_transformation_json_df = refinery_transformation_json_df.union(
-                self.spark.read.option("multiline", "true")
-                .schema(columns)
-                .json(row[f"refinery_transformation_json_{env}"])
-            )
+            trans_file_path = row[f"refinery_transformation_json_{env}"]
+            # Check if file is YAML or JSON based on extension
+            if trans_file_path.endswith(('.yaml', '.yml')):
+                # Read YAML file and convert to JSON-like format
+                yaml_content = self.spark.read.text(trans_file_path, wholetext=True).collect()[0]["value"]
+                yaml_data = yaml.safe_load(yaml_content)
+                # Create a single-row dataframe from the YAML data
+                trans_data = [(
+                    yaml_data.get('sql_query', ''),
+                    yaml_data.get('target_partition_cols', []),
+                    yaml_data.get('target_table', '')
+                )]
+                trans_df = self.spark.createDataFrame(trans_data, schema=columns)
+                refinery_transformation_json_df = refinery_transformation_json_df.union(trans_df)
+            else:
+                # Read as JSON
+                refinery_transformation_json_df = refinery_transformation_json_df.union(
+                    self.spark.read.option("multiline", "true")
+                    .schema(columns)
+                    .json(trans_file_path)
+                )
 
         logger.info(refinery_transformation_json_file)
 
@@ -390,11 +406,27 @@ class OnboardDataflowspec:
         treasury_transformation_json_files = treasury_transformation_json_file.collect()
         for row in treasury_transformation_json_files:
             if row[f"treasury_transformation_json_{env}"]:
-                treasury_transformation_json_df = treasury_transformation_json_df.union(
-                    self.spark.read.option("multiline", "true")
-                    .schema(columns)
-                    .json(row[f"treasury_transformation_json_{env}"])
-                )
+                trans_file_path = row[f"treasury_transformation_json_{env}"]
+                # Check if file is YAML or JSON based on extension
+                if trans_file_path.endswith(('.yaml', '.yml')):
+                    # Read YAML file and convert to JSON-like format
+                    yaml_content = self.spark.read.text(trans_file_path, wholetext=True).collect()[0]["value"]
+                    yaml_data = yaml.safe_load(yaml_content)
+                    # Create a single-row dataframe from the YAML data
+                    trans_data = [(
+                        yaml_data.get('sql_query', ''),
+                        yaml_data.get('target_partition_cols', []),
+                        yaml_data.get('target_table', '')
+                    )]
+                    trans_df = self.spark.createDataFrame(trans_data, schema=columns)
+                    treasury_transformation_json_df = treasury_transformation_json_df.union(trans_df)
+                else:
+                    # Read as JSON
+                    treasury_transformation_json_df = treasury_transformation_json_df.union(
+                        self.spark.read.option("multiline", "true")
+                        .schema(columns)
+                        .json(trans_file_path)
+                    )
 
         logger.info(treasury_transformation_json_file)
 
