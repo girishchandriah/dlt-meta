@@ -451,12 +451,27 @@ def handle_onboard_form():
                             text=True
                             )
 
-    # If failed with module error and not using venv, show helpful message
-    if result.returncode != 0 and "ModuleNotFoundError" in result.stderr and python_cmd == "python3":
-        error_msg = (f"ERROR: databricks-sdk not installed. "
-                    f"Please run 'Setup dlt-meta project environment' first to create the virtual environment.\n"
-                    f"Checked for venv at: {venv_python}\n"
-                    f"Original error:\n{result.stderr}")
+    # If failed with module error, add debug info
+    if result.returncode != 0 and "ModuleNotFoundError" in result.stderr:
+        debug_info = (f"\n=== DEBUG INFO ===\n"
+                     f"current_directory: {current_directory}\n"
+                     f"venv_python: {venv_python}\n"
+                     f"venv exists: {os.path.exists(venv_python)}\n"
+                     f"python_cmd used: {python_cmd}\n"
+                     f"==================\n")
+
+        if python_cmd == "python3":
+            error_msg = (f"ERROR: Virtual environment not found!\n"
+                        f"Please run 'Setup dlt-meta project environment' first.\n"
+                        f"{debug_info}"
+                        f"Original error:\n{result.stderr}")
+        else:
+            error_msg = (f"ERROR: databricks-sdk not installed in venv!\n"
+                        f"Try running in CLI tab:\n"
+                        f"  {venv_python} -m pip install databricks-sdk PyYAML\n"
+                        f"{debug_info}"
+                        f"Original error:\n{result.stderr}")
+
         return jsonify({
             'modal_content': None,
             'stdout': result.stdout,
