@@ -227,39 +227,68 @@ def start_command():
         source_code_dir = "/app/python/source_code"
         dlt_meta_path = f"{source_code_dir}/dlt-meta"
 
-        # Always perform setup - remove old installation if exists and setup fresh
-        commands = [
-            "pip install databricks-cli",
-            # Create source_code directory if it doesn't exist
-            f"mkdir -p {source_code_dir}",
-            # Remove existing dlt-meta directory and any nested duplicates
-            f"rm -rf {dlt_meta_path}",
-            # Change to source_code directory and clone fresh copy
-            f"cd {source_code_dir} && git clone -b 'feature/layer-terminology-update' https://github.com/girishchandriah/dlt-meta.git",
-            # Create virtual environment
-            f"python -m venv {dlt_meta_path}/.venv",
-            # Install dependencies using the venv python
-            f"{dlt_meta_path}/.venv/bin/pip install --upgrade pip",
-            f"{dlt_meta_path}/.venv/bin/pip install databricks-sdk",
-            f"{dlt_meta_path}/.venv/bin/pip install PyYAML",
-        ]
-
         print("Start setting up dlt-meta environment (pulling latest code and creating fresh environment)...")
+        print(f"Target installation directory: {dlt_meta_path}")
 
-        for c in commands:
-            try:
-                command_id = str(time.time())
+        # Use subprocess for synchronous execution with proper error handling
+        try:
+            # Create source_code directory if it doesn't exist
+            print("Step 1: Creating source_code directory...")
+            subprocess.run(f"mkdir -p {source_code_dir}", shell=True, check=True, capture_output=True, text=True)
+            print("✓ Source code directory created")
 
-                input_queue = queue.Queue()
-                output_queue = queue.Queue()
+            # Remove existing dlt-meta directory
+            print("Step 2: Removing old dlt-meta installation...")
+            subprocess.run(f"rm -rf {dlt_meta_path}", shell=True, check=True, capture_output=True, text=True)
+            print("✓ Old installation removed")
 
-                command_queues[command_id] = input_queue
-                response_queues[command_id] = output_queue
-                run_command(command_id, c, input_queue, output_queue, False)
-                print(f"complete setup command : {c}")
-            except Exception as e:
-                logger.error(f"Error starting command: {str(e)}")
-                print(f"Error starting command: {str(e)}")
+            # Clone fresh copy - try feature branch first, fallback to main
+            print("Step 3: Cloning dlt-meta from GitHub...")
+            clone_result = subprocess.run(
+                f"cd {source_code_dir} && git clone -b 'feature/layer-terminology-update' https://github.com/girishchandriah/dlt-meta.git 2>&1",
+                shell=True, capture_output=True, text=True
+            )
+
+            if clone_result.returncode != 0:
+                print(f"Feature branch not found, trying main branch...")
+                clone_result = subprocess.run(
+                    f"cd {source_code_dir} && git clone https://github.com/girishchandriah/dlt-meta.git 2>&1",
+                    shell=True, check=True, capture_output=True, text=True
+                )
+
+            print(f"✓ Repository cloned successfully")
+            print(f"Clone output: {clone_result.stdout}")
+
+            # Verify clone was successful
+            if not os.path.exists(f"{dlt_meta_path}/src"):
+                raise Exception(f"Clone failed - {dlt_meta_path}/src directory not found")
+
+            # Create virtual environment
+            print("Step 4: Creating virtual environment...")
+            subprocess.run(f"python -m venv {dlt_meta_path}/.venv", shell=True, check=True, capture_output=True, text=True)
+            print("✓ Virtual environment created")
+
+            # Install dependencies
+            print("Step 5: Installing dependencies...")
+            subprocess.run(f"{dlt_meta_path}/.venv/bin/pip install --upgrade pip", shell=True, check=True, capture_output=True, text=True)
+            print("✓ Pip upgraded")
+
+            subprocess.run(f"{dlt_meta_path}/.venv/bin/pip install databricks-sdk", shell=True, check=True, capture_output=True, text=True)
+            print("✓ databricks-sdk installed")
+
+            subprocess.run(f"{dlt_meta_path}/.venv/bin/pip install PyYAML", shell=True, check=True, capture_output=True, text=True)
+            print("✓ PyYAML installed")
+
+        except subprocess.CalledProcessError as e:
+            error_msg = f"Setup failed at command: {e.cmd}\nError: {e.stderr}\nOutput: {e.stdout}"
+            logger.error(error_msg)
+            print(error_msg)
+            raise
+        except Exception as e:
+            error_msg = f"Setup failed: {str(e)}"
+            logger.error(error_msg)
+            print(error_msg)
+            raise
 
         # Update environment variables after successful setup
         os.environ['PYTHONPATH'] = dlt_meta_path
@@ -267,9 +296,22 @@ def start_command():
         os.environ['VIRTUAL_ENV'] = f"{dlt_meta_path}/.venv"
         os.environ['PATH'] = f"{dlt_meta_path}/.venv/bin:{os.environ.get('PATH', '')}"
 
-        print(f"Completed setting up dlt-meta environment at: {dlt_meta_path}")
+        print(f"✅ Completed setting up dlt-meta environment at: {dlt_meta_path}")
         print(f"PYTHONPATH set to: {os.environ['PYTHONPATH']}")
         print(f"HOME set to: {os.environ['HOME']}")
+
+        # Verify installation
+        if os.path.exists(f"{dlt_meta_path}/src") and os.path.exists(f"{dlt_meta_path}/.venv"):
+            print(f"✓ Installation verified - src directory and venv found")
+            # List key directories
+            try:
+                import os
+                dirs = os.listdir(dlt_meta_path)
+                print(f"✓ Directories in dlt-meta: {', '.join(dirs)}")
+            except:
+                pass
+        else:
+            print(f"⚠ Warning: Installation may be incomplete")
 
     else:
         command_id = str(time.time())
