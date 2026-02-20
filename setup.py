@@ -22,7 +22,7 @@ package_long_description = """###Databricks Labs DLT-META Framework###
     """
 setup(
     name="dlt_meta_cds",
-    version="0.0.14",
+    version="0.0.15",
     python_requires=">=3.8",
     setup_requires=["wheel>=0.37.1,<=0.42.0"],
     install_requires=INSTALL_REQUIRES,

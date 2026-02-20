@@ -256,6 +256,44 @@ class DataflowPipeline:
             comment=comment,
         )
 
+    def _write_treasury_batch_cdc(self):
+        """Write treasury batch data - for CDC with batch sources, write to intermediate table.
+
+        Treasury batch CDC limitation: DLT's create_auto_cdc_flow requires streaming sources.
+        For batch treasury with CDC config, this writes to an intermediate table per flow.
+        User should manually create final merge logic or use a post-processing step.
+        """
+        target_path, target_table, target_table_name = self._get_target_table_info()
+
+        # For batch CDC, write to intermediate table with flow ID suffix
+        # Final table merge must be handled separately by user
+        data_flow_id = str(self.dataflowSpec.dataFlowId).replace('-', '_').replace('.', '_')
+        intermediate_table_name = f"{target_table_name}_{data_flow_id}"
+
+        target_details = self._get_target_details()
+        target_cl = target_details.get('catalog', None)
+        target_cl_name = f"{target_cl}." if target_cl is not None else ''
+        target_db_name = target_details['database']
+        intermediate_table = f"{target_cl_name}{target_db_name}.{intermediate_table_name}"
+
+        comment = f"Treasury intermediate table for batch CDC flow {self.dataflowSpec.dataFlowId}. " \
+                  f"Merge into {target_table} using separate DLT table or post-processing."
+
+        logger.warning(
+            f"Treasury batch CDC limitation: Writing to intermediate table {intermediate_table}. "
+            f"Create a separate DLT table to merge intermediate tables into {target_table_name}."
+        )
+
+        dlt.table(
+            self.write_to_delta,
+            name=intermediate_table,
+            partition_cols=DataflowSpecUtils.get_partition_cols(self.dataflowSpec.partitionColumns),
+            cluster_by=DataflowSpecUtils.get_partition_cols(self.dataflowSpec.clusterBy),
+            table_properties=self.dataflowSpec.tableProperties,
+            path=target_path if target_path else None,
+            comment=comment,
+        )
+
     def write_layer_table(self):
         """Write Landing, Refinery, or Treasury tables using unified logic."""
         is_landing = isinstance(self.dataflowSpec, LandingDataflowSpec)
@@ -299,9 +337,15 @@ class DataflowPipeline:
                 self.write_layer_with_dqe()
                 return
 
-        # Handle CDC apply changes (common to all)
+        # Handle CDC apply changes
         if self.dataflowSpec.cdcApplyChanges and not self.dataflowSpec.dataQualityExpectations:
-            self.cdc_apply_changes()
+            if is_treasury:
+                # Treasury batch CDC: write to staging table, DLT will merge via views
+                # Each flow writes to a unique staging table, then merged into final table
+                self._write_treasury_batch_cdc()
+            else:
+                # Landing/Refinery: use streaming CDC
+                self.cdc_apply_changes()
         else:
             # Write standard table
             self._write_standard_table(layer_name)
@@ -802,8 +846,8 @@ class DataflowPipeline:
 
         target_path = None if self.uc_enabled else self.dataflowSpec.targetDetails["path"]
 
-        # Only create streaming table for landing/refinery (streaming mode)
-        # Treasury uses batch mode, and create_auto_cdc_flow creates the table automatically
+        # For landing/refinery streaming mode, create streaming table first
+        # For treasury batch mode, skip table creation - use regular table writes instead
         is_treasury = isinstance(self.dataflowSpec, TreasuryDataflowSpec)
         if not is_treasury:
             self.create_streaming_table(struct_schema, target_path)
