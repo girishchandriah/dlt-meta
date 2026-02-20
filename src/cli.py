@@ -459,8 +459,8 @@ class DLTMeta:
             "layer": cmd.layer,
             "dlt_meta_whl": wheel_path,
         }
-        if cmd.layer in ["landing", "refinery", "landing_refinery"]:
-            if cmd.layer in ["landing", "landing_refinery"]:
+        if cmd.layer in ["landing", "refinery", "landing_refinery", "treasury", "refinery_treasury", "landing_refinery_treasury"]:
+            if cmd.layer in ["landing", "landing_refinery", "landing_refinery_treasury"]:
                 configuration["landing.group"] = cmd.onboard_landing_group
                 if cmd.uc_catalog_name:
                     configuration["landing.dataflowspecTable"] = (
@@ -470,7 +470,7 @@ class DLTMeta:
                     configuration["landing.dataflowspecTable"] = (
                         f"{cmd.dlt_meta_landing_schema}.{cmd.dataflowspec_landing_table}"
                     )
-            if cmd.layer in ["refinery", "landing_refinery"]:
+            if cmd.layer in ["refinery", "landing_refinery", "refinery_treasury", "landing_refinery_treasury"]:
                 configuration["refinery.group"] = cmd.onboard_refinery_group
                 if cmd.uc_catalog_name:
                     configuration["refinery.dataflowspecTable"] = (
@@ -480,8 +480,18 @@ class DLTMeta:
                     configuration["refinery.dataflowspecTable"] = (
                         f"{cmd.dlt_meta_refinery_schema}.{cmd.dataflowspec_refinery_table}"
                     )
+            if cmd.layer in ["treasury", "refinery_treasury", "landing_refinery_treasury"]:
+                configuration["treasury.group"] = cmd.onboard_treasury_group
+                if cmd.uc_catalog_name:
+                    configuration["treasury.dataflowspecTable"] = (
+                        f"{cmd.uc_catalog_name}.{cmd.dlt_meta_treasury_schema}.{cmd.dataflowspec_treasury_table}"
+                    )
+                else:
+                    configuration["treasury.dataflowspecTable"] = (
+                        f"{cmd.dlt_meta_treasury_schema}.{cmd.dataflowspec_treasury_table}"
+                    )
         else:
-            raise ValueError("layer must be one of landing, refinery, landing_refinery ")
+            raise ValueError("layer must be one of landing, refinery, landing_refinery, treasury, refinery_treasury, landing_refinery_treasury")
         created = None
         configuration["version"] = self.version
         if cmd.uc_catalog_name:
