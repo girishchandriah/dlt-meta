@@ -301,17 +301,22 @@ class OnboardDataflowspec:
             logger.warning("No refinery flows were processed successfully")
             return
 
-        # Create a map UDF to lookup SQL query by dataFlowId
-        from pyspark.sql.types import StringType as ST
-        sql_map_broadcast = self.spark.sparkContext.broadcast(sql_queries_map)
+        # Create a DataFrame from the SQL queries map and join it
+        # This works on serverless compute (no broadcast needed)
+        from pyspark.sql.types import StructType, StructField, StringType as ST
+        sql_map_schema = StructType([
+            StructField("dataFlowId", ST(), False),
+            StructField("sqlQuery", ST(), False)
+        ])
+        sql_map_data = [(flow_id, sql_query) for flow_id, sql_query in sql_queries_map.items()]
+        sql_map_df = self.spark.createDataFrame(sql_map_data, schema=sql_map_schema)
 
-        def get_sql_query(flow_id):
-            return sql_map_broadcast.value.get(flow_id, '')
-
-        get_sql_query_udf = f.udf(get_sql_query, ST())
-        refinery_dataflow_spec_df = refinery_data_flow_spec_df.withColumn(
-            "sqlQuery", get_sql_query_udf(f.col("dataFlowId"))
-        )
+        # Join the SQL queries with the flow specs
+        refinery_dataflow_spec_df = refinery_data_flow_spec_df.join(
+            sql_map_df,
+            refinery_data_flow_spec_df.dataFlowId == sql_map_df.dataFlowId,
+            "inner"
+        ).drop(sql_map_df.dataFlowId)  # Drop duplicate dataFlowId column from join
 
         refinery_dataflow_spec_df = self.__add_audit_columns(
             refinery_dataflow_spec_df,
@@ -456,17 +461,22 @@ class OnboardDataflowspec:
             logger.warning("No treasury flows were processed successfully")
             return
 
-        # Create a map UDF to lookup SQL query by dataFlowId
-        from pyspark.sql.types import StringType as ST
-        sql_map_broadcast = self.spark.sparkContext.broadcast(sql_queries_map)
+        # Create a DataFrame from the SQL queries map and join it
+        # This works on serverless compute (no broadcast needed)
+        from pyspark.sql.types import StructType, StructField, StringType as ST
+        sql_map_schema = StructType([
+            StructField("dataFlowId", ST(), False),
+            StructField("sqlQuery", ST(), False)
+        ])
+        sql_map_data = [(flow_id, sql_query) for flow_id, sql_query in sql_queries_map.items()]
+        sql_map_df = self.spark.createDataFrame(sql_map_data, schema=sql_map_schema)
 
-        def get_sql_query(flow_id):
-            return sql_map_broadcast.value.get(flow_id, '')
-
-        get_sql_query_udf = f.udf(get_sql_query, ST())
-        treasury_dataflow_spec_df = treasury_data_flow_spec_df.withColumn(
-            "sqlQuery", get_sql_query_udf(f.col("dataFlowId"))
-        )
+        # Join the SQL queries with the flow specs
+        treasury_dataflow_spec_df = treasury_data_flow_spec_df.join(
+            sql_map_df,
+            treasury_data_flow_spec_df.dataFlowId == sql_map_df.dataFlowId,
+            "inner"
+        ).drop(sql_map_df.dataFlowId)  # Drop duplicate dataFlowId column from join
 
         treasury_dataflow_spec_df = self.__add_audit_columns(
             treasury_dataflow_spec_df,
