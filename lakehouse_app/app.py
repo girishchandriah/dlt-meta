@@ -270,19 +270,34 @@ def start_command():
 
             # Create virtual environment
             print("Step 4: Creating virtual environment...")
-            subprocess.run(f"python3 -m venv {dlt_meta_path}/.venv", shell=True, check=True, capture_output=True, text=True)
+            subprocess.run(f"python3 -m venv {dlt_meta_path}/.venv --copies", shell=True, check=True, capture_output=True, text=True)
             print("✓ Virtual environment created")
 
-            # Install dependencies
+            # Determine which python exists in venv (python or python3)
+            venv_python_cmd = f"{dlt_meta_path}/.venv/bin/python3" if os.path.exists(f"{dlt_meta_path}/.venv/bin/python3") else f"{dlt_meta_path}/.venv/bin/python"
+            print(f"Using venv python: {venv_python_cmd}")
+
+            # Install dependencies using python -m pip (more reliable than calling pip directly)
             print("Step 5: Installing dependencies...")
-            subprocess.run(f"{dlt_meta_path}/.venv/bin/pip install --upgrade pip", shell=True, check=True, capture_output=True, text=True)
+            subprocess.run(f"{venv_python_cmd} -m pip install --upgrade pip", shell=True, check=True, capture_output=True, text=True)
             print("✓ Pip upgraded")
 
-            subprocess.run(f"{dlt_meta_path}/.venv/bin/pip install databricks-sdk", shell=True, check=True, capture_output=True, text=True)
+            subprocess.run(f"{venv_python_cmd} -m pip install databricks-sdk", shell=True, check=True, capture_output=True, text=True)
             print("✓ databricks-sdk installed")
 
-            subprocess.run(f"{dlt_meta_path}/.venv/bin/pip install PyYAML", shell=True, check=True, capture_output=True, text=True)
+            subprocess.run(f"{venv_python_cmd} -m pip install PyYAML", shell=True, check=True, capture_output=True, text=True)
             print("✓ PyYAML installed")
+
+            # Verify installations
+            print("Step 6: Verifying installations...")
+            verify_result = subprocess.run(
+                f"{venv_python_cmd} -c 'import databricks.sdk; import yaml; print(\"All packages verified\")'",
+                shell=True, capture_output=True, text=True
+            )
+            if verify_result.returncode == 0:
+                print("✓ All packages verified successfully")
+            else:
+                print(f"⚠ Warning: Package verification failed: {verify_result.stderr}")
 
         except subprocess.CalledProcessError as e:
             error_msg = f"Setup failed at command: {e.cmd}\nError: {e.stderr}\nOutput: {e.stdout}"
@@ -422,9 +437,9 @@ def handle_onboard_form():
         "refinery_schema": request.form.get('refinery_schema', 'dltmeta_refinery_cds'),
         "treasury_schema": request.form.get('treasury_schema', 'dltmeta_treasury_cds'),
         "dlt_meta_layer": request.form.get('dlt_meta_layer', '1'),
-        "landing_table": request.form.get('landing_table', 'landing_dataflowspec'),
-        "refinery_table": request.form.get('refinery_table', 'refinery_dataflowspec'),
-        "treasury_table": request.form.get('treasury_table', 'treasury_dataflowspec'),
+        "landing_table": request.form.get('landing_table', 'landing_dataflowspec_cds'),
+        "refinery_table": request.form.get('refinery_table', 'refinery_dataflowspec_cds'),
+        "treasury_table": request.form.get('treasury_table', 'treasury_dataflowspec_cds'),
         "overwrite": "1" if request.form.get('overwrite') == "1" else "0",
         "version": request.form.get('version', 'v1'),
         "environment": request.form.get('environment', 'nonprod'),
@@ -437,8 +452,19 @@ def handle_onboard_form():
     json_string = json.dumps(json_data)
 
     # Use virtual environment python if it exists, otherwise fall back to python3
-    venv_python = f"{current_directory}/.venv/bin/python3"
-    python_cmd = venv_python if os.path.exists(venv_python) else "python3"
+    # Check for both python3 and python in venv
+    venv_python3 = f"{current_directory}/.venv/bin/python3"
+    venv_python = f"{current_directory}/.venv/bin/python"
+
+    if os.path.exists(venv_python3):
+        python_cmd = venv_python3
+        venv_python_used = venv_python3
+    elif os.path.exists(venv_python):
+        python_cmd = venv_python
+        venv_python_used = venv_python
+    else:
+        python_cmd = "python3"
+        venv_python_used = None
 
     print(f"DEBUG: current_directory = {current_directory}")
     print(f"DEBUG: venv_python = {venv_python}")
@@ -614,8 +640,19 @@ def run_demo():
     uc_name = request.json.get('uc_name', '')
 
     # Use virtual environment python if it exists, otherwise fall back to python3
-    venv_python = f"{current_directory}/.venv/bin/python3"
-    python_cmd = venv_python if os.path.exists(venv_python) else "python3"
+    # Check for both python3 and python in venv
+    venv_python3 = f"{current_directory}/.venv/bin/python3"
+    venv_python = f"{current_directory}/.venv/bin/python"
+
+    if os.path.exists(venv_python3):
+        python_cmd = venv_python3
+        venv_python_used = venv_python3
+    elif os.path.exists(venv_python):
+        python_cmd = venv_python
+        venv_python_used = venv_python
+    else:
+        python_cmd = "python3"
+        venv_python_used = None
 
     if code_to_run == 'demo_dabs':
 
