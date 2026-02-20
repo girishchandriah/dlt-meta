@@ -817,7 +817,7 @@ class DLTMeta:
             else:
                 deploy_cmd_dict["serverless"] = False
             deploy_cmd_dict["layer"] = input_params.get("layer")
-            if deploy_cmd_dict["layer"] in ["landing", "landing_refinery"]:
+            if deploy_cmd_dict["layer"] in ["landing", "landing_refinery", "landing_refinery_treasury"]:
                 deploy_cmd_dict["onboard_landing_group"] = input_params.get("onboard_landing_group")
                 deploy_cmd_dict["dlt_meta_landing_schema"] = input_params.get("dlt_meta_landing_schema")
                 deploy_cmd_dict["dataflowspec_landing_table"] = input_params.get("dataflowspec_landing_table",
@@ -827,7 +827,7 @@ class DLTMeta:
                         "dataflowspec_landing_path",
                         f'{self._install_folder()}/landing_dataflow_specs'
                     )
-            if deploy_cmd_dict["layer"] in ["refinery", "landing_refinery"]:
+            if deploy_cmd_dict["layer"] in ["refinery", "landing_refinery", "refinery_treasury", "landing_refinery_treasury"]:
                 deploy_cmd_dict["onboard_refinery_group"] = input_params.get("onboard_refinery_group")
                 deploy_cmd_dict["dlt_meta_refinery_schema"] = input_params.get("dlt_meta_refinery_schema")
                 deploy_cmd_dict["dataflowspec_refinery_table"] = input_params.get("dataflowspec_refinery_table",
@@ -836,6 +836,16 @@ class DLTMeta:
                     deploy_cmd_dict["dataflowspec_refinery_path"] = input_params.get(
                         "dataflowspec_refinery_path",
                         f'{self._install_folder()}/refinery_dataflow_specs'
+                    )
+            if deploy_cmd_dict["layer"] in ["treasury", "refinery_treasury", "landing_refinery_treasury"]:
+                deploy_cmd_dict["onboard_treasury_group"] = input_params.get("onboard_treasury_group")
+                deploy_cmd_dict["dlt_meta_treasury_schema"] = input_params.get("dlt_meta_treasury_schema")
+                deploy_cmd_dict["dataflowspec_treasury_table"] = input_params.get("dataflowspec_treasury_table",
+                                                                                "treasury_dataflowspec")
+                if not deploy_cmd_dict["uc_enabled"]:
+                    deploy_cmd_dict["dataflowspec_treasury_path"] = input_params.get(
+                        "dataflowspec_treasury_path",
+                        f'{self._install_folder()}/treasury_dataflow_specs'
                     )
             if not deploy_cmd_dict["serverless"]:
                 deploy_cmd_dict["num_workers"] = input_params.get("num_workers", 4)
