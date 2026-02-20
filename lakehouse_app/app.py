@@ -440,11 +440,30 @@ def handle_onboard_form():
     venv_python = f"{current_directory}/.venv/bin/python3"
     python_cmd = venv_python if os.path.exists(venv_python) else "python3"
 
+    print(f"DEBUG: current_directory = {current_directory}")
+    print(f"DEBUG: venv_python = {venv_python}")
+    print(f"DEBUG: venv exists = {os.path.exists(venv_python)}")
+    print(f"DEBUG: Using python_cmd = {python_cmd}")
+
     result = subprocess.run(f"{python_cmd} {current_directory}/src/cli.py '{json_string}'",
                             shell=True,
                             capture_output=True,
                             text=True
                             )
+
+    # If failed with module error and not using venv, show helpful message
+    if result.returncode != 0 and "ModuleNotFoundError" in result.stderr and python_cmd == "python3":
+        error_msg = (f"ERROR: databricks-sdk not installed. "
+                    f"Please run 'Setup dlt-meta project environment' first to create the virtual environment.\n"
+                    f"Checked for venv at: {venv_python}\n"
+                    f"Original error:\n{result.stderr}")
+        return jsonify({
+            'modal_content': None,
+            'stdout': result.stdout,
+            'stderr': error_msg,
+            'returncode': result.returncode
+        })
+
     return extract_command_output(result)
 
 
