@@ -1,4 +1,4 @@
-transformation_id: pfocusdb_sales_ord_tran_batch_update
+target_table: pfocusdb_sales_ord_tran_dlt
 transformation_name: Sales Order Transaction 
 description: "Step 6: Complex transformation from landing to refinery with business logic for DSN sales order transactions"
 sql_query: |
