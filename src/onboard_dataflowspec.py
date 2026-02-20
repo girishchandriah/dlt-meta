@@ -586,7 +586,8 @@ class OnboardDataflowspec:
         ]  # , f"landing_table_path_{env}"
         for onboarding_row in onboarding_rows:
             # Skip flows without landing layer (null landing_database)
-            if onboarding_row.get(f"landing_database_{env}") is None:
+            landing_db_field = f"landing_database_{env}"
+            if landing_db_field in onboarding_row.asDict() and onboarding_row[landing_db_field] is None:
                 logger.info(f"Skipping landing layer for data_flow_id={onboarding_row['data_flow_id']} (no landing_database)")
                 continue
 
@@ -1181,7 +1182,8 @@ class OnboardDataflowspec:
 
         for onboarding_row in onboarding_rows:
             # Skip flows without refinery layer (null refinery_database)
-            if onboarding_row.get(f"refinery_database_{env}") is None:
+            refinery_db_field = f"refinery_database_{env}"
+            if refinery_db_field in onboarding_row.asDict() and onboarding_row[refinery_db_field] is None:
                 logger.info(f"Skipping refinery layer for data_flow_id={onboarding_row['data_flow_id']} (no refinery_database)")
                 continue
 
