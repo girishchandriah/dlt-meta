@@ -64,11 +64,12 @@ def onboard_dataflowspecs(args):
     elif onboard_layer.lower() == "refinery":
         onboard_obj.onboard_refinery_dataflow_spec()
     elif onboard_layer.lower() == "treasury":
-        # Treasury onboarding is not yet fully implemented
-        # For now, this will raise an error
-        raise NotImplementedError("Treasury-only onboarding is not yet implemented. Use 'landing_refinery_treasury' to onboard all layers including treasury.")
+        onboard_obj.onboard_treasury_dataflow_spec()
+    elif onboard_layer.lower() == "refinery_treasury":
+        onboard_obj.onboard_refinery_dataflow_spec()
+        onboard_obj.onboard_treasury_dataflow_spec()
     else:
-        raise Exception("onboard_layer must be one of: landing, refinery, landing_refinery, treasury, landing_refinery_treasury")
+        raise Exception("onboard_layer must be one of: landing, refinery, treasury, landing_refinery, refinery_treasury, landing_refinery_treasury")
 
 
 if __name__ == "__main__":

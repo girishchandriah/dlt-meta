@@ -100,26 +100,29 @@ class OnboardDataflowspec:
 
     def onboard_dataflow_specs(self):
         """
-        Onboard_dataflow_specs method will onboard dataFlowSpecs for landing, refinery and gold.
+        Onboard_dataflow_specs method will onboard dataFlowSpecs for landing, refinery and treasury.
 
         This method takes in a SparkSession object and a dictionary object containing the following attributes:
         - onboarding_file_path: The path to the onboarding file.
         - database: The name of the database to onboard the dataflow specs to.
         - env: The environment to onboard the dataflow specs to.
         - landing_dataflowspec_table: The name of the landing dataflow specs table.
-        - landing_dataflowspec_path: The path to the landing dataflow specs.
+        - landing_dataflowspec_path: The path to the landing dataflow specs (if uc_enabled is False).
         - refinery_dataflowspec_table: The name of the refinery dataflow specs table.
-        - refinery_dataflowspec_path: The path to the refinery dataflow specs.
+        - refinery_dataflowspec_path: The path to the refinery dataflow specs (if uc_enabled is False).
+        - treasury_dataflowspec_table: The name of the treasury dataflow specs table.
+        - treasury_dataflowspec_path: The path to the treasury dataflow specs (if uc_enabled is False).
         - import_author: The author of the import.
         - version: The version of the import.
         - overwrite: Whether to overwrite existing dataflow specs or not.
 
         If the `uc_enabled` flag is set to True, the dictionary object must contain all the attributes listed above.
         If the `uc_enabled` flag is set to False, the dictionary object must contain all the attributes listed above
-        except for `landing_dataflowspec_path` and `refinery_dataflowspec_path`.
+        including the path attributes.
 
-        This method calls the `onboard_landing_dataflow_spec` and `onboard_refinery_dataflow_spec` methods to onboard
-        the landing and refinery dataflow specs respectively.
+        This method calls the `onboard_landing_dataflow_spec`, `onboard_refinery_dataflow_spec`, and
+        `onboard_treasury_dataflow_spec` methods to onboard the landing, refinery, and treasury dataflow specs
+        respectively.
         """
         attributes = [
             "onboarding_file_path",
@@ -127,28 +130,28 @@ class OnboardDataflowspec:
             "env",
             "landing_dataflowspec_table",
             "refinery_dataflowspec_table",
+            "treasury_dataflowspec_table",
             "import_author",
             "version",
             "overwrite",
         ]
-        # Remove treasury parameters if present (not supported yet in this method)
-        if "treasury_dataflowspec_table" in self.dict_obj:
-            del self.dict_obj["treasury_dataflowspec_table"]
-        if "treasury_dataflowspec_path" in self.dict_obj:
-            del self.dict_obj["treasury_dataflowspec_path"]
 
         if self.uc_enabled:
             if "landing_dataflowspec_path" in self.dict_obj:
                 del self.dict_obj["landing_dataflowspec_path"]
             if "refinery_dataflowspec_path" in self.dict_obj:
                 del self.dict_obj["refinery_dataflowspec_path"]
+            if "treasury_dataflowspec_path" in self.dict_obj:
+                del self.dict_obj["treasury_dataflowspec_path"]
             self.__validate_dict_attributes(attributes, self.dict_obj)
         else:
             attributes.append("landing_dataflowspec_path")
             attributes.append("refinery_dataflowspec_path")
+            attributes.append("treasury_dataflowspec_path")
             self.__validate_dict_attributes(attributes, self.dict_obj)
         self.onboard_landing_dataflow_spec()
         self.onboard_refinery_dataflow_spec()
+        self.onboard_treasury_dataflow_spec()
 
     def register_landing_dataflow_spec_tables(self):
         """Register landing/refinery dataflow specs tables."""
@@ -168,7 +171,7 @@ class OnboardDataflowspec:
         ).show()
 
     def register_refinery_dataflow_spec_tables(self):
-        """Register landing dataflow specs tables."""
+        """Register refinery dataflow specs tables."""
         self.deltaPipelinesMetaStoreOps.create_database(
             self.dict_obj["database"], "dlt-meta database"
         )
@@ -182,6 +185,23 @@ class OnboardDataflowspec:
         )
         self.spark.read.table(
             f"""{self.dict_obj["database"]}.{self.dict_obj["refinery_dataflowspec_table"]}"""
+        ).show()
+
+    def register_treasury_dataflow_spec_tables(self):
+        """Register treasury dataflow specs tables."""
+        self.deltaPipelinesMetaStoreOps.create_database(
+            self.dict_obj["database"], "dlt-meta database"
+        )
+        self.deltaPipelinesMetaStoreOps.register_table_in_metastore(
+            self.dict_obj["database"],
+            self.dict_obj["treasury_dataflowspec_table"],
+            self.dict_obj["treasury_dataflowspec_path"],
+        )
+        logger.info(
+            f"""onboarded treasury table={self.dict_obj["database"]}.{self.dict_obj["treasury_dataflowspec_table"]}"""
+        )
+        self.spark.read.table(
+            f"""{self.dict_obj["database"]}.{self.dict_obj["treasury_dataflowspec_table"]}"""
         ).show()
 
     def onboard_refinery_dataflow_spec(self):
@@ -309,6 +329,132 @@ class OnboardDataflowspec:
             )
         if not self.uc_enabled:
             self.register_refinery_dataflow_spec_tables()
+
+    def onboard_treasury_dataflow_spec(self):
+        """
+        Onboard treasury dataflow spec.
+
+        Args:
+            dict_obj (dict): Dictionary containing the required attributes for onboarding treasury dataflow spec.
+                Required attributes:
+                    - onboarding_file_path (str): Path of the onboarding file.
+                    - database (str): Name of the database.
+                    - env (str): Environment name.
+                    - treasury_dataflowspec_table (str): Name of the treasury dataflow spec table.
+                    - treasury_dataflowspec_path (str): Path of the treasury dataflow spec file. if uc_enabled is False
+                    - import_author (str): Name of the import author.
+                    - version (str): Version of the dataflow spec.
+                    - overwrite (str): Whether to overwrite the existing dataflow spec table/file or not.
+        """
+        attributes = [
+            "onboarding_file_path",
+            "database",
+            "env",
+            "treasury_dataflowspec_table",
+            "import_author",
+            "version",
+            "overwrite",
+        ]
+        dict_obj = self.treasury_dict_obj
+        if self.uc_enabled:
+            self.__validate_dict_attributes(attributes, dict_obj)
+        else:
+            attributes.append("treasury_dataflowspec_path")
+            self.__validate_dict_attributes(attributes, dict_obj)
+
+        onboarding_df = self.__get_onboarding_file_dataframe(
+            dict_obj["onboarding_file_path"]
+        )
+        treasury_data_flow_spec_df = self.__get_treasury_dataflow_spec_dataframe(
+            onboarding_df, dict_obj["env"]
+        )
+        columns = StructType(
+            [
+                StructField("sql_query", StringType(), True),
+                StructField(
+                    "target_partition_cols", ArrayType(StringType(), True), True
+                ),
+                StructField("target_table", StringType(), True),
+            ]
+        )
+
+        emp_rdd = []
+        env = dict_obj["env"]
+        treasury_transformation_json_df = self.spark.createDataFrame(
+            data=emp_rdd, schema=columns
+        )
+        treasury_transformation_json_file = onboarding_df.select(
+            f"treasury_transformation_json_{env}"
+        ).dropDuplicates()
+
+        treasury_transformation_json_files = treasury_transformation_json_file.collect()
+        for row in treasury_transformation_json_files:
+            if row[f"treasury_transformation_json_{env}"]:
+                treasury_transformation_json_df = treasury_transformation_json_df.union(
+                    self.spark.read.option("multiline", "true")
+                    .schema(columns)
+                    .json(row[f"treasury_transformation_json_{env}"])
+                )
+
+        logger.info(treasury_transformation_json_file)
+
+        treasury_data_flow_spec_df = treasury_transformation_json_df.join(
+            treasury_data_flow_spec_df,
+            treasury_transformation_json_df.target_table
+            == treasury_data_flow_spec_df.targetDetails["table"],
+        )
+        treasury_dataflow_spec_df = (
+            treasury_data_flow_spec_df.drop("target_table")
+            .drop("target_partition_cols")
+            .withColumnRenamed("sql_query", "sqlQuery")
+        )
+
+        treasury_dataflow_spec_df = self.__add_audit_columns(
+            treasury_dataflow_spec_df,
+            {
+                "import_author": dict_obj["import_author"],
+                "version": dict_obj["version"],
+            },
+        )
+
+        treasury_fields = [field.name for field in dataclasses.fields(TreasuryDataflowSpec)]
+        treasury_dataflow_spec_df = treasury_dataflow_spec_df.select(treasury_fields)
+        database = dict_obj["database"]
+        table = dict_obj["treasury_dataflowspec_table"]
+
+        if dict_obj["overwrite"] == "True":
+            if self.uc_enabled:
+                (
+                    treasury_dataflow_spec_df.write.format("delta")
+                    .mode("overwrite")
+                    .option("mergeSchema", "true")
+                    .saveAsTable(f"{database}.{table}")
+                )
+            else:
+                treasury_dataflow_spec_df.write.mode("overwrite").format("delta").option(
+                    "mergeSchema", "true"
+                ).save(dict_obj["treasury_dataflowspec_path"])
+        else:
+            if self.uc_enabled:
+                original_dataflow_df = self.spark.read.format("delta").table(
+                    f"{database}.{table}"
+                )
+            else:
+                self.deltaPipelinesMetaStoreOps.register_table_in_metastore(
+                    database, table, dict_obj["treasury_dataflowspec_path"]
+                )
+                original_dataflow_df = self.spark.read.format("delta").load(
+                    dict_obj["treasury_dataflowspec_path"]
+                )
+            logger.info("In Merge block for treasury")
+            self.deltaPipelinesInternalTableOps.merge(
+                treasury_dataflow_spec_df,
+                f"{database}.{table}",
+                ["dataFlowId"],
+                original_dataflow_df.columns,
+            )
+        if not self.uc_enabled:
+            self.register_treasury_dataflow_spec_tables()
 
     def onboard_landing_dataflow_spec(self):
         """
@@ -1332,6 +1478,233 @@ class OnboardDataflowspec:
             )
             data.append(refinery_row)
             logger.info(f"refinery_data ==== {data}")
+
+        data_flow_spec_rows_df = self.spark.createDataFrame(
+            data, data_flow_spec_schema
+        ).toDF(*data_flow_spec_columns)
+        return data_flow_spec_rows_df
+
+    def __get_treasury_dataflow_spec_dataframe(self, onboarding_df, env):
+        """Get treasury_dataflow_spec method transform onboarding dataframe to treasury dataflowSpec dataframe.
+
+        Args:
+            onboarding_df: Onboarding dataframe
+            env: Environment (nonprod/preprod/prod)
+
+        Returns:
+            DataFrame: Treasury dataflowspec dataframe
+        """
+        data_flow_spec_columns = [
+            "dataFlowId",
+            "dataFlowGroup",
+            "sourceFormat",
+            "sourceDetails",
+            "readerConfigOptions",
+            "targetFormat",
+            "targetDetails",
+            "tableProperties",
+            "partitionColumns",
+            "cdcApplyChanges",
+            "dataQualityExpectations",
+            "clusterBy",
+            "sinks"
+        ]
+        data_flow_spec_schema = StructType(
+            [
+                StructField("dataFlowId", StringType(), True),
+                StructField("dataFlowGroup", StringType(), True),
+                StructField("sourceFormat", StringType(), True),
+                StructField(
+                    "sourceDetails", MapType(StringType(), StringType(), True), True
+                ),
+                StructField(
+                    "readerConfigOptions",
+                    MapType(StringType(), StringType(), True),
+                    True,
+                ),
+                StructField("targetFormat", StringType(), True),
+                StructField(
+                    "targetDetails", MapType(StringType(), StringType(), True), True
+                ),
+                StructField(
+                    "tableProperties", MapType(StringType(), StringType(), True), True
+                ),
+                StructField("partitionColumns", ArrayType(StringType(), True), True),
+                StructField("cdcApplyChanges", StringType(), True),
+                StructField("dataQualityExpectations", StringType(), True),
+                StructField("clusterBy", ArrayType(StringType(), True), True),
+                StructField("sinks", StringType(), True)
+            ]
+        )
+        data = []
+
+        onboarding_rows = onboarding_df.collect()
+        mandatory_fields = [
+            "data_flow_id",
+            "data_flow_group",
+            f"treasury_database_{env}",
+            "treasury_table",
+            f"treasury_transformation_json_{env}",
+        ]
+
+        for onboarding_row in onboarding_rows:
+            # Skip flows without treasury layer (null treasury_database)
+            treasury_db_field = f"treasury_database_{env}"
+            if treasury_db_field in onboarding_row.asDict() and onboarding_row[treasury_db_field] is None:
+                logger.info(f"Skipping treasury layer for data_flow_id={onboarding_row['data_flow_id']} (no treasury_database)")
+                continue
+
+            try:
+                self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
+            except ValueError:
+                mandatory_fields.append(f"treasury_table_path_{env}")
+                self.__validate_mandatory_fields(onboarding_row, mandatory_fields)
+
+            treasury_data_flow_spec_id = onboarding_row["data_flow_id"]
+            treasury_data_flow_spec_group = onboarding_row["data_flow_group"]
+            treasury_reader_config_options = {}
+
+            treasury_target_format = "delta"
+
+            # Determine source layer - could be refinery, landing, or another delta table
+            # Priority: refinery > landing > source_details (for delta sources)
+            source_details = {}
+            if f"refinery_database_{env}" in onboarding_row and onboarding_row[f"refinery_database_{env}"] is not None:
+                # Source is refinery layer
+                source_details = {
+                    "database": onboarding_row[f"refinery_database_{env}"],
+                    "table": onboarding_row["refinery_table"],
+                }
+                refinery_cl = (
+                    onboarding_row[f"refinery_catalog_{env}"]
+                    if f"refinery_catalog_{env}" in onboarding_row
+                    else None
+                )
+                if refinery_cl:
+                    source_details["catalog"] = refinery_cl
+                if not self.uc_enabled and f"refinery_table_path_{env}" in onboarding_row:
+                    source_details["path"] = onboarding_row[f"refinery_table_path_{env}"]
+            elif f"landing_database_{env}" in onboarding_row and onboarding_row[f"landing_database_{env}"] is not None:
+                # Source is landing layer
+                source_details = {
+                    "database": onboarding_row[f"landing_database_{env}"],
+                    "table": onboarding_row["landing_table"],
+                }
+                landing_cl = (
+                    onboarding_row[f"landing_catalog_{env}"]
+                    if f"landing_catalog_{env}" in onboarding_row
+                    else None
+                )
+                if landing_cl:
+                    source_details["catalog"] = landing_cl
+                if not self.uc_enabled and f"landing_table_path_{env}" in onboarding_row:
+                    source_details["path"] = onboarding_row[f"landing_table_path_{env}"]
+            elif "source_details" in onboarding_row and onboarding_row["source_details"]:
+                # Source is from source_details (for delta sources)
+                source_details_file = self.__delete_none(onboarding_row["source_details"].asDict())
+                if "catalog_{}".format(env) in source_details_file:
+                    source_details["catalog"] = source_details_file[f"catalog_{env}"]
+                if "database_{}".format(env) in source_details_file:
+                    source_details["database"] = source_details_file[f"database_{env}"]
+                if "table" in source_details_file:
+                    source_details["table"] = source_details_file["table"]
+                if f"source_path_{env}" in source_details_file:
+                    source_details["path"] = source_details_file[f"source_path_{env}"]
+
+            treasury_target_details = {
+                "database": onboarding_row[f"treasury_database_{env}"],
+                "table": onboarding_row["treasury_table"],
+            }
+            treasury_cl = (
+                onboarding_row[f"treasury_catalog_{env}"]
+                if f"treasury_catalog_{env}" in onboarding_row
+                else None
+            )
+            if "treasury_table_comment" in onboarding_row:
+                treasury_target_details["comment"] = onboarding_row["treasury_table_comment"]
+            if treasury_cl:
+                treasury_target_details["catalog"] = treasury_cl
+            if not self.uc_enabled and f"treasury_table_path_{env}" in onboarding_row:
+                treasury_target_details["path"] = onboarding_row[f"treasury_table_path_{env}"]
+
+            treasury_reader_options_json = (
+                onboarding_row["treasury_reader_options"]
+                if "treasury_reader_options" in onboarding_row
+                else {}
+            )
+            if treasury_reader_options_json:
+                treasury_reader_config_options = self.__delete_none(
+                    treasury_reader_options_json.asDict()
+                )
+
+            treasury_table_properties = {}
+            if (
+                "treasury_table_properties" in onboarding_row
+                and onboarding_row["treasury_table_properties"]
+            ):
+                treasury_table_properties = self.__delete_none(
+                    onboarding_row["treasury_table_properties"].asDict()
+                )
+
+            treasury_partition_columns_var = [""]
+            if (
+                "treasury_partition_columns" in onboarding_row
+                and onboarding_row["treasury_partition_columns"]
+            ):
+                if "," in onboarding_row["treasury_partition_columns"]:
+                    treasury_partition_columns_var = onboarding_row["treasury_partition_columns"].split(",")
+                else:
+                    treasury_partition_columns_var = [onboarding_row["treasury_partition_columns"]]
+
+            dlt_sinks = None
+            if "treasury_sinks" in onboarding_row and onboarding_row["treasury_sinks"]:
+                dlt_sinks = self.get_sink_details(onboarding_row, "treasury")
+
+            treasury_cluster_by = self.__get_cluster_by_properties(
+                onboarding_row, treasury_table_properties, "treasury_cluster_by"
+            )
+
+            treasury_cdc_apply_changes = None
+            if (
+                "treasury_cdc_apply_changes" in onboarding_row
+                and onboarding_row["treasury_cdc_apply_changes"]
+            ):
+                self.__validate_apply_changes(onboarding_row, "treasury")
+                treasury_cdc_apply_changes_row = onboarding_row["treasury_cdc_apply_changes"]
+                if self.onboard_file_type == "json":
+                    treasury_cdc_apply_changes = json.dumps(
+                        self.__delete_none(treasury_cdc_apply_changes_row.asDict())
+                    )
+
+            data_quality_expectations = None
+            if f"treasury_data_quality_expectations_json_{env}" in onboarding_row:
+                treasury_data_quality_expectations_json = onboarding_row[
+                    f"treasury_data_quality_expectations_json_{env}"
+                ]
+                if treasury_data_quality_expectations_json:
+                    data_quality_expectations = self.__get_data_quality_expecations(
+                        treasury_data_quality_expectations_json
+                    )
+
+            source_format = "delta"
+
+            treasury_row = (
+                treasury_data_flow_spec_id,
+                treasury_data_flow_spec_group,
+                source_format,
+                source_details,
+                treasury_reader_config_options,
+                treasury_target_format,
+                treasury_target_details,
+                treasury_table_properties,
+                treasury_partition_columns_var,
+                treasury_cdc_apply_changes,
+                data_quality_expectations,
+                treasury_cluster_by,
+                dlt_sinks
+            )
+            data.append(treasury_row)
+            logger.info(f"treasury_data ==== {data}")
 
         data_flow_spec_rows_df = self.spark.createDataFrame(
             data, data_flow_spec_schema
