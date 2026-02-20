@@ -243,6 +243,8 @@ class OnboardDataflowspec:
         refinery_data_flow_spec_df = self.__get_refinery_dataflow_spec_dataframe(
             onboarding_df, dict_obj["env"]
         )
+        # Save the schema for later use
+        refinery_base_schema = refinery_data_flow_spec_df.schema
         columns = StructType(
             [
                 StructField("sql_query", StringType(), True),
@@ -259,7 +261,7 @@ class OnboardDataflowspec:
         # Process each flow individually with its specific transformation file
         # This prevents cartesian joins when multiple flows target the same table
         refinery_flow_rows = refinery_data_flow_spec_df.collect()
-        refinery_final_rows = []
+        sql_queries_map = {}  # Map dataFlowId -> sql_query
 
         for flow_row in refinery_flow_rows:
             flow_df = onboarding_df.filter(f.col("data_flow_id") == flow_row["dataFlowId"])
@@ -288,21 +290,28 @@ class OnboardDataflowspec:
                     json_data = self.spark.read.option("multiline", "true").json(trans_file_path).first()
                     sql_query = json_data['sql_query'] if json_data else ''
 
-                # Create row with transformation SQL merged with flow spec
-                flow_dict = flow_row.asDict()
-                flow_dict['sqlQuery'] = sql_query
-                refinery_final_rows.append(flow_dict)
+                sql_queries_map[flow_row["dataFlowId"]] = sql_query
 
             except Exception as e:
                 logger.error(f"Error reading transformation file {trans_file_path} for flow {flow_row['dataFlowId']}: {e}")
                 continue
 
-        # Convert back to dataframe
-        if refinery_final_rows:
-            refinery_dataflow_spec_df = self.spark.createDataFrame(refinery_final_rows)
-        else:
+        # Add sqlQuery column to the dataframe
+        if not sql_queries_map:
             logger.warning("No refinery flows were processed successfully")
             return
+
+        # Create a map UDF to lookup SQL query by dataFlowId
+        from pyspark.sql.types import StringType as ST
+        sql_map_broadcast = self.spark.sparkContext.broadcast(sql_queries_map)
+
+        def get_sql_query(flow_id):
+            return sql_map_broadcast.value.get(flow_id, '')
+
+        get_sql_query_udf = f.udf(get_sql_query, ST())
+        refinery_dataflow_spec_df = refinery_data_flow_spec_df.withColumn(
+            "sqlQuery", get_sql_query_udf(f.col("dataFlowId"))
+        )
 
         refinery_dataflow_spec_df = self.__add_audit_columns(
             refinery_dataflow_spec_df,
@@ -389,6 +398,8 @@ class OnboardDataflowspec:
         treasury_data_flow_spec_df = self.__get_treasury_dataflow_spec_dataframe(
             onboarding_df, dict_obj["env"]
         )
+        # Save the schema for later use
+        treasury_base_schema = treasury_data_flow_spec_df.schema
         columns = StructType(
             [
                 StructField("sql_query", StringType(), True),
@@ -405,7 +416,7 @@ class OnboardDataflowspec:
         # Process each flow individually with its specific transformation file
         # This prevents cartesian joins when multiple flows target the same table
         treasury_flow_rows = treasury_data_flow_spec_df.collect()
-        treasury_final_rows = []
+        sql_queries_map = {}  # Map dataFlowId -> sql_query
 
         for flow_row in treasury_flow_rows:
             flow_df = onboarding_df.filter(f.col("data_flow_id") == flow_row["dataFlowId"])
@@ -434,21 +445,28 @@ class OnboardDataflowspec:
                     json_data = self.spark.read.option("multiline", "true").json(trans_file_path).first()
                     sql_query = json_data['sql_query'] if json_data else ''
 
-                # Create row with transformation SQL merged with flow spec
-                flow_dict = flow_row.asDict()
-                flow_dict['sqlQuery'] = sql_query
-                treasury_final_rows.append(flow_dict)
+                sql_queries_map[flow_row["dataFlowId"]] = sql_query
 
             except Exception as e:
                 logger.error(f"Error reading transformation file {trans_file_path} for flow {flow_row['dataFlowId']}: {e}")
                 continue
 
-        # Convert back to dataframe
-        if treasury_final_rows:
-            treasury_dataflow_spec_df = self.spark.createDataFrame(treasury_final_rows)
-        else:
+        # Add sqlQuery column to the dataframe
+        if not sql_queries_map:
             logger.warning("No treasury flows were processed successfully")
             return
+
+        # Create a map UDF to lookup SQL query by dataFlowId
+        from pyspark.sql.types import StringType as ST
+        sql_map_broadcast = self.spark.sparkContext.broadcast(sql_queries_map)
+
+        def get_sql_query(flow_id):
+            return sql_map_broadcast.value.get(flow_id, '')
+
+        get_sql_query_udf = f.udf(get_sql_query, ST())
+        treasury_dataflow_spec_df = treasury_data_flow_spec_df.withColumn(
+            "sqlQuery", get_sql_query_udf(f.col("dataFlowId"))
+        )
 
         treasury_dataflow_spec_df = self.__add_audit_columns(
             treasury_dataflow_spec_df,
