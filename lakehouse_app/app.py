@@ -451,15 +451,19 @@ def handle_onboard_form():
 
     json_string = json.dumps(json_data)
 
-    # Use virtual environment python if it exists, otherwise fall back to python3
+    # Use virtual environment python if it exists and is executable, otherwise fall back to python3
     # Check for both python3 and python in venv
     venv_python3 = f"{current_directory}/.venv/bin/python3"
     venv_python = f"{current_directory}/.venv/bin/python"
 
-    if os.path.exists(venv_python3):
+    # Helper function to check if file is executable (not just a broken symlink)
+    def is_executable(path):
+        return os.path.isfile(path) and os.access(path, os.X_OK)
+
+    if is_executable(venv_python3):
         python_cmd = venv_python3
         venv_python_used = venv_python3
-    elif os.path.exists(venv_python):
+    elif is_executable(venv_python):
         python_cmd = venv_python
         venv_python_used = venv_python
     else:
@@ -467,8 +471,10 @@ def handle_onboard_form():
         venv_python_used = None
 
     print(f"DEBUG: current_directory = {current_directory}")
-    print(f"DEBUG: venv_python = {venv_python}")
-    print(f"DEBUG: venv exists = {os.path.exists(venv_python)}")
+    print(f"DEBUG: venv_python3 path = {venv_python3}")
+    print(f"DEBUG: venv_python3 exists = {os.path.exists(venv_python3)}, executable = {is_executable(venv_python3)}")
+    print(f"DEBUG: venv_python path = {venv_python}")
+    print(f"DEBUG: venv_python exists = {os.path.exists(venv_python)}, executable = {is_executable(venv_python)}")
     print(f"DEBUG: Using python_cmd = {python_cmd}")
 
     result = subprocess.run(f"{python_cmd} {current_directory}/src/cli.py '{json_string}'",
@@ -481,8 +487,8 @@ def handle_onboard_form():
     if result.returncode != 0 and "ModuleNotFoundError" in result.stderr:
         debug_info = (f"\n=== DEBUG INFO ===\n"
                      f"current_directory: {current_directory}\n"
-                     f"venv_python: {venv_python}\n"
-                     f"venv exists: {os.path.exists(venv_python)}\n"
+                     f"venv_python3: {venv_python3} (exists={os.path.exists(venv_python3)}, executable={is_executable(venv_python3)})\n"
+                     f"venv_python: {venv_python} (exists={os.path.exists(venv_python)}, executable={is_executable(venv_python)})\n"
                      f"python_cmd used: {python_cmd}\n"
                      f"==================\n")
 
@@ -494,7 +500,7 @@ def handle_onboard_form():
         else:
             error_msg = (f"ERROR: databricks-sdk not installed in venv!\n"
                         f"Try running in CLI tab:\n"
-                        f"  {venv_python} -m pip install databricks-sdk PyYAML\n"
+                        f"  {python_cmd} -m pip install databricks-sdk PyYAML\n"
                         f"{debug_info}"
                         f"Original error:\n{result.stderr}")
 
@@ -649,15 +655,19 @@ def run_demo():
     demo_file = demo_dict.get(code_to_run, None)
     uc_name = request.json.get('uc_name', '')
 
-    # Use virtual environment python if it exists, otherwise fall back to python3
+    # Use virtual environment python if it exists and is executable, otherwise fall back to python3
     # Check for both python3 and python in venv
     venv_python3 = f"{current_directory}/.venv/bin/python3"
     venv_python = f"{current_directory}/.venv/bin/python"
 
-    if os.path.exists(venv_python3):
+    # Helper function to check if file is executable (not just a broken symlink)
+    def is_executable(path):
+        return os.path.isfile(path) and os.access(path, os.X_OK)
+
+    if is_executable(venv_python3):
         python_cmd = venv_python3
         venv_python_used = venv_python3
-    elif os.path.exists(venv_python):
+    elif is_executable(venv_python):
         python_cmd = venv_python
         venv_python_used = venv_python
     else:
