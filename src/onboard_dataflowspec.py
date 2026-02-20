@@ -265,6 +265,9 @@ class OnboardDataflowspec:
         refinery_transformation_json_files = refinery_transformation_json_file.collect()
         for row in refinery_transformation_json_files:
             trans_file_path = row[f"refinery_transformation_json_{env}"]
+            # Skip if transformation file path is None
+            if not trans_file_path:
+                continue
             # Check if file is YAML or JSON based on extension
             if trans_file_path.endswith(('.yaml', '.yml')):
                 # Read YAML file and convert to JSON-like format
@@ -405,10 +408,12 @@ class OnboardDataflowspec:
 
         treasury_transformation_json_files = treasury_transformation_json_file.collect()
         for row in treasury_transformation_json_files:
-            if row[f"treasury_transformation_json_{env}"]:
-                trans_file_path = row[f"treasury_transformation_json_{env}"]
-                # Check if file is YAML or JSON based on extension
-                if trans_file_path.endswith(('.yaml', '.yml')):
+            trans_file_path = row[f"treasury_transformation_json_{env}"]
+            # Skip if transformation file path is None
+            if not trans_file_path:
+                continue
+            # Check if file is YAML or JSON based on extension
+            if trans_file_path.endswith(('.yaml', '.yml')):
                     # Read YAML file and convert to JSON-like format
                     yaml_content = self.spark.read.text(trans_file_path, wholetext=True).collect()[0]["value"]
                     yaml_data = yaml.safe_load(yaml_content)
