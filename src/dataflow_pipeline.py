@@ -11,6 +11,7 @@ from src.dataflow_spec import LandingDataflowSpec, RefineryDataflowSpec, Treasur
 from src.pipeline_writers import AppendFlowWriter, DLTSinkWriter
 from src.__about__ import __version__
 from src.pipeline_readers import PipelineReaders
+from src.table_precreator import TablePreCreator
 
 logger = logging.getLogger('databricks.labs.dltmeta')
 logger.setLevel(logging.INFO)
@@ -1051,52 +1052,94 @@ class DataflowPipeline:
         dataflowspec_list = None
         if "landing" == layer.lower():
             dataflowspec_list = DataflowSpecUtils.get_landing_dataflow_spec(spark)
+            # Pre-create landing tables
+            uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            table_creator = TablePreCreator(spark, uc_enabled)
+            for spec in dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "landing")
             DataflowPipeline._launch_dlt_flow(
                 spark, "landing", dataflowspec_list, landing_custom_transform_func, landing_next_snapshot_and_version
             )
         elif "refinery" == layer.lower():
             dataflowspec_list = DataflowSpecUtils.get_refinery_dataflow_spec(spark)
+            # Pre-create refinery tables
+            uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            table_creator = TablePreCreator(spark, uc_enabled)
+            for spec in dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "refinery")
             DataflowPipeline._launch_dlt_flow(
                 spark, "refinery", dataflowspec_list, refinery_custom_transform_func, refinery_next_snapshot_and_version
             )
         elif "treasury" == layer.lower():
             dataflowspec_list = DataflowSpecUtils.get_treasury_dataflow_spec(spark)
+            # Pre-create treasury tables
+            uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            table_creator = TablePreCreator(spark, uc_enabled)
+            for spec in dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "treasury")
             DataflowPipeline._launch_dlt_flow(
                 spark, "treasury", dataflowspec_list, treasury_custom_transform_func, None
             )
         elif "landing_refinery" == layer.lower():
             landing_dataflowspec_list = DataflowSpecUtils.get_landing_dataflow_spec(spark)
+            # Pre-create landing tables
+            uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            table_creator = TablePreCreator(spark, uc_enabled)
+            for spec in landing_dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "landing")
             DataflowPipeline._launch_dlt_flow(
                 spark, "landing", landing_dataflowspec_list, landing_custom_transform_func,
                 landing_next_snapshot_and_version
             )
             refinery_dataflowspec_list = DataflowSpecUtils.get_refinery_dataflow_spec(spark)
+            # Pre-create refinery tables
+            for spec in refinery_dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "refinery")
             DataflowPipeline._launch_dlt_flow(
                 spark, "refinery", refinery_dataflowspec_list, refinery_custom_transform_func,
                 refinery_next_snapshot_and_version
             )
         elif "refinery_treasury" == layer.lower():
             refinery_dataflowspec_list = DataflowSpecUtils.get_refinery_dataflow_spec(spark)
+            # Pre-create refinery tables
+            uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            table_creator = TablePreCreator(spark, uc_enabled)
+            for spec in refinery_dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "refinery")
             DataflowPipeline._launch_dlt_flow(
                 spark, "refinery", refinery_dataflowspec_list, refinery_custom_transform_func,
                 refinery_next_snapshot_and_version
             )
             treasury_dataflowspec_list = DataflowSpecUtils.get_treasury_dataflow_spec(spark)
+            # Pre-create treasury tables
+            for spec in treasury_dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "treasury")
             DataflowPipeline._launch_dlt_flow(
                 spark, "treasury", treasury_dataflowspec_list, treasury_custom_transform_func, None
             )
         elif "landing_refinery_treasury" == layer.lower():
             landing_dataflowspec_list = DataflowSpecUtils.get_landing_dataflow_spec(spark)
+            # Pre-create landing tables
+            uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            table_creator = TablePreCreator(spark, uc_enabled)
+            for spec in landing_dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "landing")
             DataflowPipeline._launch_dlt_flow(
                 spark, "landing", landing_dataflowspec_list, landing_custom_transform_func,
                 landing_next_snapshot_and_version
             )
             refinery_dataflowspec_list = DataflowSpecUtils.get_refinery_dataflow_spec(spark)
+            # Pre-create refinery tables
+            for spec in refinery_dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "refinery")
             DataflowPipeline._launch_dlt_flow(
                 spark, "refinery", refinery_dataflowspec_list, refinery_custom_transform_func,
                 refinery_next_snapshot_and_version
             )
             treasury_dataflowspec_list = DataflowSpecUtils.get_treasury_dataflow_spec(spark)
+            # Pre-create treasury tables
+            for spec in treasury_dataflowspec_list:
+                table_creator.ensure_table_exists(spec, "treasury")
             DataflowPipeline._launch_dlt_flow(
                 spark, "treasury", treasury_dataflowspec_list, treasury_custom_transform_func, None
             )

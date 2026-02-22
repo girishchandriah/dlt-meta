@@ -72,6 +72,7 @@ class RefineryDataflowSpec:
     updatedBy: str
     clusterBy: list
     sinks: str
+    refinerySchemaPath: str = None
 
 
 @dataclass
@@ -97,6 +98,7 @@ class TreasuryDataflowSpec:
     updatedBy: str
     clusterBy: list
     sinks: str
+    treasurySchemaPath: str = None
 
 
 @dataclass

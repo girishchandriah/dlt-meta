@@ -1347,7 +1347,8 @@ class OnboardDataflowspec:
             "appendFlows",
             "appendFlowsSchemas",
             "clusterBy",
-            "sinks"
+            "sinks",
+            "refinerySchemaPath"
         ]
         data_flow_spec_schema = StructType(
             [
@@ -1379,7 +1380,8 @@ class OnboardDataflowspec:
                 StructField("appendFlows", StringType(), True),
                 StructField("appendFlowsSchemas", MapType(StringType(), StringType(), True), True),
                 StructField("clusterBy", ArrayType(StringType(), True), True),
-                StructField("sinks", StringType(), True)
+                StructField("sinks", StringType(), True),
+                StructField("refinerySchemaPath", StringType(), True)
             ]
         )
         data = []
@@ -1522,6 +1524,12 @@ class OnboardDataflowspec:
                     self.__delete_none(onboarding_row["refinery_apply_changes_from_snapshot"].asDict())
                 )
                 source_format = "snapshot"
+            # Extract refinery schema path
+            refinery_schema_path = (
+                onboarding_row["refinery_schema_path"]
+                if "refinery_schema_path" in onboarding_row
+                else None
+            )
             refinery_row = (
                 refinery_data_flow_spec_id,
                 refinery_data_flow_spec_group,
@@ -1541,7 +1549,8 @@ class OnboardDataflowspec:
                 append_flows,
                 append_flow_schemas,
                 refinery_cluster_by,
-                dlt_sinks
+                dlt_sinks,
+                refinery_schema_path
             )
             data.append(refinery_row)
             logger.info(f"refinery_data ==== {data}")
@@ -1574,7 +1583,8 @@ class OnboardDataflowspec:
             "cdcApplyChanges",
             "dataQualityExpectations",
             "clusterBy",
-            "sinks"
+            "sinks",
+            "treasurySchemaPath"
         ]
         data_flow_spec_schema = StructType(
             [
@@ -1600,7 +1610,8 @@ class OnboardDataflowspec:
                 StructField("cdcApplyChanges", StringType(), True),
                 StructField("dataQualityExpectations", StringType(), True),
                 StructField("clusterBy", ArrayType(StringType(), True), True),
-                StructField("sinks", StringType(), True)
+                StructField("sinks", StringType(), True),
+                StructField("treasurySchemaPath", StringType(), True)
             ]
         )
         data = []
@@ -1755,6 +1766,13 @@ class OnboardDataflowspec:
 
             source_format = "delta"
 
+            # Extract treasury schema path
+            treasury_schema_path = (
+                onboarding_row["treasury_schema_path"]
+                if "treasury_schema_path" in onboarding_row
+                else None
+            )
+
             treasury_row = (
                 treasury_data_flow_spec_id,
                 treasury_data_flow_spec_group,
@@ -1768,7 +1786,8 @@ class OnboardDataflowspec:
                 treasury_cdc_apply_changes,
                 data_quality_expectations,
                 treasury_cluster_by,
-                dlt_sinks
+                dlt_sinks,
+                treasury_schema_path
             )
             data.append(treasury_row)
             logger.info(f"treasury_data ==== {data}")
