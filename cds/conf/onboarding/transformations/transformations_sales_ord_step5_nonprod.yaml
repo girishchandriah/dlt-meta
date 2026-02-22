@@ -90,7 +90,7 @@ sql_query: |
                     tmp.expmop as expected_pmt_method_type_id  ,
                     tmp.expmopname as expected_pmt_method_type_cd  ,
                     tmp.num_stypes as tkt_type_cnt
-                    from dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord_tran_dlt z
+                    from LIVE.pfocusdb_sales_ord_tran_dlt z
                     join
                     tmp
                     on tmp.sales_ord_id = z.sales_ord_id
@@ -148,7 +148,7 @@ sql_query: |
                     z.expmopname as expected_pmt_method_type_cd,
                     z.num_stypes as tkt_type_cnt
                     from source_204-batch-update z
-                    where not exists (select 1 from dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord_tran_dlt t
+                    where not exists (select 1 from LIVE.pfocusdb_sales_ord_tran_dlt t
                     where trim(upper(t.host_sys_cd)) = trim(upper(z.system))
                     and t.host_vax_acct_num =  z._account
                     and t.host_acct_create_dt = z.acctdate
