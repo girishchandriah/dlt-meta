@@ -72,6 +72,11 @@ class TablePreCreator:
         # Get schema path based on layer
         schema_path = None
         if layer_type == "landing":
+            # DEBUG: Log sourceDetails status
+            self.logger.info(f"DEBUG: sourceDetails is None? {dataflow_spec.sourceDetails is None}")
+            self.logger.info(f"DEBUG: sourceDetails type: {type(dataflow_spec.sourceDetails)}")
+            self.logger.info(f"DEBUG: sourceDetails value: {dataflow_spec.sourceDetails}")
+
             # Access sourceDetails - try both access methods
             if dataflow_spec.sourceDetails:
                 try:
