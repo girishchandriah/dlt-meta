@@ -744,7 +744,8 @@ class OnboardDataflowspec:
             "appendFlows",
             "appendFlowsSchemas",
             "sinks",
-            "clusterBy"
+            "clusterBy",
+            "landingSchemaPath"
         ]
         data_flow_spec_schema = StructType(
             [
@@ -785,6 +786,7 @@ class OnboardDataflowspec:
                 StructField("appendFlowsSchemas", MapType(StringType(), StringType(), True), True),
                 StructField("sinks", StringType(), True),
                 StructField("clusterBy", ArrayType(StringType(), True), True),
+                StructField("landingSchemaPath", StringType(), True),
             ]
         )
         data = []
@@ -913,6 +915,11 @@ class OnboardDataflowspec:
             append_flows, append_flows_schemas = self.get_append_flows_json(
                 onboarding_row, "landing", env
             )
+            landing_schema_path = (
+                onboarding_row["landing_schema_path"]
+                if "landing_schema_path" in onboarding_row
+                else None
+            )
             landing_row = (
                 landing_data_flow_spec_id,
                 landing_data_flow_spec_group,
@@ -932,7 +939,8 @@ class OnboardDataflowspec:
                 append_flows,
                 append_flows_schemas,
                 dlt_sinks,
-                cluster_by
+                cluster_by,
+                landing_schema_path
             )
             data.append(landing_row)
             # logger.info(landing_parition_columns)

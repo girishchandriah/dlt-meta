@@ -42,6 +42,7 @@ class LandingDataflowSpec:
     updatedBy: str
     clusterBy: list
     sinks: str
+    landingSchemaPath: str = None
 
 
 @dataclass

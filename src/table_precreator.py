@@ -72,13 +72,12 @@ class TablePreCreator:
         # Get schema path based on layer
         schema_path = None
         if layer_type == "landing":
-            # DEBUG: Log sourceDetails status
-            self.logger.info(f"DEBUG: sourceDetails is None? {dataflow_spec.sourceDetails is None}")
-            self.logger.info(f"DEBUG: sourceDetails type: {type(dataflow_spec.sourceDetails)}")
-            self.logger.info(f"DEBUG: sourceDetails value: {dataflow_spec.sourceDetails}")
+            # First try landingSchemaPath (new approach)
+            schema_path = dataflow_spec.landingSchemaPath
 
-            # Access sourceDetails - try both access methods
-            if dataflow_spec.sourceDetails:
+            # Fallback to sourceDetails for backward compatibility
+            if not schema_path and dataflow_spec.sourceDetails:
+                self.logger.info("landingSchemaPath not found, falling back to sourceDetails")
                 try:
                     # Try bracket notation first (works for Spark Row types)
                     schema_path = dataflow_spec.sourceDetails["source_schema_path"]
@@ -90,10 +89,6 @@ class TablePreCreator:
                         # Last resort: convert to dict and access
                         source_dict = dict(dataflow_spec.sourceDetails) if dataflow_spec.sourceDetails else {}
                         schema_path = source_dict.get("source_schema_path")
-
-                # Debug logging
-                self.logger.info(f"sourceDetails keys: {list(dataflow_spec.sourceDetails.keys()) if hasattr(dataflow_spec.sourceDetails, 'keys') else 'N/A'}")
-                self.logger.info(f"Extracted schema_path: {schema_path}")
         elif layer_type == "refinery":
             schema_path = dataflow_spec.refinerySchemaPath
         elif layer_type == "treasury":
