@@ -48,11 +48,13 @@ class TablePreCreator:
             ValueError: If schema path not provided or target details missing
             RuntimeError: If table creation fails
         """
-        # Extract target details
-        target_details = dict(dataflow_spec.targetDetails) if dataflow_spec.targetDetails else {}
-        catalog = target_details.get('catalog')
-        database = target_details.get('database')
-        table = target_details.get('table')
+        # Extract target details (targetDetails is already dict-like)
+        if not dataflow_spec.targetDetails:
+            raise ValueError(f"Missing targetDetails for {layer_type} (dataFlowId={dataflow_spec.dataFlowId})")
+
+        catalog = dataflow_spec.targetDetails.get('catalog')
+        database = dataflow_spec.targetDetails.get('database')
+        table = dataflow_spec.targetDetails.get('table')
 
         if not database or not table:
             raise ValueError(
@@ -70,8 +72,9 @@ class TablePreCreator:
         # Get schema path based on layer
         schema_path = None
         if layer_type == "landing":
-            source_details = dict(dataflow_spec.sourceDetails) if dataflow_spec.sourceDetails else {}
-            schema_path = source_details.get("source_schema_path")
+            # Access sourceDetails directly (it's already dict-like)
+            if dataflow_spec.sourceDetails:
+                schema_path = dataflow_spec.sourceDetails.get("source_schema_path")
         elif layer_type == "refinery":
             schema_path = dataflow_spec.refinerySchemaPath
         elif layer_type == "treasury":
@@ -89,14 +92,14 @@ class TablePreCreator:
         # Load schema from DDL file
         schema = self._get_schema_from_ddl(schema_path)
 
-        # Extract table properties
+        # Extract table properties (already dict-like)
         partition_cols = (
             dataflow_spec.partitionColumns
             if hasattr(dataflow_spec, 'partitionColumns') and dataflow_spec.partitionColumns
             else None
         )
         table_properties = (
-            dict(dataflow_spec.tableProperties)
+            dataflow_spec.tableProperties
             if hasattr(dataflow_spec, 'tableProperties') and dataflow_spec.tableProperties
             else {}
         )

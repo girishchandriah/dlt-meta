@@ -371,7 +371,7 @@ class TestTablePreCreator:
         """Test that missing database raises ValueError."""
         spec = Mock(spec=LandingDataflowSpec)
         spec.dataFlowId = "test_flow_005"
-        spec.targetDetails = {"catalog": "test_catalog", "table": "test_table"}
+        spec.targetDetails = {"catalog": "test_catalog", "table": "test_table"}  # Missing database
 
         with pytest.raises(ValueError, match="Missing database or table"):
             table_creator.ensure_table_exists(spec, "landing")
