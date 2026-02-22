@@ -48,15 +48,6 @@ class TablePreCreator:
             ValueError: If schema path not provided or target details missing
             RuntimeError: If table creation fails
         """
-        # Skip pre-creation for tables with CDC apply changes configured
-        # DLT manages these tables automatically
-        if hasattr(dataflow_spec, 'cdcApplyChanges') and dataflow_spec.cdcApplyChanges:
-            self.logger.info(
-                f"Skipping pre-creation for {layer_type} table (dataFlowId={dataflow_spec.dataFlowId}) "
-                f"because CDC apply changes is configured. DLT will manage this table."
-            )
-            return
-
         # Extract target details (targetDetails is already dict-like)
         if not dataflow_spec.targetDetails:
             raise ValueError(f"Missing targetDetails for {layer_type} (dataFlowId={dataflow_spec.dataFlowId})")

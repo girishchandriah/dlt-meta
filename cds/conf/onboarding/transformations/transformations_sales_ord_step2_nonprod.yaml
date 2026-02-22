@@ -55,7 +55,7 @@ sql_query: |
       up.init_run_id,
       if(tgt.sales_ord_id is not null, true, false) as processed,
       up.landing_insert_ts
-    from dataservices_nonprod.refinery_nonprod.pfocusst_dsn_st_trans_dl_dlt up
+    from LIVE.pfocusst_dsn_st_trans_dl_dlt up
     left join tgt on up.sales_ord_id = tgt.sales_ord_id
   ),
   q_extract as (
