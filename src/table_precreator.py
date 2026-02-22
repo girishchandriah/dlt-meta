@@ -219,47 +219,44 @@ class TablePreCreator:
         """
         full_table_name = f"{catalog}.{database}.{table}" if catalog else f"{database}.{table}"
 
-        # Build column definitions
-        columns_ddl = ", ".join([
-            f"`{field.name}` {field.dataType.simpleString()}"
-            for field in schema.fields
-        ])
-
-        # Build CREATE TABLE statement
-        ddl_parts = [f"CREATE TABLE IF NOT EXISTS {full_table_name}"]
-        ddl_parts.append(f"({columns_ddl})")
-        ddl_parts.append("USING DELTA")
-
-        # Add partitioning
-        if partition_cols:
-            # Filter out empty strings from partition columns
-            valid_partition_cols = [col for col in partition_cols if col and col.strip()]
-            if valid_partition_cols:
-                partition_clause = ", ".join([f"`{col}`" for col in valid_partition_cols])
-                ddl_parts.append(f"PARTITIONED BY ({partition_clause})")
-
-        # Add clustering (Databricks-specific)
-        if cluster_by:
-            # Filter out empty strings from cluster columns
-            valid_cluster_cols = [col for col in cluster_by if col and col.strip()]
-            if valid_cluster_cols:
-                cluster_clause = ", ".join([f"`{col}`" for col in valid_cluster_cols])
-                ddl_parts.append(f"CLUSTER BY ({cluster_clause})")
-
-        # Add table properties
-        if table_properties:
-            props = ", ".join([f"'{k}' = '{v}'" for k, v in table_properties.items()])
-            ddl_parts.append(f"TBLPROPERTIES ({props})")
-
-        create_sql = " ".join(ddl_parts)
-
-        self.logger.info(f"Creating table: {create_sql}")
+        self.logger.info(f"Creating table using DataFrame API: {full_table_name}")
 
         try:
-            self.spark.sql(create_sql)
+            # Create empty DataFrame with the schema
+            empty_df = self.spark.createDataFrame([], schema)
+
+            # Start building the write operation
+            writer = empty_df.write.format("delta").mode("append")
+
+            # Add table properties (options must be set before saveAsTable)
+            if table_properties:
+                for key, value in table_properties.items():
+                    writer = writer.option(key, value)
+
+            # Add partitioning
+            if partition_cols:
+                # Filter out empty strings from partition columns
+                valid_partition_cols = [col for col in partition_cols if col and col.strip()]
+                if valid_partition_cols:
+                    self.logger.info(f"Partitioning by: {valid_partition_cols}")
+                    writer = writer.partitionBy(*valid_partition_cols)
+
+            # Add clustering (Databricks-specific)
+            if cluster_by:
+                # Filter out empty strings from cluster columns
+                valid_cluster_cols = [col for col in cluster_by if col and col.strip()]
+                if valid_cluster_cols:
+                    self.logger.info(f"Clustering by: {valid_cluster_cols}")
+                    # Use clusterBy option for Delta tables
+                    cluster_cols_str = ",".join(valid_cluster_cols)
+                    writer = writer.option("clusterBy", cluster_cols_str)
+
+            # Save as table
+            writer.saveAsTable(full_table_name)
             self.logger.info(f"Successfully created table: {full_table_name}")
+
         except Exception as e:
             raise RuntimeError(
                 f"Failed to create table '{full_table_name}': {e}. "
-                f"Check permissions and DDL syntax."
+                f"Check permissions and table configuration."
             )
