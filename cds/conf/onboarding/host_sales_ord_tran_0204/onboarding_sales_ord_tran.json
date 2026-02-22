@@ -20,6 +20,7 @@
     "landing_database_prod": "landing",
     "landing_table": "pfocusst_ff_src_hst_dsn_trans_dlt",
     "landing_table_comment": "Landing table for DSN sales order transactions from JB EDW",
+    "landing_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/dsn_sales_ord_tran.ddl",
     "landing_reader_options": {
       "cloudFiles.format": "csv",
       "header": "false",
