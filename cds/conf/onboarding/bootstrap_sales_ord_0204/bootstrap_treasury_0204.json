@@ -1,0 +1,41 @@
+[
+  {
+    "data_flow_id": "2041",
+    "data_flow_group": "sales_ord_bootstrap",
+    "source_system": "jb_edw",
+    "source_format": "snapshot",
+    "source_details": {
+      "source_database": "refinery_nonprod",
+      "source_table": "pfocusst_dsn_st_trans_dl_dlt"
+    },
+    "treasury_catalog_nonprod": "dataservices_nonprod",
+    "treasury_catalog_preprod": "dataservices_preprod",
+    "treasury_catalog_prod": "dataservices_treasury",
+    "treasury_database_nonprod": "treasury_teradata_base_nonprod",
+    "treasury_database_preprod": "treasury_teradata_base_preprod",
+    "treasury_database_prod": "treasury_teradata_base",
+    "treasury_table": "pfocusdb_sales_ord_tran_dlt",
+    "treasury_table_comment": "Bootstrap empty treasury table for CDC - created by DLT",
+    "treasury_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/bootstrap_treasury_step3_nonprod.yaml",
+    "treasury_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/bootstrap_treasury_step3_preprod.yaml",
+    "treasury_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/bootstrap_treasury_step3_prod.yaml",
+    "treasury_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/treasury_sales_ord_tran.ddl",
+    "treasury_cdc_apply_changes": {
+      "keys": [
+        "sales_ord_id",
+        "event_id",
+        "sales_ord_tran_id",
+        "sales_ord_tran_dt"
+      ],
+      "sequence_by": "host_acct_create_dt",
+      "scd_type": "1",
+      "except_column_list": []
+    },
+    "treasury_cluster_by": [
+      "sales_ord_tran_dt",
+      "event_id"
+    ],
+    "version": "v1.0",
+    "_comment": "Bootstrap dataflow (ID=2041 runs before step3) to create empty treasury CDC table within DLT pipeline. SQL returns 0 rows to initialize table structure. Main step3 can then reference it with LIVE. syntax."
+  }
+]
