@@ -45,7 +45,10 @@
       "scd_type": "1",
       "apply_as_deletes": "processed is true",
       "except_column_list": [
-        "_rescued_data"
+        "_rescued_data",
+        "last_run_id",
+        "init_run_id",
+        "last_batch_id"
       ]
     },
     "refinery_reader_options": {},
