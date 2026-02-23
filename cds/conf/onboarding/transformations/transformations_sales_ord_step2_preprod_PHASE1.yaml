@@ -165,18 +165,25 @@ sql_query: |
       dataservices_preprod.refinery_preprod.cdsudf_getoptype(q_extract.pcode, q_extract.system, q_extract.acctdate) as print_optype,
       q_extract.landing_insert_ts
     from q_extract
+  ),
+  all_new_records as (
+    select
+      uuid() as pfocusst_dsn_st_trans_dl_id,
+      o.sales_ord_id,
+      q.system, q.facility_fee, q.acctdate, q.mimic_flg, q.tkt_transfer_rcvd_flg,
+      q.tkt_transfer_surrender_flg, q.firstqual, q.distance_charge, q.tkt_transfer_sent_flg,
+      q.resale_status_nm, q.print_optype, q.serchg, q.expmopname, q.vcode, q.exchangee_fee,
+      q.last_run_id, q.ser_chrg_tax, q.tsale, q.vflag, q.vdate, q._account, q.set_tax,
+      q.vaxevid, q.price_level, q.tqty, q.seatloc, q.ticket_value, q.ser_chrg_tax2,
+      q.expmop, q.trnum, q.num_stypes, q.void_used_opr_cd, q.pflag, q.price_level_name,
+      q.tran_optype, q.last_batch_id, q.pdate, q.void_optype, q.acmode, q.pcode, q.tdate,
+      q.tcode, q.init_run_id,
+      false as processed,
+      q.landing_insert_ts
+    from query q
+    left join dataservices_preprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord o
+      on trim(upper(q.system)) = trim(upper(o.host_sys_cd))
+      and q.acctdate = o.host_acct_create_dt
+      and q._account = o.host_vax_acct_num
   )
-  select
-    uuid() as pfocusst_dsn_st_trans_dl_id,
-    cast(null as string) as sales_ord_id,
-    system, facility_fee, acctdate, mimic_flg, tkt_transfer_rcvd_flg,
-    tkt_transfer_surrender_flg, firstqual, distance_charge, tkt_transfer_sent_flg,
-    resale_status_nm, print_optype, serchg, expmopname, vcode, exchangee_fee,
-    last_run_id, ser_chrg_tax, tsale, vflag, vdate, _account, set_tax,
-    vaxevid, price_level, tqty, seatloc, ticket_value, ser_chrg_tax2,
-    expmop, trnum, num_stypes, void_used_opr_cd, pflag, price_level_name,
-    tran_optype, last_batch_id, pdate, void_optype, acmode, pcode, tdate,
-    tcode, init_run_id,
-    false as processed,
-    landing_insert_ts
-  from query
+  select * from all_new_records
