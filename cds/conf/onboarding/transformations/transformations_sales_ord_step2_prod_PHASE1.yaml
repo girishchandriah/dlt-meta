@@ -100,7 +100,7 @@ sql_query: |
         else f.transopcode
       end as tcode,
       null as init_run_id,
-      f.insert_ts as landing_insert_ts
+      current_timestamp() as landing_insert_ts
     from source_204 f
   ),
   query as (
