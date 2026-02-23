@@ -48,10 +48,6 @@
         "_rescued_data"
       ]
     },
-    "refinery_cluster_by": [
-      "tdate",
-      "sales_ord_id"
-    ],
     "refinery_reader_options": {},
     "treasury_catalog_nonprod": "dataservices_nonprod",
     "treasury_catalog_preprod": "dataservices_preprod",
