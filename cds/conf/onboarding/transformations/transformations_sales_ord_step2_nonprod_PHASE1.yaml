@@ -32,7 +32,7 @@ sql_query: |
       if(f.resale_status_nm=1, 'Available',
         if(f.resale_status_nm=2, 'Purchased',
           if(f.resale_status_nm=3, 'Sold', null))) as resale_status_nm,
-      null as print_optype,
+      cast(null as string) as print_optype,
       case
         when trim(upper(f.voidflag)) = 'T' then 0.0000
         else f.servicedollars
@@ -47,7 +47,7 @@ sql_query: |
         when trim(upper(f.voidflag)) = 'T' then 0.0000
         else f.exchangefee
       end as exchangee_fee,
-      null as last_run_id,
+      cast(null as string) as last_run_id,
       case
         when trim(upper(f.voidflag)) = 'T' then 0.0000
         else f.servicetax
@@ -84,10 +84,10 @@ sql_query: |
       f.vcode_used as void_used_opr_cd,
       f.printflag as pflag,
       f.pricelevelname as price_level_name,
-      null as tran_optype,
-      null as last_batch_id,
+      cast(null as string) as tran_optype,
+      cast(null as string) as last_batch_id,
       f.printdate as pdate,
-      null as void_optype,
+      cast(null as string) as void_optype,
       f.acmode as acmode,
       case
         when (upper(trim(f.printflag)) = 'F' and (f.printopcode IS null or f.printopcode = '')) then 'NOT APPLICABLE'
@@ -99,7 +99,7 @@ sql_query: |
         when f.transopcode IS null or f.transopcode = '' then 'UNKNOWN'
         else f.transopcode
       end as tcode,
-      null as init_run_id,
+      cast(null as string) as init_run_id,
       current_timestamp() as landing_insert_ts
     from source_204 f
   ),
