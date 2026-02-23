@@ -1,7 +1,7 @@
 [
   {
     "data_flow_id": "2040",
-    "data_flow_group": "sales_ord_bootstrap",
+    "data_flow_group": "sales_ord",
     "source_system": "jb_edw",
     "source_format": "snapshot",
     "source_details": {
