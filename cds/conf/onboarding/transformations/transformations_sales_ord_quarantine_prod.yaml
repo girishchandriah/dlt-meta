@@ -13,7 +13,7 @@ sql_query: |
       end as system,
       if(
         substring(f.accountdate FROM -2) >
-        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_refinery.refinery.jobs_configurations where key='century_year'),
         add_months(to_date(f.accountdate,'M/d/yy'), -1200),
         to_date(f.accountdate, 'M/d/yy')
       ) as acctdate,
@@ -22,7 +22,7 @@ sql_query: |
       f.transnum as trnum,
       if(
         substring(f.transdate FROM -2) >
-        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_refinery.refinery.jobs_configurations where key='century_year'),
         add_months(to_date(f.transdate,'M/d/yy'), -1200),
         to_date(f.transdate, 'M/d/yy')
       ) as tdate,
@@ -53,7 +53,7 @@ sql_query: |
       current_timestamp() as quarantine_ts,
       'NO_SALES_ORD_ID' as quarantine_reason
     from q_extract q
-    left join dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord o
+    left join dataservices_treasury.treasury_teradata_base.pfocusdb_sales_ord o
       on trim(upper(q.system)) = trim(upper(o.host_sys_cd))
       and q.acctdate = o.host_acct_create_dt
       and q._account = o.host_vax_acct_num
