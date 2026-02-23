@@ -52,9 +52,7 @@
       "tdate",
       "sales_ord_id"
     ],
-    "refinery_reader_options": {
-      "readChangeFeed": "true"
-    },
+    "refinery_reader_options": {},
     "treasury_catalog_nonprod": "dataservices_nonprod",
     "treasury_catalog_preprod": "dataservices_preprod",
     "treasury_catalog_prod": "dataservices_treasury",
