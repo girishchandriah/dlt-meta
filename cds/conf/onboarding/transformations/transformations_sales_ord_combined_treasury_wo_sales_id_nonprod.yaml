@@ -96,7 +96,7 @@ sql_query: |
         else f.transopcode
       end as tcode,
       f.acmode as acmode
-    from source_204 f
+    from source_210 f
   ),
 
   -- Step 2: Apply date conversions and get operator types
