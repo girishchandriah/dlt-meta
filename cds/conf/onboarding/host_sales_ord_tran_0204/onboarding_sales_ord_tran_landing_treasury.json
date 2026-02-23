@@ -1,6 +1,6 @@
 [
   {
-    "data_flow_id": "204_combined",
+    "data_flow_id": "204",
     "data_flow_group": "sales_ord",
     "source_system": "jb_edw",
     "source_format": "cloudFiles",
@@ -66,7 +66,7 @@
     "_comment": "Dataflow 204_combined: Landing → Treasury direct pipeline. No refinery layer. Combines all transformation logic (step 2 + step 3) in one treasury SQL. Handles regular transactions and void updates."
   },
   {
-    "data_flow_id": "204_quarantine",
+    "data_flow_id": "205",
     "data_flow_group": "sales_ord",
     "source_system": "jb_edw",
     "source_format": "delta",

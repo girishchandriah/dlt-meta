@@ -1,8 +1,9 @@
 target_table: pfocusdb_sales_ord_tran_dlt_v2
 transformation_name: Sales Order Transaction Combined Treasury Transformation (Landing → Treasury)
-description: "Combined transformation: Reads directly from landing, applies all refinery transformations, handles void logic, and writes to treasury. No refinery table needed."
+description: "Combined transformation: Reads from source view (incremental via DLT streaming), applies all refinery transformations, handles void logic, and writes to treasury. No refinery table needed."
 sql_query: |
   -- Step 1: Apply all refinery transformations (from step 2)
+  -- Note: 'source_204' is a DLT-managed view that provides incremental data from landing
   with q_extract as (
     select
       case
@@ -95,7 +96,7 @@ sql_query: |
         else f.transopcode
       end as tcode,
       f.acmode as acmode
-    from LIVE.pfocusst_ff_src_hst_dsn_trans_dlt_v2 f
+    from source_204 f
   ),
 
   -- Step 2: Apply date conversions and get operator types
@@ -160,6 +161,7 @@ sql_query: |
   ),
 
   -- Step 3: Get sales_ord_id lookup
+  -- This lookup is necessary to enrich records with sales_ord_id
   enriched_data as (
     select
       q.*,
@@ -172,32 +174,8 @@ sql_query: |
     where o.sales_ord_id is not null  -- Only process records with sales_ord_id
   ),
 
-  -- Step 4: Filter out already-processed records (exist in treasury)
-  existing_treasury as (
-    select
-      host_sys_cd,
-      host_vax_acct_num,
-      host_acct_create_dt,
-      event_id,
-      sales_ord_tran_id,
-      sales_ord_tran_dt
-    from LIVE.pfocusdb_sales_ord_tran_dlt_v2
-  ),
-
-  new_records as (
-    select e.*
-    from enriched_data e
-    left join existing_treasury t
-      on trim(upper(e.system)) = trim(upper(t.host_sys_cd))
-      and e._account = t.host_vax_acct_num
-      and e.acctdate = t.host_acct_create_dt
-      and e.vaxevid = t.event_id
-      and e.trnum = t.sales_ord_tran_id
-      and e.tdate = t.sales_ord_tran_dt
-    where t.host_sys_cd is null  -- Not in treasury yet
-  ),
-
-  -- Step 5: UNION - Part 1: Regular transactions (non-void)
+  -- Step 4: UNION - Part 1: Regular transactions (non-void)
+  -- CDC handles deduplication automatically via merge keys, no manual filtering needed
   regular_transactions as (
     select
       st.sales_ord_id,
@@ -252,11 +230,11 @@ sql_query: |
       cast(null as string) as expected_pmt_method_type_id,
       cast(null as string) as expected_pmt_method_type_cd,
       st.num_stypes as tkt_type_cnt
-    from new_records st
+    from enriched_data st
     where coalesce(upper(trim(st.vflag)), '') <> 'T'  -- Non-void transactions
   ),
 
-  -- Step 6: UNION - Part 2: Void transactions (update existing treasury records)
+  -- Step 5: UNION - Part 2: Void transactions (update existing treasury records)
   void_transactions as (
     select
       d.sales_ord_id,
@@ -324,7 +302,8 @@ sql_query: |
     where trim(upper(d.vflag)) = 'T'  -- Match with incoming void transactions
   )
 
-  -- Step 7: UNION all results
+  -- Step 6: UNION all results
+  -- CDC merge will handle any duplicates based on configured keys
   select * from regular_transactions
   union all
   select * from void_transactions
