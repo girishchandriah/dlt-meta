@@ -1,4 +1,4 @@
-target_table: pfocusdb_sales_ord_tran_dlt
+target_table: pfocusdb_sales_ord_tran_dlt_v2
 transformation_name: Sales Order Transaction Treasury Transformation - Phase 1 (Initial Run)
 description: "Step 3 Phase 1: Initial run without self-referential checks. Inserts non-void transactions from refinery to treasury. Run this for the first pipeline execution, then switch to PHASE2."
 sql_query: |

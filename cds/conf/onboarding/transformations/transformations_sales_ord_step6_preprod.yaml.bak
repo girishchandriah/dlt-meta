@@ -59,7 +59,7 @@ sql_query: |
                         a.expected_pmt_method_type_id,
                         a.expected_pmt_method_type_cd,
                         a.tkt_type_cnt
-                        from LIVE.pfocusdb_sales_ord_tran_dlt_v2 a
+                        from LIVE.pfocusdb_sales_ord_tran_dlt a
                         inner join src on
                         a.event_id = src.event_id and
                         trim(a.host_sys_cd) = trim(src.host_sys_cd) and

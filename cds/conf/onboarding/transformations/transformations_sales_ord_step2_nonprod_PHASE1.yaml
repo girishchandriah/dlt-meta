@@ -1,4 +1,4 @@
-target_table: pfocusst_dsn_st_trans_dl_dlt
+target_table: pfocusst_dsn_st_trans_dl_dlt_v2
 transformation_name: Sales Order Transaction Refinery Transformation - Phase 1 (Initial Run)
 description: "Step 2 Phase 1: Initial run without self-referential checks. Creates refinery table without checking treasury. Run this for the first pipeline execution, then switch to PHASE2."
 sql_query: |

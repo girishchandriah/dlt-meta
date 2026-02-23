@@ -1,7 +1,7 @@
 target_table: pfocusdb_sales_ord_tran_dlt_v2
 transformation_name: Sales Order Transaction Treasury Transformation - Phase 2 (With Referential Checks)
 description: "Step 3 Phase 2: Processes void transactions by updating existing treasury records. Use PHASE1 for initial run (without self-reference), then switch to this PHASE2 for subsequent runs (with self-referential checks)."
-sql_query: | 
+sql_query: |
     with a as (select * from LIVE.pfocusst_dsn_st_trans_dl_dlt_v2 where sales_ord_id is not null),
             tmp as (
               select d.system,  d._account,d.acctdate,d.trnum,d.vaxevid,d.tdate,d.vflag,d.vdate,d.vcode,d.void_optype,d.last_batch_id,d.last_run_id,
@@ -19,7 +19,7 @@ sql_query: |
               d.tkt_transfer_rcvd_flg as tkt_transfer_rcvd_flg,
               d.tkt_transfer_surrender_flg as tkt_transfer_surrender_flg,
               initcap(lower(d.resale_status_nm)) as resale_status_nm
-              from a d join LIVE.pfocusdb_sales_ord_tran_dlt_v2 sales_ord_tran
+              from a d join LIVE.pfocusdb_sales_ord_tran_dlt sales_ord_tran
                   on trim(upper(sales_ord_tran.host_sys_cd)) =  trim(upper(d.system ))
                   and sales_ord_tran.host_vax_acct_num =  d._account
                   and sales_ord_tran.host_acct_create_dt = d.acctdate
@@ -78,7 +78,7 @@ sql_query: |
                   sales_ord_tran.print_dt     ,
                   tmp.trans_service_charge_amt  as trans_service_charge_amt   ,
                   tmp.trans_service_tax_amt   as trans_service_tax_amt  ,
-                  tmp.trans_set_tax_amt as trans_set_tax_amt from LIVE.pfocusdb_sales_ord_tran_dlt_v2 sales_ord_tran
+                  tmp.trans_set_tax_amt as trans_set_tax_amt from Live.pfocusdb_sales_ord_tran_dlt sales_ord_tran
                   join
                   tmp
                   on

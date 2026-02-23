@@ -1,10 +1,10 @@
-target_table: pfocusst_dsn_st_trans_dl_dlt
+target_table: pfocusst_dsn_st_trans_dl_dlt_v2
 transformation_name: Sales Order Transaction Refinery Transformation - Phase 2 (With Referential Checks)
 description: "Step 2 Phase 2: Transformation with self-referential checks. Validates against treasury tables. Use this for all runs AFTER the initial run. For the first run, use transformations_sales_ord_step2_nonprod_PHASE1.yaml instead."
 sql_query: |
   with tgt as (
     select distinct sales_ord_id
-    from LIVE.pfocusdb_sales_ord_tran_dlt
+    from LIVE.pfocusdb_sales_ord_tran_dlt_v2
   ),
   unprocessed_records as (
     select
@@ -55,7 +55,7 @@ sql_query: |
       up.init_run_id,
       if(tgt.sales_ord_id is not null, true, false) as processed,
       up.landing_insert_ts
-    from LIVE.pfocusst_dsn_st_trans_dl_dlt up
+    from LIVE.pfocusst_dsn_st_trans_dl_dlt_v2 up
     left join tgt on up.sales_ord_id = tgt.sales_ord_id
   ),
   q_extract as (
