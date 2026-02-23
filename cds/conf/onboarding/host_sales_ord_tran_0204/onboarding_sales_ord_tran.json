@@ -20,7 +20,6 @@
     "landing_database_prod": "landing",
     "landing_table": "pfocusst_ff_src_hst_dsn_trans_dlt_v2",
     "landing_table_comment": "Landing table for DSN sales order transactions from JB EDW",
-    "landing_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/dsn_sales_ord_tran.ddl",
     "landing_reader_options": {
       "cloudFiles.format": "csv",
       "header": "false",
@@ -38,7 +37,6 @@
     "refinery_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step2_nonprod_PHASE1.yaml",
     "refinery_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step2_preprod.yaml",
     "refinery_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step2_prod.yaml",
-    "refinery_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/refinery_sales_ord_tran.ddl",
     "refinery_cdc_apply_changes": {
       "keys": [
         "pfocusst_dsn_st_trans_dl_id"
@@ -46,7 +44,7 @@
       "sequence_by": "tdate",
       "scd_type": "1",
       "apply_as_deletes": "processed is true",
-      "except_column_list": ["last_run_id", "init_run_id", "last_batch_id"]
+      "except_column_list": []
     },
     "refinery_reader_options": {},
     "treasury_catalog_nonprod": "dataservices_nonprod",
@@ -60,7 +58,6 @@
     "treasury_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step3_nonprod_PHASE1.yaml",
     "treasury_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step3_preprod.yaml",
     "treasury_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step3_prod.yaml",
-    "treasury_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/treasury_sales_ord_tran.ddl",
     "treasury_cluster_by": [
       "sales_ord_tran_dt",
       "event_id"
