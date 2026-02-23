@@ -7,7 +7,7 @@
     "source_details": {
       "source_database": "hostfile",
       "source_table": "dsn_sales_ord_tran",
-      "source_path_nonprod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/nonprod/jb_edw_dsn_sales_ord_tran_0204/file-ingest",
+      "source_path_nonprod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/prod/jb_edw_dsn_sales_ord_tran_0204/file-ingest",
       "source_path_preprod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/preprod/jb_edw_dsn_sales_ord_tran_0204/file-ingest",
       "source_path_prod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/prod/jb_edw_dsn_sales_ord_tran_0204/file-ingest",
       "source_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/dsn_sales_ord_tran.ddl"
