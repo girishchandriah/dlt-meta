@@ -340,12 +340,20 @@ class DataflowPipeline:
 
         # Handle CDC apply changes
         if self.dataflowSpec.cdcApplyChanges and not self.dataflowSpec.dataQualityExpectations:
+            # Check if treasury is using streaming (has readChangeFeed or CDC configured)
+            treasury_is_streaming = False
             if is_treasury:
-                # Treasury batch CDC: write to staging table, DLT will merge via views
-                # Each flow writes to a unique staging table, then merged into final table
+                reader_config_opts = self._get_reader_config_options()
+                treasury_is_streaming = (
+                    self.cdcApplyChanges or
+                    (reader_config_opts and reader_config_opts.get('readChangeFeed', '').lower() == 'true')
+                )
+
+            if is_treasury and not treasury_is_streaming:
+                # Treasury batch CDC: write to staging table (legacy batch mode)
                 self._write_treasury_batch_cdc()
             else:
-                # Landing/Refinery: use streaming CDC
+                # Landing/Refinery/Treasury streaming: use streaming CDC
                 self.cdc_apply_changes()
         else:
             # Write standard table
@@ -642,29 +650,62 @@ class DataflowPipeline:
         return refinery_df
 
     def read_treasury(self) -> DataFrame:
-        """Read Treasury tables with SQL transformations (batch only)."""
+        """Read Treasury tables with SQL transformations (supports both batch and streaming)."""
         treasury_dataflow_spec: TreasuryDataflowSpec = self.dataflowSpec
         source_details = self._get_source_details()
         reader_config_opts = self._get_reader_config_options()
 
-        # Read from refinery layer (batch mode only)
+        # Read from refinery layer (batch or streaming based on configuration)
         source_cl = source_details.get('catalog', None)
         source_cl_name = f"{source_cl}." if source_cl is not None else ''
         source_database = source_details["database"]
         source_table = source_details["table"]
 
+        # Determine if we should use streaming based on:
+        # 1. CDC configuration present
+        # 2. readChangeFeed option enabled
+        # 3. sourceFormat is not 'snapshot'
+        use_streaming = False
+        if self.cdcApplyChanges:
+            # CDC requires streaming
+            use_streaming = True
+        elif reader_config_opts and reader_config_opts.get('readChangeFeed', '').lower() == 'true':
+            # readChangeFeed option requests streaming
+            use_streaming = True
+        elif hasattr(treasury_dataflow_spec, 'sourceFormat') and treasury_dataflow_spec.sourceFormat:
+            # Explicit sourceFormat provided - snapshot means batch, others mean streaming
+            use_streaming = treasury_dataflow_spec.sourceFormat.lower() != "snapshot"
+
         if reader_config_opts:
-            refinery_df = self.spark.read.options(**reader_config_opts).table(
-                f"{source_cl_name}{source_database}.{source_table}"
-            ) if self.uc_enabled else self.spark.read.options(**reader_config_opts).load(
-                path=source_details.get("path"), format="delta"
-            )
+            if use_streaming:
+                # Use streaming read for CDC/streaming use cases
+                refinery_df = self.spark.readStream.options(**reader_config_opts).table(
+                    f"{source_cl_name}{source_database}.{source_table}"
+                ) if self.uc_enabled else self.spark.readStream.options(**reader_config_opts).load(
+                    path=source_details.get("path"), format="delta"
+                )
+            else:
+                # Use batch read
+                refinery_df = self.spark.read.options(**reader_config_opts).table(
+                    f"{source_cl_name}{source_database}.{source_table}"
+                ) if self.uc_enabled else self.spark.read.options(**reader_config_opts).load(
+                    path=source_details.get("path"), format="delta"
+                )
         else:
-            refinery_df = self.spark.read.table(
-                f"{source_cl_name}{source_database}.{source_table}"
-            ) if self.uc_enabled else self.spark.read.load(
-                path=source_details.get("path"), format="delta"
-            )
+            if use_streaming:
+                # Use streaming read for CDC/streaming use cases
+                refinery_df = self.spark.readStream.table(
+                    f"{source_cl_name}{source_database}.{source_table}"
+                ) if self.uc_enabled else self.spark.readStream.load(
+                    path=source_details.get("path"), format="delta"
+                )
+            else:
+                # Use batch read
+                refinery_df = self.spark.read.table(
+                    f"{source_cl_name}{source_database}.{source_table}"
+                ) if self.uc_enabled else self.spark.read.load(
+                    path=source_details.get("path"), format="delta"
+                )
 
         # Apply SQL transformation
         sql_query = treasury_dataflow_spec.sqlQuery

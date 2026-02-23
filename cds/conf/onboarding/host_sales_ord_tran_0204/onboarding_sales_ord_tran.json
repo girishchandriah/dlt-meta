@@ -71,7 +71,9 @@
       "sales_ord_tran_dt",
       "event_id"
     ],
-    "treasury_reader_options": {},
+    "treasury_reader_options": {
+      "readChangeFeed": "true"
+    },
     "version": "v2.0",
     "treasury_cdc_apply_changes": {
       "keys": [
