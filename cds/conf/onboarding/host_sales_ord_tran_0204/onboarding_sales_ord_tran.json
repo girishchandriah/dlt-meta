@@ -46,9 +46,7 @@
       "sequence_by": "tdate",
       "scd_type": "1",
       "apply_as_deletes": "processed is true",
-      "except_column_list": [
-        "_rescued_data"
-      ]
+      "except_column_list": []
     },
     "refinery_cluster_by": [
       "tdate",
