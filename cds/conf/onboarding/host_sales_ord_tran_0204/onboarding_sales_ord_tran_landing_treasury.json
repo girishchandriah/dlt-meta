@@ -1,0 +1,124 @@
+[
+  {
+    "data_flow_id": "204_combined",
+    "data_flow_group": "sales_ord",
+    "source_system": "jb_edw",
+    "source_format": "cloudFiles",
+    "source_details": {
+      "source_database": "hostfile",
+      "source_table": "dsn_sales_ord_tran",
+      "source_path_nonprod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/prod/jb_edw_dsn_sales_ord_tran_0204/inbound",
+      "source_path_preprod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/preprod/jb_edw_dsn_sales_ord_tran_0204/file-ingest",
+      "source_path_prod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/prod/jb_edw_dsn_sales_ord_tran_0204/file-ingest",
+      "source_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/dsn_sales_ord_tran.ddl"
+    },
+    "landing_catalog_nonprod": "dataservices_nonprod",
+    "landing_catalog_preprod": "dataservices_preprod",
+    "landing_catalog_prod": "dataservices_landing",
+    "landing_database_nonprod": "landing_nonprod",
+    "landing_database_preprod": "landing_preprod",
+    "landing_database_prod": "landing",
+    "landing_table": "pfocusst_ff_src_hst_dsn_trans_dlt_v2",
+    "landing_table_comment": "Landing table for DSN sales order transactions from JB EDW",
+    "landing_reader_options": {
+      "cloudFiles.format": "csv",
+      "header": "false",
+      "delimiter": "|",
+      "cloudFiles.rescuedDataColumn": "_rescued_data"
+    },
+    "refinery_catalog_nonprod": null,
+    "refinery_catalog_preprod": null,
+    "refinery_catalog_prod": null,
+    "refinery_database_nonprod": null,
+    "refinery_database_preprod": null,
+    "refinery_database_prod": null,
+    "refinery_table": null,
+    "treasury_catalog_nonprod": "dataservices_nonprod",
+    "treasury_catalog_preprod": "dataservices_preprod",
+    "treasury_catalog_prod": "dataservices_treasury",
+    "treasury_database_nonprod": "treasury_teradata_base_nonprod",
+    "treasury_database_preprod": "treasury_teradata_base_preprod",
+    "treasury_database_prod": "treasury_teradata_base",
+    "treasury_table": "pfocusdb_sales_ord_tran_dlt_v2",
+    "treasury_table_comment": "Treasury table for sales order transactions - gold layer (combined transformation from landing)",
+    "treasury_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_combined_treasury_nonprod.yaml",
+    "treasury_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_combined_treasury_preprod.yaml",
+    "treasury_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_combined_treasury_prod.yaml",
+    "treasury_cluster_by": [
+      "sales_ord_tran_dt",
+      "event_id"
+    ],
+    "treasury_reader_options": {
+      "readChangeFeed": "true"
+    },
+    "version": "v3.0",
+    "treasury_cdc_apply_changes": {
+      "keys": [
+        "sales_ord_id",
+        "event_id",
+        "sales_ord_tran_id",
+        "sales_ord_tran_dt"
+      ],
+      "sequence_by": "host_acct_create_dt",
+      "scd_type": "1",
+      "except_column_list": []
+    },
+    "_comment": "Dataflow 204_combined: Landing → Treasury direct pipeline. No refinery layer. Combines all transformation logic (step 2 + step 3) in one treasury SQL. Handles regular transactions and void updates."
+  },
+  {
+    "data_flow_id": "204_quarantine",
+    "data_flow_group": "sales_ord",
+    "source_system": "jb_edw",
+    "source_format": "delta",
+    "source_details": {
+      "source_database": "hostfile",
+      "source_table": "dsn_sales_ord_tran"
+    },
+    "landing_catalog_nonprod": null,
+    "landing_catalog_preprod": null,
+    "landing_catalog_prod": null,
+    "landing_database_nonprod": null,
+    "landing_database_preprod": null,
+    "landing_database_prod": null,
+    "landing_table": null,
+    "refinery_catalog_nonprod": "dataservices_nonprod",
+    "refinery_catalog_preprod": "dataservices_preprod",
+    "refinery_catalog_prod": "dataservices_refinery",
+    "refinery_database_nonprod": "refinery_nonprod",
+    "refinery_database_preprod": "refinery_preprod",
+    "refinery_database_prod": "refinery",
+    "refinery_table": "pfocusst_dsn_st_trans_quarantine_dlt_v2",
+    "refinery_table_comment": "Quarantine table for DSN sales order transactions without sales_ord_id - data quality layer",
+    "refinery_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_quarantine_nonprod.yaml",
+    "refinery_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_quarantine_preprod.yaml",
+    "refinery_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_quarantine_prod.yaml",
+    "refinery_cluster_by": [
+      "quarantine_ts"
+    ],
+    "refinery_reader_options": {
+      "readChangeFeed": "true"
+    },
+    "refinery_cdc_apply_changes": {
+      "keys": [
+        "host_sys_cd",
+        "host_vax_acct_num",
+        "host_acct_create_dt",
+        "event_id",
+        "sales_ord_tran_id",
+        "sales_ord_tran_dt"
+      ],
+      "sequence_by": "quarantine_ts",
+      "scd_type": "1",
+      "except_column_list": []
+    },
+    "treasury_catalog_nonprod": null,
+    "treasury_catalog_preprod": null,
+    "treasury_catalog_prod": null,
+    "treasury_database_nonprod": null,
+    "treasury_database_preprod": null,
+    "treasury_database_prod": null,
+    "treasury_table": null,
+    "version": "v3.0",
+    "_comment": "Dataflow 204_quarantine: Reads from landing, identifies records without sales_ord_id, writes to refinery quarantine table. Data quality layer - keeps treasury clean with only valid records."
+  }
+]
