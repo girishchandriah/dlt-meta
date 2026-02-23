@@ -1,6 +1,6 @@
 target_table: pfocusdb_sales_ord_tran_dlt
-transformation_name: Sales Order Transaction Refinery Transformation
-description: "Step 2: Complex transformation from landing to refinery with business logic for DSN sales order transactions"
+transformation_name: Sales Order Transaction Treasury Transformation - Phase 2 (With Referential Checks)
+description: "Step 3 Phase 2: Processes void transactions by updating existing treasury records. Use PHASE1 for initial run (without self-reference), then switch to this PHASE2 for subsequent runs (with self-referential checks)."
 sql_query: |
     with a as (select * from LIVE.pfocusst_dsn_st_trans_dl_dlt where sales_ord_id is not null),
             tmp as (
@@ -78,7 +78,7 @@ sql_query: |
                   sales_ord_tran.print_dt     ,
                   tmp.trans_service_charge_amt  as trans_service_charge_amt   ,
                   tmp.trans_service_tax_amt   as trans_service_tax_amt  ,
-                  tmp.trans_set_tax_amt as trans_set_tax_amt from dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord_tran_dlt sales_ord_tran
+                  tmp.trans_set_tax_amt as trans_set_tax_amt from Live.pfocusdb_sales_ord_tran_dlt sales_ord_tran
                   join
                   tmp
                   on

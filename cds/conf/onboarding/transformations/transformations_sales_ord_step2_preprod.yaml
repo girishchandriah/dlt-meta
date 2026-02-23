@@ -1,6 +1,6 @@
 target_table: pfocusst_dsn_st_trans_dl_dlt
-transformation_name: Sales Order Transaction Refinery Transformation
-description: "Step 2: Complex transformation from landing to refinery with business logic for DSN sales order transactions"
+transformation_name: Sales Order Transaction Refinery Transformation - Phase 2 (With Referential Checks)
+description: "Step 2 Phase 2: Transformation with self-referential checks. Validates against treasury tables. Use this for all runs AFTER the initial run. For the first run, use transformations_sales_ord_step2_preprod_PHASE1.yaml instead."
 sql_query: |
   with tgt as (
     select distinct sales_ord_id
