@@ -70,9 +70,7 @@
       "sales_ord_tran_dt",
       "event_id"
     ],
-    "treasury_reader_options": {
-      "readChangeFeed": "true"
-    },
+    "treasury_reader_options": {},
     "version": "v2.0",
     "treasury_cdc_apply_changes": {
       "keys": [
