@@ -277,6 +277,7 @@ class DataflowSpecUtils:
             dataflow_spec_df.withColumn("row_num", row_number().over(version_history))
             .where(col("row_num") == lit(1))  # latest version
             .drop(col("row_num"))
+            .orderBy(col("dataFlowId"))  # Sort by dataFlowId to ensure bootstrap flows run first
         )
 
         return dataflow_spec_df
