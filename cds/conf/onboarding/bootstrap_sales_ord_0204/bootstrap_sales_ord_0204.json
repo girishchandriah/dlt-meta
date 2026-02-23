@@ -1,5 +1,44 @@
 [
   {
+    "data_flow_id": "2040",
+    "data_flow_group": "sales_ord",
+    "source_system": "jb_edw",
+    "source_format": "snapshot",
+    "source_details": {
+      "source_database": "landing_nonprod",
+      "source_table": "pfocusst_ff_src_hst_dsn_trans_dlt"
+    },
+    "refinery_catalog_nonprod": "dataservices_nonprod",
+    "refinery_catalog_preprod": "dataservices_preprod",
+    "refinery_catalog_prod": "dataservices_refinery",
+    "refinery_database_nonprod": "refinery_nonprod",
+    "refinery_database_preprod": "refinery_preprod",
+    "refinery_database_prod": "refinery",
+    "refinery_table": "pfocusst_dsn_st_trans_dl_dlt",
+    "refinery_table_comment": "Bootstrap empty refinery table for CDC - created by DLT",
+    "refinery_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/bootstrap_refinery_step2_nonprod.yaml",
+    "refinery_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/bootstrap_refinery_step2_preprod.yaml",
+    "refinery_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/bootstrap_refinery_step2_prod.yaml",
+    "refinery_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/refinery_sales_ord_tran.ddl",
+    "refinery_cdc_apply_changes": {
+      "keys": [
+        "pfocusst_dsn_st_trans_dl_id"
+      ],
+      "sequence_by": "tdate",
+      "scd_type": "1",
+      "apply_as_deletes": "processed is true",
+      "except_column_list": [
+        "_rescued_data"
+      ]
+    },
+    "refinery_cluster_by": [
+      "tdate",
+      "sales_ord_id"
+    ],
+    "version": "v1.0",
+    "_comment": "Bootstrap dataflow (ID=2040 runs before 204) to create empty refinery CDC table within DLT pipeline. SQL returns 0 rows to initialize table structure. Main dataflow 204 can then reference it with LIVE. syntax."
+  },
+  {
     "data_flow_id": "2041",
     "data_flow_group": "sales_ord",
     "source_system": "jb_edw",
