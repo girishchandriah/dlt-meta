@@ -55,6 +55,6 @@ sql_query: |
     cast(null as string) as expected_pmt_method_type_id,
     cast(null as string) as expected_pmt_method_type_cd,
     st.num_stypes as tkt_type_cnt
-  from LIVE.pfocusst_dsn_st_trans_dl_dlt st
+  from source_204 st
   where st.sales_ord_id is not null
     and coalesce(upper(trim(st.vflag)), '') <> 'T'
