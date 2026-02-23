@@ -1,6 +1,6 @@
 [
   {
-    "data_flow_id": "2040",
+    "data_flow_id": "204_a",
     "data_flow_group": "sales_ord",
     "source_system": "jb_edw",
     "source_format": "snapshot",
@@ -36,10 +36,10 @@
       "sales_ord_id"
     ],
     "version": "v1.0",
-    "_comment": "Bootstrap dataflow (ID=2040 runs before 204) to create empty refinery CDC table within DLT pipeline. SQL returns 0 rows to initialize table structure. Main dataflow 204 can then reference it with LIVE. syntax."
+    "_comment": "Bootstrap dataflow (ID=204_a runs before 204_c) to create empty refinery CDC table within DLT pipeline. SQL returns 0 rows to initialize table structure. Main dataflow 204_c can then reference it with LIVE. syntax."
   },
   {
-    "data_flow_id": "2041",
+    "data_flow_id": "204_b",
     "data_flow_group": "sales_ord",
     "source_system": "jb_edw",
     "source_format": "snapshot",
@@ -75,10 +75,10 @@
       "event_id"
     ],
     "version": "v1.0",
-    "_comment": "Bootstrap dataflow (ID=2041 runs before step3) to create empty treasury CDC table within DLT pipeline. SQL returns 0 rows to initialize table structure. Main step3 can then reference it with LIVE. syntax."
+    "_comment": "Bootstrap dataflow (ID=204_b runs before 204_c) to create empty treasury CDC table within DLT pipeline. SQL returns 0 rows to initialize table structure. Main step3 can then reference it with LIVE. syntax."
   },
   {
-    "data_flow_id": "204",
+    "data_flow_id": "204_c",
     "data_flow_group": "sales_ord",
     "source_system": "jb_edw",
     "source_format": "cloudFiles",
@@ -166,6 +166,6 @@
       "scd_type": "1",
       "except_column_list": []
     },
-    "_comment": "Main dataflow 204: Processes sales order transactions through landing → refinery → treasury layers. Complex transformations are externalized to YAML files. Bootstrap dataflows 2040 and 2041 run first to create empty CDC tables."
+    "_comment": "Main dataflow 204_c: Processes sales order transactions through landing → refinery → treasury layers. Complex transformations are externalized to YAML files. Bootstrap dataflows 204_a and 204_b run first to create empty CDC tables."
   }
 ]
