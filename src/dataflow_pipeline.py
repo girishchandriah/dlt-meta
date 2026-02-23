@@ -86,6 +86,33 @@ class DataflowPipeline:
         """Get table properties as a proper dictionary."""
         return self._get_dict_as_dict(self.dataflowSpec.tableProperties)
 
+    def _is_treasury_streaming(self):
+        """Check if treasury layer is configured for streaming mode.
+
+        Returns:
+            bool: True if treasury should use streaming, False for batch mode
+
+        Treasury uses streaming when:
+        - readChangeFeed is set to 'true' in treasury_reader_options
+        - CDC apply changes is configured
+        - sourceFormat is not 'snapshot'
+        """
+        if not isinstance(self.dataflowSpec, TreasuryDataflowSpec):
+            return False
+
+        # Check for CDC configuration
+        if self.cdcApplyChanges:
+            # If CDC is configured, check reader options for streaming flag
+            reader_config_opts = self._get_reader_config_options()
+            if reader_config_opts and reader_config_opts.get('readChangeFeed', '').lower() == 'true':
+                return True
+
+        # Check sourceFormat - snapshot means batch, others mean streaming
+        if hasattr(self.dataflowSpec, 'sourceFormat') and self.dataflowSpec.sourceFormat:
+            return self.dataflowSpec.sourceFormat.lower() != "snapshot"
+
+        return False
+
     def __initialize_dataflow_pipeline(
         self, spark, dataflow_spec, view_name, view_name_quarantine, custom_transform_func: Callable,
         next_snapshot_and_version: Callable
@@ -340,16 +367,8 @@ class DataflowPipeline:
 
         # Handle CDC apply changes
         if self.dataflowSpec.cdcApplyChanges and not self.dataflowSpec.dataQualityExpectations:
-            # Check if treasury is using streaming (has readChangeFeed or CDC configured)
-            treasury_is_streaming = False
-            if is_treasury:
-                reader_config_opts = self._get_reader_config_options()
-                treasury_is_streaming = (
-                    self.cdcApplyChanges or
-                    (reader_config_opts and reader_config_opts.get('readChangeFeed', '').lower() == 'true')
-                )
-
-            if is_treasury and not treasury_is_streaming:
+            # Check if treasury is using streaming mode
+            if is_treasury and not self._is_treasury_streaming():
                 # Treasury batch CDC: write to staging table (legacy batch mode)
                 self._write_treasury_batch_cdc()
             else:
@@ -661,20 +680,8 @@ class DataflowPipeline:
         source_database = source_details["database"]
         source_table = source_details["table"]
 
-        # Determine if we should use streaming based on:
-        # 1. CDC configuration present
-        # 2. readChangeFeed option enabled
-        # 3. sourceFormat is not 'snapshot'
-        use_streaming = False
-        if self.cdcApplyChanges:
-            # CDC requires streaming
-            use_streaming = True
-        elif reader_config_opts and reader_config_opts.get('readChangeFeed', '').lower() == 'true':
-            # readChangeFeed option requests streaming
-            use_streaming = True
-        elif hasattr(treasury_dataflow_spec, 'sourceFormat') and treasury_dataflow_spec.sourceFormat:
-            # Explicit sourceFormat provided - snapshot means batch, others mean streaming
-            use_streaming = treasury_dataflow_spec.sourceFormat.lower() != "snapshot"
+        # Determine if we should use streaming mode
+        use_streaming = self._is_treasury_streaming()
 
         if reader_config_opts:
             if use_streaming:
@@ -914,10 +921,14 @@ class DataflowPipeline:
 
         target_path = None if self.uc_enabled else self.dataflowSpec.targetDetails["path"]
 
-        # For landing/refinery streaming mode, create streaming table first
-        # For treasury batch mode, skip table creation - use regular table writes instead
+        # Determine if we should create streaming table
+        # For landing/refinery: always create streaming table
+        # For treasury: only create if using streaming mode (not batch)
         is_treasury = isinstance(self.dataflowSpec, TreasuryDataflowSpec)
-        if not is_treasury:
+        should_create_streaming_table = not is_treasury or self._is_treasury_streaming()
+
+        # Create streaming table only for streaming sources
+        if should_create_streaming_table:
             self.create_streaming_table(struct_schema, target_path)
 
         apply_as_deletes = None
