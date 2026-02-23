@@ -291,7 +291,7 @@ sql_query: |
       t.expected_pmt_method_type_cd,
       t.tkt_type_cnt
     from enriched_data d  -- All data including voids
-    join LIVE.pfocusdb_sales_ord_tran_dlt_v2 t
+    join dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord_tran_dlt_v2 t
       on trim(upper(t.host_sys_cd)) = trim(upper(d.system))
       and t.host_vax_acct_num = d._account
       and t.host_acct_create_dt = d.acctdate

@@ -72,7 +72,14 @@
     "source_format": "delta",
     "source_details": {
       "source_database": "hostfile",
-      "source_table": "dsn_sales_ord_tran"
+      "source_table": "dsn_sales_ord_tran",
+      "source_catalog_nonprod": "dataservices_nonprod",
+      "source_catalog_preprod": "dataservices_preprod",
+      "source_catalog_prod": "dataservices_landing",
+      "source_database_nonprod": "landing_nonprod",
+      "source_database_preprod": "landing_preprod",
+      "source_database_prod": "landing",
+      "source_table_ref": "pfocusst_ff_src_hst_dsn_trans_dlt_v2"
     },
     "landing_catalog_nonprod": null,
     "landing_catalog_preprod": null,

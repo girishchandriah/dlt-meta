@@ -1421,17 +1421,48 @@ class OnboardDataflowspec:
 
             refinery_target_format = "delta"
 
-            landing_target_details = {
-                "database": onboarding_row["landing_database_{}".format(env)],
-                "table": onboarding_row["landing_table"],
-            }
-            landing_cl = (
-                onboarding_row["landing_catalog_{}".format(env)]
-                if "landing_catalog_{}".format(env) in onboarding_row
-                else None
-            )
-            if landing_cl:
-                landing_target_details["catalog"] = landing_cl
+            # Determine source layer for refinery - could be landing or delta source from source_details
+            landing_target_details = {}
+            if (f"landing_database_{env}" in onboarding_row
+                and onboarding_row[f"landing_database_{env}"] is not None
+                and "landing_table" in onboarding_row
+                and onboarding_row["landing_table"] is not None):
+                # Source is landing layer
+                landing_target_details = {
+                    "database": onboarding_row[f"landing_database_{env}"],
+                    "table": onboarding_row["landing_table"],
+                }
+                landing_cl = (
+                    onboarding_row[f"landing_catalog_{env}"]
+                    if f"landing_catalog_{env}" in onboarding_row
+                    else None
+                )
+                if landing_cl:
+                    landing_target_details["catalog"] = landing_cl
+                if not self.uc_enabled and f"landing_table_path_{env}" in onboarding_row:
+                    landing_target_details["path"] = onboarding_row[f"landing_table_path_{env}"]
+            elif "source_details" in onboarding_row and onboarding_row["source_details"]:
+                # Source is from source_details (for delta sources)
+                source_details_file = self.__delete_none(onboarding_row["source_details"].asDict())
+                # Try new naming convention first (source_catalog_, source_database_, source_table_ref)
+                if f"source_catalog_{env}" in source_details_file:
+                    landing_target_details["catalog"] = source_details_file[f"source_catalog_{env}"]
+                elif f"catalog_{env}" in source_details_file:
+                    landing_target_details["catalog"] = source_details_file[f"catalog_{env}"]
+
+                if f"source_database_{env}" in source_details_file:
+                    landing_target_details["database"] = source_details_file[f"source_database_{env}"]
+                elif f"database_{env}" in source_details_file:
+                    landing_target_details["database"] = source_details_file[f"database_{env}"]
+
+                if "source_table_ref" in source_details_file:
+                    landing_target_details["table"] = source_details_file["source_table_ref"]
+                elif "table" in source_details_file:
+                    landing_target_details["table"] = source_details_file["table"]
+
+                if f"source_path_{env}" in source_details_file:
+                    landing_target_details["path"] = source_details_file[f"source_path_{env}"]
+
             refinery_target_details = {
                 "database": onboarding_row["refinery_database_{}".format(env)],
                 "table": onboarding_row["refinery_table"],
@@ -1446,12 +1477,12 @@ class OnboardDataflowspec:
             if refinery_cl:
                 refinery_target_details["catalog"] = refinery_cl
             if not self.uc_enabled:
-                landing_target_details["path"] = onboarding_row[
-                    f"landing_table_path_{env}"
-                ]
-                refinery_target_details["path"] = onboarding_row[
-                    f"refinery_table_path_{env}"
-                ]
+                # Only set paths if they exist in the onboarding row
+                if (f"landing_table_path_{env}" in onboarding_row
+                    and "path" not in landing_target_details):  # Don't override if already set from source_details
+                    landing_target_details["path"] = onboarding_row[f"landing_table_path_{env}"]
+                if f"refinery_table_path_{env}" in onboarding_row:
+                    refinery_target_details["path"] = onboarding_row[f"refinery_table_path_{env}"]
             refinery_reader_options_json = (
                 onboarding_row["refinery_reader_options"]
                 if "refinery_reader_options" in onboarding_row
@@ -1688,12 +1719,22 @@ class OnboardDataflowspec:
             elif "source_details" in onboarding_row and onboarding_row["source_details"]:
                 # Source is from source_details (for delta sources)
                 source_details_file = self.__delete_none(onboarding_row["source_details"].asDict())
-                if "catalog_{}".format(env) in source_details_file:
+                # Try new naming convention first (source_catalog_, source_database_, source_table_ref)
+                if f"source_catalog_{env}" in source_details_file:
+                    source_details["catalog"] = source_details_file[f"source_catalog_{env}"]
+                elif f"catalog_{env}" in source_details_file:
                     source_details["catalog"] = source_details_file[f"catalog_{env}"]
-                if "database_{}".format(env) in source_details_file:
+
+                if f"source_database_{env}" in source_details_file:
+                    source_details["database"] = source_details_file[f"source_database_{env}"]
+                elif f"database_{env}" in source_details_file:
                     source_details["database"] = source_details_file[f"database_{env}"]
-                if "table" in source_details_file:
+
+                if "source_table_ref" in source_details_file:
+                    source_details["table"] = source_details_file["source_table_ref"]
+                elif "table" in source_details_file:
                     source_details["table"] = source_details_file["table"]
+
                 if f"source_path_{env}" in source_details_file:
                     source_details["path"] = source_details_file[f"source_path_{env}"]
 
