@@ -42,7 +42,7 @@ sql_query: |
       f.pricelevelname as price_level_name,
       f.seattypes as num_stypes,
       f.acmode as acmode
-    from LIVE.pfocusst_ff_src_hst_dsn_trans_dlt_v2 f
+    from source_205 f
   ),
 
   -- Try to get sales_ord_id

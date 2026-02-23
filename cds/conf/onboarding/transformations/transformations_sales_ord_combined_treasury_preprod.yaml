@@ -18,7 +18,7 @@ sql_query: |
       end as facility_fee,
       if(
         substring(f.accountdate FROM -2) >
-        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_preprod.refinery_preprod.jobs_configurations where key='century_year'),
         add_months(to_date(f.accountdate,'M/d/yy'), -1200),
         to_date(f.accountdate, 'M/d/yy')
       ) as acctdate,
@@ -109,21 +109,21 @@ sql_query: |
       q_extract.trnum,
       if(
         substring(q_extract.tdate FROM -2) >
-        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_preprod.refinery_preprod.jobs_configurations where key='century_year'),
         add_months(to_date(q_extract.tdate,'M/d/yy'), -1200),
         to_date(q_extract.tdate, 'M/d/yy')
       ) as tdate,
       q_extract.tcode,
       if(
         substring(q_extract.pdate FROM -2) >
-        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_preprod.refinery_preprod.jobs_configurations where key='century_year'),
         add_months(to_date(q_extract.pdate,'M/d/yy'), -1200),
         to_date(q_extract.pdate, 'M/d/yy')
       ) as pdate,
       q_extract.pcode,
       if(
         substring(q_extract.vdate FROM -2) >
-        (select int(value) from dataservices_nonprod.refinery_nonprod.jobs_configurations where key='century_year'),
+        (select int(value) from dataservices_preprod.refinery_preprod.jobs_configurations where key='century_year'),
         add_months(to_date(q_extract.vdate,'M/d/yy'), -1200),
         to_date(q_extract.vdate, 'M/d/yy')
       ) as vdate,
@@ -154,9 +154,9 @@ sql_query: |
       q_extract.tkt_transfer_sent_flg,
       q_extract.resale_status_nm,
       q_extract.void_used_opr_cd,
-      dataservices_nonprod.refinery_nonprod.cdsudf_getoptype(q_extract.vcode, q_extract.system, q_extract.acctdate) as void_optype,
-      dataservices_nonprod.refinery_nonprod.cdsudf_getoptype(q_extract.tcode, q_extract.system, q_extract.acctdate) as tran_optype,
-      dataservices_nonprod.refinery_nonprod.cdsudf_getoptype(q_extract.pcode, q_extract.system, q_extract.acctdate) as print_optype
+      dataservices_preprod.refinery_preprod.cdsudf_getoptype(q_extract.vcode, q_extract.system, q_extract.acctdate) as void_optype,
+      dataservices_preprod.refinery_preprod.cdsudf_getoptype(q_extract.tcode, q_extract.system, q_extract.acctdate) as tran_optype,
+      dataservices_preprod.refinery_preprod.cdsudf_getoptype(q_extract.pcode, q_extract.system, q_extract.acctdate) as print_optype
     from q_extract
   ),
 
@@ -167,7 +167,7 @@ sql_query: |
       q.*,
       o.sales_ord_id
     from query q
-    left join dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord o
+    left join dataservices_preprod.treasury_teradata_base_preprod.pfocusdb_sales_ord o
       on trim(upper(q.system)) = trim(upper(o.host_sys_cd))
       and q.acctdate = o.host_acct_create_dt
       and q._account = o.host_vax_acct_num

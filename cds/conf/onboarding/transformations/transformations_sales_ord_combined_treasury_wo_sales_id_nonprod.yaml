@@ -159,27 +159,12 @@ sql_query: |
       dataservices_nonprod.refinery_nonprod.cdsudf_getoptype(q_extract.pcode, q_extract.system, q_extract.acctdate) as print_optype
     from q_extract
   ),
-
-  -- Step 3: Get sales_ord_id lookup
-  -- This lookup is necessary to enrich records with sales_ord_id
-  enriched_data as (
-    select
-      q.*,
-      o.sales_ord_id
-    from query q
-    left join dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord o
-      on trim(upper(q.system)) = trim(upper(o.host_sys_cd))
-      and q.acctdate = o.host_acct_create_dt
-      and q._account = o.host_vax_acct_num
-    where o.sales_ord_id is not null  -- Only process records with sales_ord_id
-  ),
-
   -- Step 4: Transform all transactions (void handling already done in q_extract)
   -- CDC will automatically handle updates when void records arrive with same keys
   -- Amounts are already zeroed in q_extract for void transactions
   all_transactions as (
     select
-      st.sales_ord_id,
+      concat_ws('||', st.system, st._account, st.acctdate) as sales_ord_id,
       st.system as host_sys_cd,
       st._account as host_vax_acct_num,
       st.acctdate as host_acct_create_dt,
@@ -231,7 +216,7 @@ sql_query: |
       cast(null as string) as expected_pmt_method_type_id,
       cast(null as string) as expected_pmt_method_type_cd,
       st.num_stypes as tkt_type_cnt
-    from enriched_data st
+    from query st
   )
 
   -- Return all transactions - CDC apply_changes will handle inserts/updates based on keys
