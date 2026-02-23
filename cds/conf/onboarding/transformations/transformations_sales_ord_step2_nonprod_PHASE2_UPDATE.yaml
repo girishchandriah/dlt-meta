@@ -1,0 +1,61 @@
+target_table: pfocusst_dsn_st_trans_dl_dlt_v2
+transformation_name: Sales Order Transaction Refinery Update - Phase 2 (Update Only)
+description: "Step 2 Phase 2: PURE UPDATE - Reads existing refinery records, checks against treasury, and updates processed flag. Does NOT read source data. Use this for dataflow 205 to avoid duplicate processing."
+sql_query: |
+  with tgt as (
+    select distinct sales_ord_id
+    from LIVE.pfocusdb_sales_ord_tran_dlt_v2
+  ),
+  updated_records as (
+    select
+      up.pfocusst_dsn_st_trans_dl_id,
+      up.sales_ord_id,
+      up.system,
+      up.facility_fee,
+      up.acctdate,
+      up.mimic_flg,
+      up.tkt_transfer_rcvd_flg,
+      up.tkt_transfer_surrender_flg,
+      up.firstqual,
+      up.distance_charge,
+      up.tkt_transfer_sent_flg,
+      up.resale_status_nm,
+      up.print_optype,
+      up.serchg,
+      up.expmopname,
+      up.vcode,
+      up.exchangee_fee,
+      up.last_run_id,
+      up.ser_chrg_tax,
+      up.tsale,
+      up.vflag,
+      up.vdate,
+      up._account,
+      up.set_tax,
+      up.vaxevid,
+      up.price_level,
+      up.tqty,
+      up.seatloc,
+      up.ticket_value,
+      up.ser_chrg_tax2,
+      up.expmop,
+      up.trnum,
+      up.num_stypes,
+      up.void_used_opr_cd,
+      up.pflag,
+      up.price_level_name,
+      up.tran_optype,
+      up.last_batch_id,
+      up.pdate,
+      up.void_optype,
+      up.acmode,
+      up.pcode,
+      up.tdate,
+      up.tcode,
+      up.init_run_id,
+      if(tgt.sales_ord_id is not null, true, false) as processed,
+      up.landing_insert_ts
+    from LIVE.pfocusst_dsn_st_trans_dl_dlt_v2 up
+    left join tgt on up.sales_ord_id = tgt.sales_ord_id
+  )
+  select * from updated_records

@@ -77,6 +77,73 @@
       "scd_type": "1",
       "except_column_list": []
     },
-    "_comment": "Main dataflow 204_c: Processes sales order transactions through landing → refinery → treasury layers. Complex transformations are externalized to YAML files. Use PHASE1 transformations for initial run (without self-referential checks), then switch to PHASE2 transformations (with referential checks) for subsequent runs."
+    "_comment": "Dataflow 204: PHASE1 - Initial run without self-referential checks. Full pipeline: source → landing → refinery → treasury."
+  },
+  {
+    "data_flow_id": "205",
+    "data_flow_group": "sales_ord",
+    "source_system": "existing_refinery",
+    "source_format": "delta",
+    "source_details": {
+      "source_database": "refinery_nonprod",
+      "source_table": "pfocusst_dsn_st_trans_dl_dlt_v2",
+      "source_catalog_nonprod": "dataservices_nonprod",
+      "source_catalog_preprod": "dataservices_preprod",
+      "source_catalog_prod": "dataservices_refinery"
+    },
+    "refinery_catalog_nonprod": "dataservices_nonprod",
+    "refinery_catalog_preprod": "dataservices_preprod",
+    "refinery_catalog_prod": "dataservices_refinery",
+    "refinery_database_nonprod": "refinery_nonprod",
+    "refinery_database_preprod": "refinery_nonprod",
+    "refinery_database_prod": "refinery",
+    "refinery_table": "pfocusst_dsn_st_trans_dl_dlt_v2",
+    "refinery_table_comment": "Refined DSN sales order transactions with PHASE2 self-referential checks - UPDATE ONLY (no source re-reading)",
+    "refinery_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step2_nonprod_PHASE2_UPDATE.yaml",
+    "refinery_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step2_preprod_PHASE2_UPDATE.yaml",
+    "refinery_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step2_prod_PHASE2_UPDATE.yaml",
+    "refinery_cdc_apply_changes": {
+      "keys": [
+        "pfocusst_dsn_st_trans_dl_id"
+      ],
+      "sequence_by": "tdate",
+      "scd_type": "1",
+      "apply_as_deletes": "processed is true",
+      "except_column_list": []
+    },
+    "refinery_reader_options": {
+      "readChangeFeed": "true"
+    },
+    "treasury_catalog_nonprod": "dataservices_nonprod",
+    "treasury_catalog_preprod": "dataservices_preprod",
+    "treasury_catalog_prod": "dataservices_treasury",
+    "treasury_database_nonprod": "treasury_teradata_base_nonprod",
+    "treasury_database_preprod": "treasury_teradata_base_preprod",
+    "treasury_database_prod": "treasury_teradata_base",
+    "treasury_table": "pfocusdb_sales_ord_tran_dlt_v2",
+    "treasury_table_comment": "Treasury table for sales order transactions - gold layer with PHASE2 updates",
+    "treasury_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step3_nonprod.yaml",
+    "treasury_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step3_preprod.yaml",
+    "treasury_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_step3_prod.yaml",
+    "treasury_cluster_by": [
+      "sales_ord_tran_dt",
+      "event_id"
+    ],
+    "treasury_reader_options": {
+      "readChangeFeed": "true"
+    },
+    "version": "v2.0",
+    "treasury_cdc_apply_changes": {
+      "keys": [
+        "sales_ord_id",
+        "event_id",
+        "sales_ord_tran_id",
+        "sales_ord_tran_dt"
+      ],
+      "sequence_by": "host_acct_create_dt",
+      "scd_type": "1",
+      "except_column_list": []
+    },
+    "_comment": "Dataflow 205: PHASE2 - Reads from existing refinery table, applies self-referential checks, and updates treasury. No landing ingestion - starts from refinery layer."
   }
 ]
