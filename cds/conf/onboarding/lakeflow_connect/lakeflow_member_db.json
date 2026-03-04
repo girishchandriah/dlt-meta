@@ -1,0 +1,39 @@
+{
+  "data_flow_id": "6001",
+  "data_flow_group": "federated_postgres",
+  "source_system": "postgres_production",
+  "source_format": "delta",
+  
+  "source_details": {
+    "source_catalog": "my_postgres_connection",
+    "source_database": "public",
+    "source_table": "orders"
+  },
+  
+  "landing_reader_options": {
+    "readChangeFeed": "true",
+    "startingVersion": "0"
+  },
+  
+  "landing_catalog_prod": "main",
+  "landing_database_prod": "landing",
+  "landing_table": "postgres_orders",
+  "landing_partition_columns": "order_date",
+  
+  "landing_table_properties": {
+    "delta.autoOptimize.optimizeWrite": "true",
+    "delta.autoOptimize.autoCompact": "true"
+  },
+  
+  "refinery_catalog_prod": "main",
+  "refinery_database_prod": "refinery",
+  "refinery_table": "orders",
+  
+  "refinery_cdc_apply_changes": {
+    "keys": ["order_id"],
+    "sequence_by": "updated_at",
+    "scd_type": "1",
+    "apply_as_deletes": "is_deleted = true",
+    "except_column_list": ["_metadata"]
+  }
+}

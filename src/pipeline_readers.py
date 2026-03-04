@@ -197,11 +197,16 @@ class PipelineReaders:
         }
         ssl_truststore_location = self.source_details.get("kafka.ssl.truststore.location", None)
         ssl_keystore_location = self.source_details.get("kafka.ssl.keystore.location", None)
+        security_protocol = self.source_details.get("kafka.security.protocol", None)
+
         if ssl_truststore_location and ssl_keystore_location:
             truststore_scope = self.source_details.get("kafka.ssl.truststore.secrets.scope", None)
             truststore_key = self.source_details.get("kafka.ssl.truststore.secrets.key", None)
             keystore_scope = self.source_details.get("kafka.ssl.keystore.secrets.scope", None)
             keystore_key = self.source_details.get("kafka.ssl.keystore.secrets.key", None)
+            key_scope = self.source_details.get("kafka.ssl.key.secrets.scope", None)
+            key_key = self.source_details.get("kafka.ssl.key.secrets.key", None)
+
             if (truststore_scope and truststore_key and keystore_scope and keystore_key):
                 dbutils = self.get_db_utils()
                 kafka_ssl_conn = {
@@ -210,6 +215,15 @@ class PipelineReaders:
                     "kafka.ssl.keystore.password": dbutils.secrets.get(keystore_scope, keystore_key),
                     "kafka.ssl.truststore.password": dbutils.secrets.get(truststore_scope, truststore_key)
                 }
+
+                # Add kafka.ssl.key.password if provided
+                if key_scope and key_key:
+                    kafka_ssl_conn["kafka.ssl.key.password"] = dbutils.secrets.get(key_scope, key_key)
+
+                # Add security protocol if provided
+                if security_protocol:
+                    kafka_ssl_conn["kafka.security.protocol"] = security_protocol
+
                 kafka_options = {**kafka_base_ops, **kafka_ssl_conn, **self.reader_config_options}
             else:
                 params = ["kafka.ssl.truststore.secrets.scope",
