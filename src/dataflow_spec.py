@@ -26,6 +26,7 @@ class LandingDataflowSpec:
     targetFormat: str
     targetDetails: map
     tableProperties: map
+    sqlQuery: str
     schema: str
     partitionColumns: list
     cdcApplyChanges: str

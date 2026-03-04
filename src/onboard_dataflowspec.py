@@ -734,6 +734,7 @@ class OnboardDataflowspec:
             "targetFormat",
             "targetDetails",
             "tableProperties",
+            "sqlQuery",
             "schema",
             "partitionColumns",
             "cdcApplyChanges",
@@ -767,6 +768,7 @@ class OnboardDataflowspec:
                 StructField(
                     "tableProperties", MapType(StringType(), StringType(), True), True
                 ),
+                StructField("sqlQuery", StringType(), True),
                 StructField("schema", StringType(), True),
                 StructField("partitionColumns", ArrayType(StringType(), True), True),
                 StructField("cdcApplyChanges", StringType(), True),
@@ -920,6 +922,29 @@ class OnboardDataflowspec:
                 if "landing_schema_path" in onboarding_row
                 else None
             )
+
+            # NEW: Read SQL transformation file for landing layer (if provided)
+            sql_query = None
+            landing_transformation_field = f"landing_transformation_json_{env}"
+            if landing_transformation_field in onboarding_row and onboarding_row[landing_transformation_field]:
+                trans_file_path = onboarding_row[landing_transformation_field]
+                try:
+                    if trans_file_path.endswith(('.yaml', '.yml')):
+                        # Read YAML file
+                        yaml_content = self.spark.read.text(trans_file_path, wholetext=True).collect()[0]["value"]
+                        yaml_data = yaml.safe_load(yaml_content)
+                        sql_query = yaml_data.get('sql_query', None)
+                    else:
+                        # Read JSON file
+                        json_data = self.spark.read.option("multiline", "true").json(trans_file_path).first()
+                        sql_query = json_data['sql_query'] if json_data and 'sql_query' in json_data else None
+
+                    if sql_query:
+                        logger.info(f"Loaded SQL transformation for landing layer: data_flow_id={landing_data_flow_spec_id}")
+                except Exception as e:
+                    logger.warning(f"Error reading landing transformation file {trans_file_path} for flow {landing_data_flow_spec_id}: {e}")
+                    sql_query = None
+
             landing_row = (
                 landing_data_flow_spec_id,
                 landing_data_flow_spec_group,
@@ -929,6 +954,7 @@ class OnboardDataflowspec:
                 landing_target_format,
                 landing_target_details,
                 landing_table_properties,
+                sql_query,
                 schema,
                 partition_columns,
                 cdc_apply_changes,

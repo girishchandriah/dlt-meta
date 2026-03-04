@@ -1,0 +1,40 @@
+target_table: kafka_payment_events
+transformation_name: Landing - Deserialize Avro from Kafka
+description: "Deserialize Avro-encoded payment events from Kafka at landing layer using Schema Registry with SSL"
+sql_query: |
+  SELECT
+    payment_data.payment_id,
+    payment_data.customer_id,
+    payment_data.amount,
+    payment_data.currency,
+    payment_data.payment_method,
+    CAST(payment_data.transaction_timestamp AS TIMESTAMP) as transaction_timestamp,
+    payment_data.status,
+    payment_data.merchant_id,
+    payment_data.metadata,
+    DATE(CAST(payment_data.transaction_timestamp AS TIMESTAMP)) as payment_date,
+    topic as kafka_topic,
+    partition as kafka_partition,
+    offset as kafka_offset,
+    timestamp as kafka_timestamp,
+    current_timestamp() as ingestion_timestamp
+  FROM (
+    SELECT
+      topic,
+      partition,
+      offset,
+      timestamp,
+      from_avro(
+        value,
+        'payment-events-value',
+        map(
+          'url', 'https://schema-registry.company.com:8081',
+          'ssl.ca.location', '/Volumes/dataservices_nonprod/landing_nonprod/shared_resources/schema_registry_ssl/ca-cert.pem',
+          'ssl.certificate.location', '/Volumes/dataservices_nonprod/landing_nonprod/shared_resources/schema_registry_ssl/client-cert.pem',
+          'ssl.key.location', '/Volumes/dataservices_nonprod/landing_nonprod/shared_resources/schema_registry_ssl/client-key.pem',
+          'ssl.key.password', '{{secrets/schema_registry/key_password}}',
+          'mode', 'PERMISSIVE'
+        )
+      ) as payment_data
+    FROM stream(kafka_source)
+  )

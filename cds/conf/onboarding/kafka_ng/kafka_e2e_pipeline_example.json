@@ -1,0 +1,86 @@
+{
+  "version": "v1",
+  "data_flow_id": "5001",
+  "data_flow_group": "kafka_e2e_avro_pipeline",
+  "source_system": "kafka_nonprod",
+  "source_format": "kafka",
+
+  "_comment": "Complete end-to-end Kafka pipeline: Ingest from Kafka with Avro → Transform → Export to Kafka with Avro",
+
+  "source_details": {
+    "kafka.bootstrap.servers": "br-lb.prd2428.dev.use1.kafka.nonprod-tmaws.io:9093",
+    "subscribe": "raw-payment-events",
+    "kafka.security.protocol": "SSL",
+    "kafka.ssl.truststore.location": "/dbfs/FileStore/ssl/truststore.jks",
+    "kafka.ssl.keystore.location": "/dbfs/FileStore/ssl/keystore.jks",
+    "kafka.ssl.truststore.secrets.scope": "ssl_certs",
+    "kafka.ssl.truststore.secrets.key": "truststore_password",
+    "kafka.ssl.keystore.secrets.scope": "ssl_certs",
+    "kafka.ssl.keystore.secrets.key": "keystore_password",
+    "kafka.ssl.key.secrets.scope": "ssl_certs",
+    "kafka.ssl.key.secrets.key": "key_password",
+    "schema.registry.url": "https://sr-lb.prd2428.dev.use1.kafka.nonprod-tmaws.io:8081",
+    "schema.registry.subject": "raw-payment-events-value",
+    "data_format": "avro",
+    "mode": "PERMISSIVE"
+  },
+
+  "landing_reader_options": {
+    "startingOffsets": "earliest",
+    "maxOffsetsPerTrigger": "100000",
+    "kafka.request.timeout.ms": "60000",
+    "kafka.session.timeout.ms": "60000",
+    "failOnDataLoss": "false"
+  },
+
+  "landing_catalog_nonprod": "dataservices_nonprod",
+  "landing_database_nonprod": "landing_nonprod",
+  "landing_table": "kafka_raw_payment_events",
+  "landing_table_comment": "Raw payment events ingested from Kafka with Avro deserialization",
+  "landing_partition_columns": "date",
+
+  "refinery_catalog_nonprod": "dataservices_nonprod",
+  "refinery_database_nonprod": "refinery_nonprod",
+  "refinery_table": "payment_events_enriched",
+  "refinery_table_comment": "Enriched payment events with customer and merchant details",
+  "refinery_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta/transformations/payment_enrichment.yaml",
+
+  "sinks": [
+    {
+      "name": "enriched_payments_kafka_sink",
+      "format": "kafka",
+      "options": {
+        "kafka.bootstrap.servers": "br-lb.prd2428.dev.use1.kafka.nonprod-tmaws.io:9093",
+        "topic": "enriched-payment-events",
+        "kafka.security.protocol": "SSL",
+        "kafka.ssl.truststore.location": "/dbfs/FileStore/ssl/truststore.jks",
+        "kafka.ssl.keystore.location": "/dbfs/FileStore/ssl/keystore.jks",
+        "kafka.ssl.truststore.password": "{{secrets/ssl_certs/truststore_password}}",
+        "kafka.ssl.keystore.password": "{{secrets/ssl_certs/keystore_password}}",
+        "kafka.ssl.key.password": "{{secrets/ssl_certs/key_password}}",
+        "schema.registry.url": "https://sr-lb.prd2428.dev.use1.kafka.nonprod-tmaws.io:8081",
+        "schema.registry.subject": "enriched-payment-events-value",
+        "data_format": "avro",
+        "confluent.schema.registry.ssl.truststore.location": "/dbfs/FileStore/ssl/truststore.jks",
+        "confluent.schema.registry.ssl.truststore.password": "{{secrets/ssl_certs/truststore_password}}",
+        "confluent.schema.registry.ssl.keystore.location": "/dbfs/FileStore/ssl/keystore.jks",
+        "confluent.schema.registry.ssl.keystore.password": "{{secrets/ssl_certs/keystore_password}}",
+        "confluent.schema.registry.ssl.key.password": "{{secrets/ssl_certs/key_password}}"
+      },
+      "select_exp": [
+        "payment_id as key",
+        "payment_id",
+        "customer_id",
+        "customer_name",
+        "merchant_id",
+        "merchant_name",
+        "amount",
+        "currency",
+        "payment_method",
+        "status",
+        "transaction_timestamp"
+      ],
+      "where_clause": "status IN ('COMPLETED', 'PENDING')"
+    }
+  ]
+}

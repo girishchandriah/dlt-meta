@@ -1,0 +1,42 @@
+{
+  "version": "v1",
+  "data_flow_id": "3003",
+  "data_flow_group": "kafka_protobuf_ingest",
+  "source_system": "kafka_nonprod",
+  "source_format": "kafka",
+
+  "source_details": {
+    "kafka.bootstrap.servers": "br-lb.prd2428.dev.use1.kafka.nonprod-tmaws.io:9093",
+    "subscribe": "prd3293.upsell-offers-by-id",
+    "kafka.security.protocol": "SSL",
+    "kafka.ssl.truststore.location": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/conf/certs/truststore.jks",
+    "kafka.ssl.keystore.location": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/conf/certs/keystore.jks",
+    "kafka.ssl.truststore.secrets.scope": "tm_cds_platform",
+    "kafka.ssl.truststore.secrets.key": "kafka_ng_nonprod_truststore_password",
+    "kafka.ssl.keystore.secrets.scope": "tm_cds_platform",
+    "kafka.ssl.keystore.secrets.key": "kafka_ng_nonprod_keystore_password",
+    "kafka.ssl.key.secrets.scope": "tm_cds_platform",
+    "kafka.ssl.key.secrets.key": "kafka_ng_nonprod_keystore_password",
+    "schema.registry.url": "https://sr-lb.prd2428.dev.use1.kafka.nonprod-tmaws.io:8081",
+    "schema.registry.subject": "prd3293.upsell-offers-by-id-value",
+    "data_format": "protobuf",
+    "mode": "PERMISSIVE"
+  },
+
+  "landing_reader_options": {
+    "startingOffsets": "earliest",
+    "maxOffsetsPerTrigger": "50000",
+    "kafka.request.timeout.ms": "60000",
+    "kafka.session.timeout.ms": "60000"
+  },
+
+  "landing_catalog_nonprod": "dataservices_nonprod",
+  "landing_database_nonprod": "landing_nonprod",
+  "landing_table": "dlt_meta_kafka_upsell_offers_protobuf",
+  "landing_table_comment": "Kafka Protobuf deserialized order events with Schema Registry integration",
+  "landing_partition_columns": "data_source_date_part",
+  "landing_table_properties": {
+    "delta.autoOptimize.optimizeWrite": "true",
+    "delta.autoOptimize.autoCompact": "true"
+  }
+}

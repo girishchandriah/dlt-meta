@@ -230,10 +230,20 @@ class DataflowPipeline:
                              comment=f"append flow input dataset view for {append_flow.name}_view"
                              )
                 elif append_flow.source_format == "eventhub" or append_flow.source_format == "kafka":
-                    dlt.view(pipeline_reader.read_kafka,
-                             name=f"{append_flow.name}_view",
-                             comment=f"append flow input dataset view for {append_flow.name}_view"
-                             )
+                    # Check if Schema Registry is configured for Kafka append flows
+                    if (append_flow.source_format == "kafka" and
+                        append_flow.source_details.get("schema.registry.url") and
+                        append_flow.source_details.get("schema.registry.subject")):
+                        logger.info(f"Using Kafka with Schema Registry for append flow: {append_flow.name}")
+                        dlt.view(pipeline_reader.read_kafka_with_schema_registry,
+                                 name=f"{append_flow.name}_view",
+                                 comment=f"append flow input dataset view for {append_flow.name}_view with Schema Registry"
+                                 )
+                    else:
+                        dlt.view(pipeline_reader.read_kafka,
+                                 name=f"{append_flow.name}_view",
+                                 comment=f"append flow input dataset view for {append_flow.name}_view"
+                                 )
         else:
             raise Exception(f"Append Flows not found for dataflowSpec={self.dataflowSpec}")
 
@@ -399,7 +409,7 @@ class DataflowPipeline:
         self.write_layer_table()
 
     def read_landing(self) -> DataFrame:
-        """Read Landing Table."""
+        """Read Landing Table with optional SQL transformation support."""
         logger.info("In read_landing func")
         pipeline_reader = PipelineReaders(
             self.spark,
@@ -409,15 +419,32 @@ class DataflowPipeline:
             self.schema_json
         )
         landing_dataflow_spec: LandingDataflowSpec = self.dataflowSpec
+        source_details = self._get_source_details()
         input_df = None
+
         if landing_dataflow_spec.sourceFormat == "cloudFiles":
             input_df = pipeline_reader.read_dlt_cloud_files()
         elif landing_dataflow_spec.sourceFormat == "delta" or landing_dataflow_spec.sourceFormat == "snapshot":
             input_df = pipeline_reader.read_dlt_delta()
         elif landing_dataflow_spec.sourceFormat == "eventhub" or landing_dataflow_spec.sourceFormat == "kafka":
-            input_df = pipeline_reader.read_kafka()
+            # Check if Schema Registry is configured
+            if (landing_dataflow_spec.sourceFormat == "kafka" and
+                source_details.get("schema.registry.url") and
+                source_details.get("schema.registry.subject")):
+                logger.info("Using Kafka with Schema Registry integration")
+                input_df = pipeline_reader.read_kafka_with_schema_registry()
+            else:
+                logger.info("Using standard Kafka reader")
+                input_df = pipeline_reader.read_kafka()
         else:
             raise Exception(f"{landing_dataflow_spec.sourceFormat} source format not supported")
+
+        # Apply SQL transformation if provided (NEW FEATURE)
+        sql_query = landing_dataflow_spec.sqlQuery
+        if sql_query and sql_query.strip():
+            logger.info(f"Applying SQL transformation to landing layer for dataFlowId={landing_dataflow_spec.dataFlowId}")
+            input_df = self.execute_sql_transformation(input_df, sql_query)
+
         return self.apply_custom_transform_fun(input_df)
 
     def apply_custom_transform_fun(self, input_df):

@@ -1,0 +1,32 @@
+{
+  "data_flow_id": "3001",
+  "data_flow_group": "streaming_events",
+  "source_system": "kafka_nonprod",
+  "source_format": "kafka",
+
+  "source_details": {
+    "source_schema_path": "/Volumes/dataservices_nonprod/landing_nonprod/dlt_meta/schemas/events.ddl",
+    "subscribe": "payment-events",
+    "kafka.bootstrap.servers": "kafka-1:9093,kafka-2:9093,kafka-3:9093",
+    "kafka.security.protocol": "SASL_SSL",
+    "kafka.sasl.mechanism": "SCRAM-SHA-256",
+    "kafka.sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"{{secrets/kafka_secrets/username}}\" password=\"{{secrets/kafka_secrets/password}}\";",
+    "kafka.ssl.ca.location": "/Volumes/dataservices_nonprod/landing_nonprod/shared_resources/kafka_ssl/ca-cert.pem"
+  },
+
+  "landing_reader_options": {
+    "startingOffsets": "earliest",
+    "maxOffsetsPerTrigger": "100000",
+    "kafka.request.timeout.ms": "60000",
+    "kafka.session.timeout.ms": "60000"
+  },
+
+  "landing_catalog_prod": "enterprise_data",
+  "landing_database_prod": "landing_events",
+  "landing_table": "kafka_payment_events_raw",
+  "landing_table_comment": "Raw Kafka messages with Avro serialized values",
+  "landing_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/landing_avro_deserialize.yaml",
+  "landing_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/cds/conf/transformations/kafka_ng/landing_avro_deserialize.yaml.yaml",
+  "landing_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/cds/conf/transformations/kafka_ng/landing_avro_deserialize.yaml.yaml",
+
+}
