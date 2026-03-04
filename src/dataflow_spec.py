@@ -26,7 +26,6 @@ class LandingDataflowSpec:
     targetFormat: str
     targetDetails: map
     tableProperties: map
-    sqlQuery: str
     schema: str
     partitionColumns: list
     cdcApplyChanges: str
@@ -43,6 +42,7 @@ class LandingDataflowSpec:
     updatedBy: str
     clusterBy: list
     sinks: str
+    sqlQuery: str = None
     landingSchemaPath: str = None
 
 
@@ -58,7 +58,6 @@ class RefineryDataflowSpec:
     targetFormat: str
     targetDetails: map
     tableProperties: map
-    sqlQuery: str
     partitionColumns: list
     cdcApplyChanges: str
     applyChangesFromSnapshot: str
@@ -74,6 +73,7 @@ class RefineryDataflowSpec:
     updatedBy: str
     clusterBy: list
     sinks: str
+    sqlQuery: str = None
     refinerySchemaPath: str = None
 
 
@@ -89,7 +89,6 @@ class TreasuryDataflowSpec:
     targetFormat: str
     targetDetails: map
     tableProperties: map
-    sqlQuery: str
     partitionColumns: list
     cdcApplyChanges: str
     dataQualityExpectations: str
@@ -100,6 +99,7 @@ class TreasuryDataflowSpec:
     updatedBy: str
     clusterBy: list
     sinks: str
+    sqlQuery: str = None
     treasurySchemaPath: str = None
 
 
