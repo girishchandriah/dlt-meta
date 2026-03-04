@@ -314,9 +314,8 @@ class PipelineReaders:
         logger.info(f"Data Format: {data_format}")
 
         # Build Schema Registry SSL options
-        schema_registry_options = {
-            "schema.registry.url": schema_registry_url
-        }
+        # Note: For protobuf, "schema.registry.address" is added separately
+        schema_registry_options = {}
 
         # Add SSL options for Schema Registry
         ssl_truststore_location = self.source_details.get("kafka.ssl.truststore.location")
@@ -358,10 +357,11 @@ class PipelineReaders:
             logger.info("Using Protobuf deserialization with Schema Registry (DLT-compatible approach)")
 
             # Build protobuf options map
+            # Note: from_protobuf Python API uses "schema.registry.address" (not "url")
             protobuf_options = {
                 "mode": mode,
                 "schema.registry.subject": schema_registry_subject,
-                "schema.registry.url": schema_registry_url
+                "schema.registry.address": schema_registry_url
             }
 
             # Merge Schema Registry SSL options (already have confluent. prefix from schema_registry_options)
@@ -371,27 +371,14 @@ class PipelineReaders:
             logger.info(f"Protobuf Schema Registry URL: {schema_registry_url}")
             logger.info(f"Protobuf options: {protobuf_options}")
 
-            # Build SQL map() expression with proper escaping
-            # Replace single quotes with doubled single quotes for SQL escaping
-            options_kvs = []
-            for key, value in protobuf_options.items():
-                # SQL standard: escape single quotes by doubling them
-                escaped_key = key.replace("'", "''")
-                escaped_value = str(value).replace("'", "''")
-                options_kvs.append(f"'{escaped_key}', '{escaped_value}'")
-
-            options_map_sql = "map(" + ", ".join(options_kvs) + ")"
-
-            # Use selectExpr with from_protobuf SQL function
-            # For Schema Registry mode: use CAST(NULL AS STRING) for messageName
-            # This tells from_protobuf to look up schema from Schema Registry
-            sql_expression = f"from_protobuf(value, CAST(NULL AS STRING), {options_map_sql}) as parsed_records"
-            logger.info(f"Generated SQL expression: {sql_expression}")
+            # Use Python API for from_protobuf (not SQL expression)
+            # This approach works with Schema Registry without requiring message name
+            logger.info(f"Using Python from_protobuf API with options: {protobuf_options}")
 
             try:
-                parsed_df = raw_df.selectExpr(
-                    "*",  # Keep all existing columns
-                    sql_expression
+                parsed_df = raw_df.withColumn(
+                    "parsed_records",
+                    from_protobuf(col("value"), options=protobuf_options)
                 )
                 logger.info("Protobuf deserialization expression added successfully")
                 return parsed_df

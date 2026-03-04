@@ -34,7 +34,7 @@
   "landing_database_nonprod": "landing_nonprod",
   "landing_table": "dlt_meta_kafka_upsell_offers_protobuf",
   "landing_table_comment": "Kafka Protobuf deserialized order events with Schema Registry integration",
-  "landing_partition_columns": "data_source_date_part",
+  "landing_partition_columns": "timestamp",
   "landing_table_properties": {
     "delta.autoOptimize.optimizeWrite": "true",
     "delta.autoOptimize.autoCompact": "true"
