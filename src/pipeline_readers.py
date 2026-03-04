@@ -355,18 +355,33 @@ class PipelineReaders:
 
         # Deserialize based on data format
         if data_format == "protobuf":
-            logger.info("Using Protobuf deserialization")
-            # Protobuf deserialization
+            logger.info("Using Protobuf deserialization with Schema Registry")
+            # Protobuf deserialization with Confluent Schema Registry
             protobuf_options = {
-                "schema.registry.subject": schema_registry_subject,
-                "schema.registry.address": schema_registry_url,
                 "mode": mode
             }
+
+            # Merge Schema Registry SSL options (already have confluent. prefix from schema_registry_options)
             protobuf_options.update(schema_registry_options)
 
+            logger.info(f"Protobuf Schema Registry subject: {schema_registry_subject}")
+            logger.info(f"Protobuf Schema Registry URL: {schema_registry_url}")
+            logger.info(f"Protobuf options: {protobuf_options}")
+
+            # Correct signature: from_protobuf(data, messageName, descFilePath, options)
+            # For Schema Registry mode: messageName="" and provide schema registry details in options
             return raw_df.withColumn(
                 "parsed_records",
-                from_protobuf(col("value"), options=protobuf_options)
+                from_protobuf(
+                    col("value"),
+                    messageName="",
+                    descFilePath=None,
+                    options={
+                        **protobuf_options,
+                        "schema.registry.subject": schema_registry_subject,
+                        "schema.registry.url": schema_registry_url
+                    }
+                )
             )
         elif data_format == "avro":
             logger.info("Using Avro deserialization")
