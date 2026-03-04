@@ -3,7 +3,7 @@ import logging
 import json
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType
-from pyspark.sql.functions import from_json, col
+from pyspark.sql.functions import from_json, col, expr
 from pyspark.sql.avro.functions import from_avro
 from pyspark.sql.protobuf.functions import from_protobuf
 from pyspark import SparkContext
@@ -355,10 +355,12 @@ class PipelineReaders:
 
         # Deserialize based on data format
         if data_format == "protobuf":
-            logger.info("Using Protobuf deserialization with Schema Registry")
-            # Protobuf deserialization with Confluent Schema Registry
+            logger.info("Using Protobuf deserialization with Schema Registry (SQL expression for DLT compatibility)")
+            # Build protobuf options map
             protobuf_options = {
-                "mode": mode
+                "mode": mode,
+                "schema.registry.subject": schema_registry_subject,
+                "schema.registry.url": schema_registry_url
             }
 
             # Merge Schema Registry SSL options (already have confluent. prefix from schema_registry_options)
@@ -368,21 +370,21 @@ class PipelineReaders:
             logger.info(f"Protobuf Schema Registry URL: {schema_registry_url}")
             logger.info(f"Protobuf options: {protobuf_options}")
 
-            # Correct signature: from_protobuf(data, messageName, descFilePath, options)
-            # For Schema Registry mode: messageName="" and provide schema registry details in options
-            return raw_df.withColumn(
-                "parsed_records",
-                from_protobuf(
-                    col("value"),
-                    messageName="",
-                    descFilePath=None,
-                    options={
-                        **protobuf_options,
-                        "schema.registry.subject": schema_registry_subject,
-                        "schema.registry.url": schema_registry_url
-                    }
-                )
-            )
+            # Build options map for SQL expression
+            # Escape quotes and build SQL map literal
+            options_parts = []
+            for key, value in protobuf_options.items():
+                # Escape single quotes in values
+                escaped_value = str(value).replace("'", "\\'")
+                options_parts.append(f"'{key}', '{escaped_value}'")
+            options_sql = "map(" + ", ".join(options_parts) + ")"
+
+            # Use SQL expression syntax (DLT-whitelisted)
+            # from_protobuf(value, '', options_map)
+            sql_expr = f"from_protobuf(value, '', {options_sql})"
+            logger.info(f"Using SQL expression: {sql_expr}")
+
+            return raw_df.withColumn("parsed_records", expr(sql_expr))
         elif data_format == "avro":
             logger.info("Using Avro deserialization")
             # Avro deserialization
