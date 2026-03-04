@@ -7,7 +7,7 @@ from pyspark.sql.functions import from_json, col
 from pyspark.sql.avro.functions import from_avro
 from pyspark.sql.protobuf.functions import from_protobuf
 from pyspark import SparkContext
-from pyspark.sql.column import Column, _to_java_column
+from pyspark.sql.column import Column
 from pyspark.util import _print_missing_jar
 
 logger = logging.getLogger('databricks.labs.dltmeta')
@@ -243,7 +243,7 @@ class PipelineReaders:
         sc = SparkContext._active_spark_context
         try:
             jc = sc._jvm.org.apache.spark.sql.avro.functions.from_avro(
-                _to_java_column(data), subject, registry_url, combined_options or {}
+                data._jc, subject, registry_url, combined_options or {}
             )
         except TypeError as e:
             if str(e) == "'JavaPackage' object is not callable":

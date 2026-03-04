@@ -13,7 +13,7 @@ from pyspark.sql.avro.functions import to_avro
 from pyspark.sql.protobuf.functions import to_protobuf
 from pyspark.sql.functions import col, struct
 from pyspark import SparkContext
-from pyspark.sql.column import Column, _to_java_column
+from pyspark.sql.column import Column
 import logging
 
 logger = logging.getLogger('databricks.labs.dltmeta')
@@ -103,7 +103,7 @@ class DLTSinkWriter:
 
         sc = SparkContext._active_spark_context
         jc = sc._jvm.org.apache.spark.sql.avro.functions.to_avro(
-            _to_java_column(data), subject, registry_url, combined_options or {}
+            data._jc, subject, registry_url, combined_options or {}
         )
         return Column(jc)
 
