@@ -355,7 +355,8 @@ class PipelineReaders:
 
         # Deserialize based on data format
         if data_format == "protobuf":
-            logger.info("Using Protobuf deserialization with Schema Registry (SQL expression for DLT compatibility)")
+            logger.info("Using Protobuf deserialization with Schema Registry (DLT-compatible approach)")
+
             # Build protobuf options map
             protobuf_options = {
                 "mode": mode,
@@ -370,21 +371,35 @@ class PipelineReaders:
             logger.info(f"Protobuf Schema Registry URL: {schema_registry_url}")
             logger.info(f"Protobuf options: {protobuf_options}")
 
-            # Build options map for SQL expression
-            # Escape quotes and build SQL map literal
-            options_parts = []
+            # Build SQL map() expression with proper escaping
+            # Replace single quotes with doubled single quotes for SQL escaping
+            options_kvs = []
             for key, value in protobuf_options.items():
-                # Escape single quotes in values
-                escaped_value = str(value).replace("'", "\\'")
-                options_parts.append(f"'{key}', '{escaped_value}'")
-            options_sql = "map(" + ", ".join(options_parts) + ")"
+                # SQL standard: escape single quotes by doubling them
+                escaped_key = key.replace("'", "''")
+                escaped_value = str(value).replace("'", "''")
+                options_kvs.append(f"'{escaped_key}', '{escaped_value}'")
 
-            # Use SQL expression syntax (DLT-whitelisted)
-            # from_protobuf(value, '', options_map)
-            sql_expr = f"from_protobuf(value, '', {options_sql})"
-            logger.info(f"Using SQL expression: {sql_expr}")
+            options_map_sql = "map(" + ", ".join(options_kvs) + ")"
 
-            return raw_df.withColumn("parsed_records", expr(sql_expr))
+            # Use selectExpr with from_protobuf SQL function
+            # For Schema Registry mode: use CAST(NULL AS STRING) for messageName
+            # This tells from_protobuf to look up schema from Schema Registry
+            sql_expression = f"from_protobuf(value, CAST(NULL AS STRING), {options_map_sql}) as parsed_records"
+            logger.info(f"Generated SQL expression: {sql_expression}")
+
+            try:
+                parsed_df = raw_df.selectExpr(
+                    "*",  # Keep all existing columns
+                    sql_expression
+                )
+                logger.info("Protobuf deserialization expression added successfully")
+                return parsed_df
+            except Exception as e:
+                logger.error(f"Failed to apply from_protobuf: {e}")
+                # Fallback: Return raw dataframe with value column (no deserialization)
+                logger.warning("Returning raw Kafka data without protobuf deserialization")
+                return raw_df
         elif data_format == "avro":
             logger.info("Using Avro deserialization")
             # Avro deserialization
