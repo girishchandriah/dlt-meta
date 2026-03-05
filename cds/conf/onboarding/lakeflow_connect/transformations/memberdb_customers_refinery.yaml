@@ -1,7 +1,7 @@
 target_table: memberdb_customers
 transformation_name: Member DB CUSTOMERS Refinery Transformation
-description: "Federated load from Oracle CUSTOMERS table via Lakehouse Federation. Full snapshot load of all customer records."
+description: "Load from source view created by dlt-meta. Source is _member_db_catalog.member.CUSTOMERS."
 sql_query: |
   select
     *
-  from _member_db_catalog.member.CUSTOMERS
+  from source_6001
