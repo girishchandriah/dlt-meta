@@ -26,5 +26,7 @@
   "refinery_apply_changes_from_snapshot": {
     "keys": ["CUSTOMER_ID"],
     "scd_type": "1"
-  }
+  },
+
+  "refinery_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/lakeflow_connect/transformations/memberdb_customers_refinery.yaml"
 }

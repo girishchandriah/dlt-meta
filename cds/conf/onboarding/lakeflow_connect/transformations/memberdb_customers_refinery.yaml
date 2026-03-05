@@ -1,0 +1,7 @@
+target_table: memberdb_customers
+transformation_name: Member DB CUSTOMERS Refinery Transformation
+description: "Federated load from Oracle CUSTOMERS table via Lakehouse Federation. Full snapshot load of all customer records."
+sql_query: |
+  select
+    *
+  from _member_db_catalog.member.CUSTOMERS
