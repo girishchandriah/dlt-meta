@@ -13,8 +13,8 @@
 
   "landing_catalog_prod": "main",
   "landing_database_prod": "staging",
-  "landing_table": "customers",
-  "landing_partition_columns": "LAST_MODIFIED_DATE",
+  "landing_table": "customers_full",
+  "landing_partition_columns": "LAST_UPDATE_DATE",
 
   "landing_table_properties": {
     "delta.autoOptimize.optimizeWrite": "true",
@@ -25,8 +25,19 @@
 
   "landing_apply_changes_from_snapshot": {
     "keys": ["CUSTOMER_ID"],
-    "sequence_by": "LAST_MODIFIED",
+    "sequence_by": "LAST_UPDATE",
     "scd_type": "1",
     "ignore_null_updates": "false"
+  },
+
+  "refinery_catalog_prod": "main",
+  "refinery_database_prod": "refinery",
+  "refinery_table": "customers_full",
+
+  "refinery_apply_changes_from_snapshot": {
+    "keys": ["CUSTOMER_ID"],
+    "sequence_by": "LAST_UPDATE",
+    "scd_type": "2",
+    "track_history_except_column_list": ["_metadata", "_load_date", "_load_timestamp"]
   }
 }
