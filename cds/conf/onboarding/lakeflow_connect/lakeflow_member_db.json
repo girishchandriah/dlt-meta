@@ -6,8 +6,8 @@
 
   "source_details": {
     "snapshot_format": "delta",
-    "catalog": "_member_db_catalog",
-    "database": "member",
+    "catalog_nonprod": "_member_db_catalog",
+    "database_nonprod": "member",
     "table": "CUSTOMERS"
   },
 
