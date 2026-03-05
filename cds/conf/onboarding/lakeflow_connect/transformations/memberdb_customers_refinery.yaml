@@ -5,3 +5,4 @@ sql_query: |
   select
     *
   from source_6001
+  limit 10000
