@@ -11,21 +11,20 @@
     "source_table": "CUSTOMERS"
   },
 
-  "landing_catalog_nonprod": "dataservices_nonprod",
-  "landing_database_nonprod": "landing_nonprod",
-  "landing_table": "memberdb_customers",
-  "landing_partition_columns": "LAST_MODIFIED",
+  "refinery_catalog_nonprod": "dataservices_nonprod",
+  "refinery_database_nonprod": "refinery_nonprod",
+  "refinery_table": "memberdb_customers",
+  "refinery_partition_columns": "LAST_MODIFIED",
 
-  "landing_table_properties": {
+  "refinery_table_properties": {
     "delta.autoOptimize.optimizeWrite": "true",
     "delta.autoOptimize.autoCompact": "true",
     "delta.tuneFileSizesForRewrites": "true",
     "delta.targetFileSize": "256mb"
   },
 
-  "landing_apply_changes_from_snapshot": {
+  "refinery_apply_changes_from_snapshot": {
     "keys": ["CUSTOMER_ID"],
-    "sequence_by": "LAST_MODIFIED",
     "scd_type": "1"
   }
 }
