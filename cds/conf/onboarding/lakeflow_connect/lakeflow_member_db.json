@@ -14,7 +14,7 @@
   "landing_catalog_nonprod": "dataservices_nonprod",
   "landing_database_nonprod": "landing_nonprod",
   "landing_table": "memberdb_customers",
-  "landing_partition_columns": "LAST_MODIFIED_DATE",
+  "landing_partition_columns": "LAST_MODIFIED",
 
   "landing_table_properties": {
     "delta.autoOptimize.optimizeWrite": "true",
@@ -26,7 +26,6 @@
   "landing_apply_changes_from_snapshot": {
     "keys": ["CUSTOMER_ID"],
     "sequence_by": "LAST_MODIFIED",
-    "scd_type": "1",
-    "ignore_null_updates": "false"
+    "scd_type": "1"
   }
 }
