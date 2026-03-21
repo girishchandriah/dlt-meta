@@ -70,8 +70,7 @@ def main():
         treasury_dataflowspec_table="treasury_dataflowspec",
 
         # Settings
-        overwrite=True,  # Overwrite existing dataflows
-        update_paths=True,  # Update workspace paths
+        overwrite=False,  # Merge with existing specs (recommended)
         serverless=True  # Use serverless compute
     )
 

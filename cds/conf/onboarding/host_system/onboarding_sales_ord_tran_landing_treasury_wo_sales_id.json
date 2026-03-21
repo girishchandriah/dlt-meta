@@ -10,7 +10,7 @@
       "source_path_nonprod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/prod/jb_edw_dsn_sales_ord_tran_0204/inbound",
       "source_path_preprod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/preprod/jb_edw_dsn_sales_ord_tran_0204/file-ingest",
       "source_path_prod": "s3a://prd2612-251362386508-databricks-prod-us-west-2-prelanding/prod/jb_edw_dsn_sales_ord_tran_0204/file-ingest",
-      "source_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/dsn_sales_ord_tran.ddl"
+      "source_schema_path": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/schemas/host_system/dsn_sales_ord_tran.ddl"
     },
     "landing_catalog_nonprod": "dataservices_nonprod",
     "landing_catalog_preprod": "dataservices_preprod",
@@ -41,9 +41,9 @@
     "treasury_database_prod": "treasury_teradata_base",
     "treasury_table": "pfocusdb_sales_ord_tran_dlt_v3",
     "treasury_table_comment": "Treasury table for sales order transactions - gold layer (combined transformation from landing)",
-    "treasury_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_combined_treasury_wo_sales_id_nonprod.yaml",
-    "treasury_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_combined_treasury_wo_sales_id_preprod.yaml",
-    "treasury_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/transformations_sales_ord_combined_treasury_wo_sales_id_prod.yaml",
+    "treasury_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/host_system/transformations_sales_ord_combined_treasury_wo_sales_id_nonprod.yaml",
+    "treasury_transformation_json_preprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/host_system/transformations_sales_ord_combined_treasury_wo_sales_id_preprod.yaml",
+    "treasury_transformation_json_prod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/transformations/host_system/transformations_sales_ord_combined_treasury_wo_sales_id_prod.yaml",
     "treasury_cluster_by": [
       "sales_ord_tran_dt",
       "event_id"

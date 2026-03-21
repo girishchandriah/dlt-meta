@@ -26,7 +26,6 @@ class CliTests(unittest.TestCase):
         overwrite=True,
         landing_dataflowspec_table="landing_dataflowspec",
         refinery_dataflowspec_table="refinery_dataflowspec",
-        update_paths=True,
     )
 
     onboard_cmd_without_uc = OnboardCommand(
@@ -45,7 +44,6 @@ class CliTests(unittest.TestCase):
         overwrite=True,
         landing_dataflowspec_table="landing_dataflowspec",
         refinery_dataflowspec_table="refinery_dataflowspec",
-        update_paths=True,
     )
 
     deploy_cmd = DeployCommand(
@@ -199,8 +197,7 @@ class CliTests(unittest.TestCase):
             overwrite=True,
             landing_dataflowspec_table="landing_dataflowspec",
             refinery_dataflowspec_table="refinery_dataflowspec",
-            update_paths=True,
-        )
+            )
         dltmeta = DLTMeta(None)
         named_parameters = dltmeta._get_onboarding_named_parameters(
             cmd
@@ -337,7 +334,6 @@ class CliTests(unittest.TestCase):
         self.assertEqual(cmd.version, "v1")
         self.assertEqual(cmd.env, "prod")
         self.assertEqual(cmd.import_author, "author")
-        self.assertTrue(cmd.update_paths)
 
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
@@ -371,7 +367,6 @@ class CliTests(unittest.TestCase):
         self.assertEqual(cmd.version, "v1")
         self.assertEqual(cmd.env, "prod")
         self.assertEqual(cmd.import_author, "author")
-        self.assertTrue(cmd.update_paths)
 
     @patch("src.cli.WorkspaceInstaller")
     @patch("src.cli.WorkspaceClient")
@@ -494,8 +489,7 @@ class CliTests(unittest.TestCase):
             overwrite=True,
             landing_dataflowspec_table="landing_dataflowspec",
             refinery_dataflowspec_table="refinery_dataflowspec",
-            update_paths=True,
-        )
+            )
         dltmeta = DLTMeta(mock_workspace_client)
         dltmeta._wsi = mock_workspace_client.return_value
         dltmeta.update_ws_onboarding_paths(cmd)
@@ -1440,7 +1434,6 @@ class CliTests(unittest.TestCase):
             'version': 'v2',
             'environment': 'dev',
             'author': 'custom_author',
-            'update_paths': "1"
         }
 
         result = dltmeta._load_onboard_config_ui(form_data)
@@ -1462,7 +1455,6 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.version, "v2")
         self.assertEqual(result.env, "dev")
         self.assertEqual(result.import_author, "custom_author")
-        self.assertTrue(result.update_paths)
 
     @patch("src.cli.uuid.uuid4")
     @patch("builtins.open", new_callable=mock_open)

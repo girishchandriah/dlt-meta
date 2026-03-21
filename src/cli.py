@@ -50,17 +50,16 @@ class OnboardCommand:
     landing_schema: str = None
     refinery_schema: str = None
     treasury_schema: str = None
-    uc_enabled: bool = False
+    uc_enabled: bool = True  # Unity Catalog is always enabled
     uc_catalog_name: str = None
     uc_volume_path: str = None
-    overwrite: bool = True
+    overwrite: bool = False  # Never overwrite existing dataflow specs
     landing_dataflowspec_table: str = "landing_dataflowspec"
     refinery_dataflowspec_table: str = "refinery_dataflowspec"
     treasury_dataflowspec_table: str = "treasury_dataflowspec"
     landing_dataflowspec_path: str = None
     refinery_dataflowspec_path: str = None
     treasury_dataflowspec_path: str = None
-    update_paths: bool = True
 
     def __post_init__(self):
         if not self.onboarding_file_path or self.onboarding_file_path == "":
@@ -135,7 +134,7 @@ class DeployCommand:
     dataflowspec_landing_path: str = None
     dataflowspec_refinery_path: str = None
     dataflowspec_treasury_path: str = None
-    uc_enabled: bool = False
+    uc_enabled: bool = True  # Unity Catalog is always enabled
     serverless: bool = False
     dbfs_path: str = None
 
@@ -556,16 +555,11 @@ class DLTMeta:
 
     def _load_onboard_config(self) -> OnboardCommand:
         onboard_cmd_dict = {}
-        onboard_cmd_dict["uc_enabled"] = self._wsi._choice(
-            "Run onboarding with unity catalog enabled?", ['True', 'False'])
-        onboard_cmd_dict["uc_enabled"] = True if onboard_cmd_dict["uc_enabled"] == "True" else False
-        if onboard_cmd_dict["uc_enabled"]:
-            onboard_cmd_dict["dbfs_path"] = None
-            onboard_cmd_dict["uc_catalog_name"] = self._wsi._question(
-                "Provide unity catalog name")
-        else:
-            onboard_cmd_dict["dbfs_path"] = self._wsi._question(
-                "Provide dbfs path", default=f"dbfs:/dlt-meta_cli_demo_{uuid.uuid4().hex}")
+        # Unity Catalog is always enabled
+        onboard_cmd_dict["uc_enabled"] = True
+        onboard_cmd_dict["dbfs_path"] = None
+        onboard_cmd_dict["uc_catalog_name"] = self._wsi._question(
+            "Provide unity catalog name")
         onboard_cmd_dict["serverless"] = self._wsi._choice(
             "Run onboarding with serverless?", ['True', 'False'])
         onboard_cmd_dict["serverless"] = True if onboard_cmd_dict["serverless"] == 'True' else False
@@ -603,18 +597,14 @@ class DLTMeta:
             if not onboard_cmd_dict["uc_enabled"]:
                 onboard_cmd_dict["refinery_dataflowspec_path"] = self._wsi._question(
                     "Provide refinery dataflow spec path", default=f'{self._install_folder()}/refinery_dataflow_specs')
-        onboard_cmd_dict["overwrite"] = self._wsi._choice(
-            "Overwrite dataflow spec?", ['True', 'False'])
-        onboard_cmd_dict["overwrite"] = True if onboard_cmd_dict["overwrite"] == 'True' else False
+        # Never overwrite existing dataflow specs
+        onboard_cmd_dict["overwrite"] = False
         onboard_cmd_dict["version"] = self._wsi._question(
             "Provide dataflow spec version", default='v1')
         onboard_cmd_dict["env"] = self._wsi._question(
             "Provide environment name", default='prod')
         onboard_cmd_dict["import_author"] = self._wsi._question(
             "Provide import author name", default=self._wsi._short_name)
-        onboard_cmd_dict["update_paths"] = self._wsi._choice(
-            "Update workspace/dbfs uc volume paths, unity catalog name, landing/refinery schema names in onboarding file?",
-            ['True', 'False'])
         with open("onboarding_job_details.json", "w") as oc_file:
             json.dump(onboard_cmd_dict, oc_file, indent=4)
         cmd = OnboardCommand(**onboard_cmd_dict)
@@ -669,17 +659,13 @@ class DLTMeta:
                 deploy_cmd_dict["num_workers"] = int(self._wsi._question(
                     "Provide number of workers", default=4))
         else:
-            deploy_cmd_dict["uc_enabled"] = self._wsi._choice(
-                "Deploy DLT-META with unity catalog enabled?", ["True", "False"])
-            deploy_cmd_dict["uc_enabled"] = True if deploy_cmd_dict["uc_enabled"] == "True" else False
-            if deploy_cmd_dict["uc_enabled"]:
-                deploy_cmd_dict["uc_catalog_name"] = self._wsi._question(
-                    "Provide unity catalog name")
-                deploy_cmd_dict["serverless"] = self._wsi._choice(
-                    "Deploy DLT-META with serverless?", ["True", "False"])
-                deploy_cmd_dict["serverless"] = True if deploy_cmd_dict["serverless"] == "True" else False
-            else:
-                deploy_cmd_dict["serverless"] = False
+            # Unity Catalog is always enabled
+            deploy_cmd_dict["uc_enabled"] = True
+            deploy_cmd_dict["uc_catalog_name"] = self._wsi._question(
+                "Provide unity catalog name")
+            deploy_cmd_dict["serverless"] = self._wsi._choice(
+                "Deploy DLT-META with serverless?", ["True", "False"])
+            deploy_cmd_dict["serverless"] = True if deploy_cmd_dict["serverless"] == "True" else False
             deploy_cmd_dict["layer"] = self._wsi._choice(
                 "Provide dlt meta layer", ['landing', 'refinery', 'landing_refinery'])
             if deploy_cmd_dict["layer"] in ["landing", "landing_refinery"]:
@@ -716,13 +702,10 @@ class DLTMeta:
     def _load_onboard_config_ui(self, form_data) -> OnboardCommand:
         onboard_cmd_dict = {}
 
-        # Get unity catalog settings
-        onboard_cmd_dict["uc_enabled"] = True if form_data.get('unity_catalog_enabled') == "1" else False
-        if onboard_cmd_dict["uc_enabled"]:
-            onboard_cmd_dict["dbfs_path"] = None
-            onboard_cmd_dict["uc_catalog_name"] = form_data.get('unity_catalog_name')
-        else:
-            onboard_cmd_dict["dbfs_path"] = f"dbfs:/dlt-meta_cli_demo_{uuid.uuid4().hex}"
+        # Unity Catalog is always enabled
+        onboard_cmd_dict["uc_enabled"] = True
+        onboard_cmd_dict["dbfs_path"] = None
+        onboard_cmd_dict["uc_catalog_name"] = form_data.get('unity_catalog_name')
 
         # Get serverless setting
         onboard_cmd_dict["serverless"] = True if form_data.get('serverless') == "1" else False
@@ -776,11 +759,10 @@ class DLTMeta:
                 onboard_cmd_dict["treasury_dataflowspec_path"] = f'{self._install_folder()}/treasury_dataflow_specs'
 
         # Get other settings
-        onboard_cmd_dict["overwrite"] = True if form_data.get('overwrite') == "1" else False
+        onboard_cmd_dict["overwrite"] = False  # Never overwrite existing dataflow specs
         onboard_cmd_dict["version"] = form_data.get('version', 'v1')
         onboard_cmd_dict["env"] = form_data.get('environment', 'prod')
         onboard_cmd_dict["import_author"] = form_data.get('author', self._wsi._short_name)
-        onboard_cmd_dict["update_paths"] = True if form_data.get('update_paths') == "1" else False
 
         # Save to file
         with open("onboarding_job_details.json", "w") as oc_file:
@@ -800,14 +782,11 @@ class DLTMeta:
 
         if load_from_ojd_json and oc_job_details_json:
             oc_job_details_json = json.loads(oc_job_details_json)
-            uc_enabled_value = input_params.get("uc_enabled", False)
-            deploy_cmd_dict["uc_enabled"] = uc_enabled_value == "1" or uc_enabled_value is True
-            if deploy_cmd_dict["uc_enabled"]:
-                deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
-                serverless_value = input_params.get("serverless", False)
-                deploy_cmd_dict["serverless"] = serverless_value == "1" or serverless_value is True
-            else:
-                deploy_cmd_dict["serverless"] = False
+            # Unity Catalog is always enabled
+            deploy_cmd_dict["uc_enabled"] = True
+            deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
+            serverless_value = input_params.get("serverless", False)
+            deploy_cmd_dict["serverless"] = serverless_value == "1" or serverless_value is True
             deploy_cmd_dict["layer"] = input_params.get("layer")
             if deploy_cmd_dict["layer"] in ["landing", "landing_refinery"]:
                 if deploy_cmd_dict["uc_enabled"]:
@@ -826,14 +805,11 @@ class DLTMeta:
             if not deploy_cmd_dict["serverless"]:
                 deploy_cmd_dict["num_workers"] = input_params.get("num_workers", 4)
         else:
-            uc_enabled_value = input_params.get("uc_enabled", False)
-            deploy_cmd_dict["uc_enabled"] = uc_enabled_value == "1" or uc_enabled_value is True
-            if deploy_cmd_dict["uc_enabled"]:
-                deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
-                serverless_value = input_params.get("serverless", False)
-                deploy_cmd_dict["serverless"] = serverless_value == "1" or serverless_value is True
-            else:
-                deploy_cmd_dict["serverless"] = False
+            # Unity Catalog is always enabled
+            deploy_cmd_dict["uc_enabled"] = True
+            deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
+            serverless_value = input_params.get("serverless", False)
+            deploy_cmd_dict["serverless"] = serverless_value == "1" or serverless_value is True
             deploy_cmd_dict["layer"] = input_params.get("layer")
             if deploy_cmd_dict["layer"] in ["landing", "landing_refinery", "landing_refinery_treasury"]:
                 deploy_cmd_dict["onboard_landing_group"] = input_params.get("onboard_landing_group")

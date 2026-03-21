@@ -159,8 +159,7 @@ onboard_cmd = OnboardCommand(
     treasury_dataflowspec_table="treasury_dataflowspec",
 
     # Settings
-    overwrite=True,
-    update_paths=True
+    overwrite=False  # Merge with existing specs (recommended)
 )
 
 # Execute onboarding
@@ -221,8 +220,7 @@ Monitor the job in the Databricks UI.
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `overwrite` | Overwrite existing dataflows | `True` |
-| `update_paths` | Update workspace paths | `True` |
+| `overwrite` | Replace entire dataflowspec table (False = merge with existing) | `False` |
 | `serverless` | Use serverless compute | `True` |
 | `cloud` | Cloud provider (if not serverless) | `"aws"` |
 | `dbr_version` | DBR version (if not serverless) | `"13.3.x-scala2.12"` |
@@ -345,8 +343,7 @@ def main():
         uc_enabled=True,
         uc_catalog_name="dataservices_nonprod",
         landing_dataflowspec_table="landing_dataflowspec",
-        overwrite=True,
-        update_paths=True
+        overwrite=False  # Merge with existing specs
     )
 
     dltmeta.onboard(onboard_cmd)

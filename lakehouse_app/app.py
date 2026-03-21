@@ -435,25 +435,21 @@ def handle_onboard_form():
 
     # Create JSON object from form data
     json_data = {
-        "unity_catalog_enabled": "1" if request.form.get('unity_catalog_enabled') == "1" else "0",
+        "unity_catalog_enabled": "1",  # Unity Catalog is always enabled
         "unity_catalog_name": request.form.get('unity_catalog_name', ''),
         "serverless": "1" if request.form.get('serverless') == "1" else "0",
         "onboarding_file_path": request.form.get('onboarding_file_path', '/app/python/source_code/dlt-meta/cds/conf/onboarding/host_sales_ord_tran_0204/onboarding_sales_ord_tran.json'),
         "local_directory": request.form.get('local_directory', '/app/python/source_code/dlt-meta/cds/'),
         "dlt_meta_schema": request.form.get('dlt_meta_schema',
                                             'dlt_meta_dataflowspecs_cds'),
-        "landing_schema": request.form.get('landing_schema', 'dltmeta_landing_cds'),
-        "refinery_schema": request.form.get('refinery_schema', 'dltmeta_refinery_cds'),
-        "treasury_schema": request.form.get('treasury_schema', 'dltmeta_treasury_cds'),
         "dlt_meta_layer": request.form.get('dlt_meta_layer', '1'),
         "landing_table": request.form.get('landing_table', 'landing_dataflowspec_cds'),
         "refinery_table": request.form.get('refinery_table', 'refinery_dataflowspec_cds'),
         "treasury_table": request.form.get('treasury_table', 'treasury_dataflowspec_cds'),
-        "overwrite": "1" if request.form.get('overwrite') == "1" else "0",
+        "overwrite": "0",  # Never overwrite existing dataflow specs
         "version": request.form.get('version', 'v1'),
         "environment": request.form.get('environment', 'nonprod'),
         "author": request.form.get('author', 'app-6250cg demo-dltmeta-cds'),
-        "update_paths": "1" if request.form.get('update_paths') == "1" else "0",
         "command": "onboard_ui",
         "flags": {"log_level": "info"},
     }
@@ -567,7 +563,7 @@ def handle_deploy_form():
         print(f"CLI exists: {os.path.exists(current_directory + '/src/cli.py')}")
 
         json_data = {
-            "uc_enabled": "1" if request.form.get('uc_enabled') == "1" else "0",
+            "uc_enabled": "1",  # Unity Catalog is always enabled
             "uc_catalog_name": request.form.get('uc_catalog_name', ''),
             "serverless": "1" if request.form.get('serverless') == "1" else "0",
             "layer": request.form.get('deploylayer', 'landing'),

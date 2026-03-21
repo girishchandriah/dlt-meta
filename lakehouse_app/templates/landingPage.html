@@ -563,22 +563,6 @@
                             <!-- Unity Catalog Settings -->
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Run onboarding with unity catalog enabled?</label>
-                                    <div class="radio-group">
-
-                                        <div class="radio-option">
-                                            <input checked id="unity_catalog_true" name="unity_catalog_enabled"
-                                                   type="radio" value="1">
-                                            <label for="unity_catalog_true"> True</label>
-                                        </div>
-                                        <div class="radio-option">
-                                            <input id="unity_catalog_false" name="unity_catalog_enabled" type="radio"
-                                                   value="0">
-                                            <label for="unity_catalog_false"> False</label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group" id="unity_catalog_name_group">
                                     <label>Provide unity catalog name:</label>
                                     <input id="unity_catalog_name" name="unity_catalog_name"
                                            placeholder="Enter unity catalog name" type="text">
@@ -623,27 +607,6 @@
                                     <input id="dlt_meta_schema" name="dlt_meta_schema" placeholder="Enter schema name"
                                            type="text" value="dlt_meta_dataflowspecs_cds">
                                 </div>
-                                <div class="form-group">
-                                    <label>Provide dlt meta landing layer schema name:</label>
-                                    <input id="landing_schema" name="landing_schema"
-                                           placeholder="Enter landing schema name"
-                                           type="text" value="dltmeta_landing_cds">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Provide dlt meta refinery layer schema name:</label>
-                                    <input id="refinery_schema" name="refinery_schema"
-                                           placeholder="Enter refinery schema name"
-                                           type="text" value="dltmeta_refinery_cds">
-                                </div>
-                                <div class="form-group">
-                                    <label>Provide dlt meta treasury layer schema name:</label>
-                                    <input id="treasury_schema" name="treasury_schema"
-                                           placeholder="Enter treasury schema name"
-                                           type="text" value="dltmeta_treasury_cds">
-                                </div>
                             </div>
 
                             <div class="form-row">
@@ -680,22 +643,6 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Overwrite dataflow spec?</label>
-                                    <div class="radio-group">
-                                        <div class="radio-option">
-                                            <input id="overwrite_false" name="overwrite" type="radio" value="0">
-                                            <label for="overwrite_false"> False</label>
-                                        </div>
-                                        <div class="radio-option">
-                                            <input checked id="overwrite_true" name="overwrite" type="radio" value="1">
-                                            <label for="overwrite_true"> True</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
                                     <label>Provide dataflow spec version:</label>
                                     <input id="version" name="version" placeholder="Enter version" type="text"
                                            value="v1">
@@ -714,25 +661,6 @@
                                            value="app-6250cg demo-dltmeta-cds">
                                 </div>
                             </div>
-
-                            <!-- Path Update Option -->
-                            <div class="form-row">
-                                <div class="form-group full-width">
-                                    <label>Update workspace/dbfs uc volume paths, unity catalog name, landing/refinery
-                                        schema names in onboarding file?</label>
-                                    <div class="radio-group">
-                                        <div class="radio-option">
-                                            <input checked id="update_paths_false" name="update_paths" type="radio"
-                                                   value="0">
-                                            <label for="update_paths_false"> False</label>
-                                        </div>
-                                        <div class="radio-option">
-                                            <input id="update_paths_true" name="update_paths" type="radio" value="1">
-                                            <label for="update_paths_true"> True</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <button type="submit">Run Onboarding</button>
@@ -746,21 +674,6 @@
                             <!-- Unity Catalog Settings -->
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Run onboarding with unity catalog enabled?</label>
-                                    <div class="radio-group">
-                                        <div class="radio-option">
-                                            <input checked id="unity_catalog_true" name="uc_enabled" type="radio"
-                                                   value="1">
-                                            <label for="unity_catalog_true"> True</label>
-                                        </div>
-                                        <div class="radio-option">
-                                            <input id="unity_catalog_false" name="uc_enabled" type="radio" value="0">
-                                            <label for="unity_catalog_false"> False</label>
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="form-group" id="unity_catalog_name_group">
                                     <label>Provide unity catalog name:</label>
                                     <input id="uc_catalog_name" name="uc_catalog_name"
                                            placeholder="Enter unity catalog name" type="text">
