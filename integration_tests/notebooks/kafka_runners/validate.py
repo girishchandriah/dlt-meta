@@ -4,18 +4,18 @@ import pandas as pd
 run_id = dbutils.widgets.get("run_id")
 uc_catalog_name = dbutils.widgets.get("uc_catalog_name")
 output_file_path = dbutils.widgets.get("output_file_path")
-bronze_schema = dbutils.widgets.get("bronze_schema")
+landing_schema = dbutils.widgets.get("landing_schema")
 log_list = []
 
-# Assumption is that to get to this notebook Bronze and Silver completed successfully
-log_list.append("Completed Bronze Eventhub Lakeflow Declarative Pipeline.")
+# Assumption is that to get to this notebook Landing and Refinery completed successfully
+log_list.append("Completed Landing Eventhub Lakeflow Declarative Pipeline.")
 
 TABLES = {
-    f"{uc_catalog_name}.{bronze_schema}.bronze_{run_id}_iot": 20,
-    f"{uc_catalog_name}.{bronze_schema}.bronze_{run_id}_iot_quarantine": 2,
+    f"{uc_catalog_name}.{landing_schema}.landing_{run_id}_iot": 20,
+    f"{uc_catalog_name}.{landing_schema}.landing_{run_id}_iot_quarantine": 2,
 }
 
-log_list.append("Validating Lakeflow Declarative Pipeline for Eventhub Bronze Table Counts...")
+log_list.append("Validating Lakeflow Declarative Pipeline for Eventhub Landing Table Counts...")
 for table, counts in TABLES.items():
     query = spark.sql(f"SELECT count(*) as cnt FROM {table}")
     cnt = query.collect()[0].cnt

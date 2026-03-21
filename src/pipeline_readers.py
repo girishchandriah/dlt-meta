@@ -3,7 +3,12 @@ import logging
 import json
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType
-from pyspark.sql.functions import from_json, col
+from pyspark.sql.functions import from_json, col, expr
+from pyspark.sql.avro.functions import from_avro
+from pyspark.sql.protobuf.functions import from_protobuf
+from pyspark import SparkContext
+from pyspark.sql.column import Column
+from pyspark.util import _print_missing_jar
 
 logger = logging.getLogger('databricks.labs.dltmeta')
 logger.setLevel(logging.INFO)
@@ -80,7 +85,7 @@ class PipelineReaders:
 
         Args:
             spark (_type_): _description_
-            bronze_dataflow_spec (_type_): _description_
+            landing_dataflow_spec (_type_): _description_
         Returns:
             DataFrame: _description_
         """
@@ -110,7 +115,7 @@ class PipelineReaders:
 
         Args:
             spark (_type_): _description_
-            bronze_dataflow_spec (_type_): _description_
+            landing_dataflow_spec (_type_): _description_
             schema_json (_type_): _description_
 
         Returns:
@@ -192,11 +197,16 @@ class PipelineReaders:
         }
         ssl_truststore_location = self.source_details.get("kafka.ssl.truststore.location", None)
         ssl_keystore_location = self.source_details.get("kafka.ssl.keystore.location", None)
+        security_protocol = self.source_details.get("kafka.security.protocol", None)
+
         if ssl_truststore_location and ssl_keystore_location:
             truststore_scope = self.source_details.get("kafka.ssl.truststore.secrets.scope", None)
             truststore_key = self.source_details.get("kafka.ssl.truststore.secrets.key", None)
             keystore_scope = self.source_details.get("kafka.ssl.keystore.secrets.scope", None)
             keystore_key = self.source_details.get("kafka.ssl.keystore.secrets.key", None)
+            key_scope = self.source_details.get("kafka.ssl.key.secrets.scope", None)
+            key_key = self.source_details.get("kafka.ssl.key.secrets.key", None)
+
             if (truststore_scope and truststore_key and keystore_scope and keystore_key):
                 dbutils = self.get_db_utils()
                 kafka_ssl_conn = {
@@ -205,6 +215,15 @@ class PipelineReaders:
                     "kafka.ssl.keystore.password": dbutils.secrets.get(keystore_scope, keystore_key),
                     "kafka.ssl.truststore.password": dbutils.secrets.get(truststore_scope, truststore_key)
                 }
+
+                # Add kafka.ssl.key.password if provided
+                if key_scope and key_key:
+                    kafka_ssl_conn["kafka.ssl.key.password"] = dbutils.secrets.get(key_scope, key_key)
+
+                # Add security protocol if provided
+                if security_protocol:
+                    kafka_ssl_conn["kafka.security.protocol"] = security_protocol
+
                 kafka_options = {**kafka_base_ops, **kafka_ssl_conn, **self.reader_config_options}
             else:
                 params = ["kafka.ssl.truststore.secrets.scope",
@@ -216,3 +235,172 @@ class PipelineReaders:
         else:
             kafka_options = {**kafka_base_ops, **self.reader_config_options}
         return kafka_options
+
+    @staticmethod
+    def from_avro_with_schema_registry(data, subject, registry_url, options={}, schema_registry_options={}):
+        """
+        Custom from_avro that supports Schema Registry with SSL.
+        Based on platform_notebooks/landing_from_kafka_ng.py implementation.
+
+        Args:
+            data: Column containing Avro binary data
+            subject: Schema Registry subject name
+            registry_url: Schema Registry URL
+            options: Additional Avro parsing options (e.g., {"mode": "PERMISSIVE"})
+            schema_registry_options: Schema Registry SSL configuration options
+
+        Returns:
+            Column: Deserialized Avro data as struct
+        """
+        combined_options = {**options, **schema_registry_options}
+
+        sc = SparkContext._active_spark_context
+        try:
+            jc = sc._jvm.org.apache.spark.sql.avro.functions.from_avro(
+                data._jc, subject, registry_url, combined_options or {}
+            )
+        except TypeError as e:
+            if str(e) == "'JavaPackage' object is not callable":
+                _print_missing_jar("Avro", "avro", "avro", sc.version)
+            raise
+        return Column(jc)
+
+    def read_kafka_with_schema_registry(self) -> DataFrame:
+        """
+        Read Kafka with Schema Registry support (Avro/Protobuf).
+        Supports SSL for both Kafka and Schema Registry.
+
+        Expected source_details configuration:
+        {
+            "kafka.bootstrap.servers": "broker:9093",
+            "subscribe": "topic-name",
+            "kafka.security.protocol": "SSL",
+            "kafka.ssl.truststore.location": "/path/to/truststore.jks",
+            "kafka.ssl.keystore.location": "/path/to/keystore.jks",
+            "kafka.ssl.truststore.secrets.scope": "ssl_certs",
+            "kafka.ssl.truststore.secrets.key": "truststore_password",
+            "kafka.ssl.keystore.secrets.scope": "ssl_certs",
+            "kafka.ssl.keystore.secrets.key": "keystore_password",
+            "kafka.ssl.key.secrets.scope": "ssl_certs",
+            "kafka.ssl.key.secrets.key": "key_password",
+            "schema.registry.url": "https://schema-registry:8081",
+            "schema.registry.subject": "topic-name-value",
+            "data_format": "avro" or "protobuf",
+            "mode": "PERMISSIVE" (optional, defaults to PERMISSIVE)
+        }
+
+        Returns:
+            DataFrame: Kafka DataFrame with parsed_records column containing deserialized data
+        """
+        logger.info("In read_kafka_with_schema_registry func")
+        dbutils = self.get_db_utils()
+
+        # Get Kafka connection options
+        kafka_options = self.get_kafka_options()
+
+        # Get Schema Registry details
+        schema_registry_url = self.source_details.get("schema.registry.url")
+        schema_registry_subject = self.source_details.get("schema.registry.subject")
+        data_format = self.source_details.get("data_format", "avro")
+        mode = self.source_details.get("mode", "PERMISSIVE")
+
+        if not schema_registry_url or not schema_registry_subject:
+            raise Exception(
+                "schema.registry.url and schema.registry.subject are required for Schema Registry integration!"
+            )
+
+        logger.info(f"Schema Registry URL: {schema_registry_url}")
+        logger.info(f"Schema Registry Subject: {schema_registry_subject}")
+        logger.info(f"Data Format: {data_format}")
+
+        # Build Schema Registry SSL options
+        # Note: For protobuf, "schema.registry.address" is added separately
+        schema_registry_options = {}
+
+        # Add SSL options for Schema Registry
+        ssl_truststore_location = self.source_details.get("kafka.ssl.truststore.location")
+        ssl_keystore_location = self.source_details.get("kafka.ssl.keystore.location")
+
+        if ssl_truststore_location and ssl_keystore_location:
+            truststore_scope = self.source_details.get("kafka.ssl.truststore.secrets.scope")
+            truststore_key = self.source_details.get("kafka.ssl.truststore.secrets.key")
+            keystore_scope = self.source_details.get("kafka.ssl.keystore.secrets.scope")
+            keystore_key = self.source_details.get("kafka.ssl.keystore.secrets.key")
+            key_password_scope = self.source_details.get("kafka.ssl.key.secrets.scope")
+            key_password_key = self.source_details.get("kafka.ssl.key.secrets.key")
+
+            if truststore_scope and truststore_key and keystore_scope and keystore_key:
+                truststore_password = dbutils.secrets.get(truststore_scope, truststore_key)
+                keystore_password = dbutils.secrets.get(keystore_scope, keystore_key)
+                key_password = dbutils.secrets.get(key_password_scope, key_password_key) if key_password_scope and key_password_key else keystore_password
+
+                schema_registry_options.update({
+                    "confluent.schema.registry.ssl.truststore.location": ssl_truststore_location,
+                    "confluent.schema.registry.ssl.truststore.password": truststore_password,
+                    "confluent.schema.registry.ssl.keystore.location": ssl_keystore_location,
+                    "confluent.schema.registry.ssl.keystore.password": keystore_password,
+                    "confluent.schema.registry.ssl.key.password": key_password
+                })
+                logger.info("Schema Registry SSL configuration added")
+
+        # Read from Kafka
+        raw_df = (
+            self.spark.readStream
+            .format("kafka")
+            .options(**kafka_options)
+            .load()
+            .selectExpr("*", "to_date(timestamp) as date", "hour(timestamp) as hour", "minute(timestamp) as minute")
+        )
+
+        # Deserialize based on data format
+        if data_format == "protobuf":
+            logger.info("Using Protobuf deserialization with Schema Registry (DLT-compatible approach)")
+
+            # Build protobuf options map
+            # Note: from_protobuf Python API uses "schema.registry.address" (not "url")
+            protobuf_options = {
+                "mode": mode,
+                "schema.registry.subject": schema_registry_subject,
+                "schema.registry.address": schema_registry_url
+            }
+
+            # Merge Schema Registry SSL options (already have confluent. prefix from schema_registry_options)
+            protobuf_options.update(schema_registry_options)
+
+            logger.info(f"Protobuf Schema Registry subject: {schema_registry_subject}")
+            logger.info(f"Protobuf Schema Registry URL: {schema_registry_url}")
+            logger.info(f"Protobuf options: {protobuf_options}")
+
+            # Use Python API for from_protobuf (not SQL expression)
+            # This approach works with Schema Registry without requiring message name
+            logger.info(f"Using Python from_protobuf API with options: {protobuf_options}")
+
+            try:
+                parsed_df = raw_df.withColumn(
+                    "parsed_records",
+                    from_protobuf(col("value"), options=protobuf_options)
+                )
+                logger.info("Protobuf deserialization expression added successfully")
+                return parsed_df
+            except Exception as e:
+                logger.error(f"Failed to apply from_protobuf: {e}")
+                # Fallback: Return raw dataframe with value column (no deserialization)
+                logger.warning("Returning raw Kafka data without protobuf deserialization")
+                return raw_df
+        elif data_format == "avro":
+            logger.info("Using Avro deserialization")
+            # Avro deserialization
+            return raw_df.withColumn(
+                "parsed_records",
+                self.from_avro_with_schema_registry(
+                    col("value"),
+                    schema_registry_subject,
+                    schema_registry_url,
+                    {"mode": mode},
+                    schema_registry_options
+                )
+            )
+        else:
+            raise Exception(
+                f"Unsupported data_format: {data_format}. Supported formats: avro, protobuf"
+            )

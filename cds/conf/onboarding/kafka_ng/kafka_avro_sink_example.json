@@ -1,0 +1,51 @@
+{
+  "version": "v1",
+  "data_flow_id": "4001",
+  "data_flow_group": "kafka_avro_export",
+  "source_system": "delta",
+  "source_format": "delta",
+
+  "source_details": {
+    "source_catalog": "dataservices_nonprod",
+    "source_database": "refinery_nonprod",
+    "source_table": "enriched_orders"
+  },
+
+  "refinery_catalog_nonprod": "dataservices_nonprod",
+  "refinery_database_nonprod": "refinery_nonprod",
+  "refinery_table": "enriched_orders",
+
+  "sinks": [
+    {
+      "name": "enriched_orders_kafka_avro_sink",
+      "format": "kafka",
+      "options": {
+        "kafka.bootstrap.servers": "br-lb.prd2428.dev.use1.kafka.nonprod-tmaws.io:9093",
+        "topic": "enriched-orders-avro",
+        "kafka.security.protocol": "SSL",
+        "kafka.ssl.truststore.location": "/dbfs/FileStore/ssl/truststore.jks",
+        "kafka.ssl.keystore.location": "/dbfs/FileStore/ssl/keystore.jks",
+        "kafka.ssl.truststore.password": "{{secrets/ssl_certs/truststore_password}}",
+        "kafka.ssl.keystore.password": "{{secrets/ssl_certs/keystore_password}}",
+        "kafka.ssl.key.password": "{{secrets/ssl_certs/key_password}}",
+        "schema.registry.url": "https://sr-lb.prd2428.dev.use1.kafka.nonprod-tmaws.io:8081",
+        "schema.registry.subject": "enriched-orders-avro-value",
+        "data_format": "avro",
+        "confluent.schema.registry.ssl.truststore.location": "/dbfs/FileStore/ssl/truststore.jks",
+        "confluent.schema.registry.ssl.truststore.password": "{{secrets/ssl_certs/truststore_password}}",
+        "confluent.schema.registry.ssl.keystore.location": "/dbfs/FileStore/ssl/keystore.jks",
+        "confluent.schema.registry.ssl.keystore.password": "{{secrets/ssl_certs/keystore_password}}",
+        "confluent.schema.registry.ssl.key.password": "{{secrets/ssl_certs/key_password}}"
+      },
+      "select_exp": [
+        "order_id as key",
+        "order_id",
+        "customer_id",
+        "order_date",
+        "total_amount",
+        "status"
+      ],
+      "where_clause": "status = 'COMPLETED'"
+    }
+  ]
+}

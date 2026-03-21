@@ -1,0 +1,37 @@
+[
+  {
+      "data_flow_id": "0070",
+      "data_flow_group": "my_people",
+      "landing_catalog_dev": "{uc_catalog_name}",
+      "landing_database_dev": "{landing_schema}",
+      "landing_catalog_prod": "{uc_catalog_name}",
+      "landing_database_prod": "{landing_schema}",  
+      "landing_table": "people_landing",
+      
+      "refinery_catalog_dev": "{uc_catalog_name}",
+      "refinery_database_dev": "{refinery_schema}",
+      "refinery_catalog_prod": "{uc_catalog_name}",
+      "refinery_database_prod": "{refinery_schema}",
+      "refinery_table": "people_refinery_sal_below_50K",
+      
+      "refinery_transformation_json_dev": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json",
+      "refinery_transformation_json_prod": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json"      
+  },
+  {
+      "data_flow_id": "0071",
+      "data_flow_group": "my_people",
+      "landing_catalog_dev": "{uc_catalog_name}",
+      "landing_database_dev": "{landing_schema}",
+      "landing_catalog_prod": "{uc_catalog_name}",
+      "landing_database_prod": "{landing_schema}",  
+      "landing_table": "people_landing",
+      "refinery_catalog_dev": "{uc_catalog_name}",
+      "refinery_database_dev": "{refinery_schema}",
+      "refinery_catalog_prod": "{uc_catalog_name}",
+      "refinery_database_prod": "{refinery_schema}",
+      "refinery_table": "people_refinery_sal_above_50K",
+      
+      "refinery_transformation_json_dev": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json",
+      "refinery_transformation_json_prod": "{uc_volume_path}/demo/dabs/conf/refinery_queries_people.json"
+  }        
+]

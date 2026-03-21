@@ -1,17 +1,17 @@
 ---
-title: "Silver Fanout Demo"
+title: "Refinery Fanout Demo"
 date: 2021-08-04T14:25:26-04:00
 weight: 25
 draft: false
 ---
 
-### Silver Fanout Demo
+### Refinery Fanout Demo
   - This demo will perform following steps
-    - Showcase onboarding process for silver fanout pattern
-    - Run onboarding for the bronze cars table, which contains data from various countries.
-    - Run onboarding for the silver tables, which have a `where_clause` based on the country condition in [silver_transformations_cars.json](https://github.com/databrickslabs/dlt-meta/blob/main/demo/conf/silver_transformations_cars.json).
-    - Run Bronze for cars tables
-    - Run onboarding for the silver tables, fanning out from the bronze cars tables to country-specific tables such as cars_usa, cars_uk, cars_germany, and cars_japan.    
+    - Showcase onboarding process for refinery fanout pattern
+    - Run onboarding for the landing cars table, which contains data from various countries.
+    - Run onboarding for the refinery tables, which have a `where_clause` based on the country condition in the refinery transformations configuration.
+    - Run Landing for cars tables
+    - Run onboarding for the refinery tables, fanning out from the landing cars tables to country-specific tables such as cars_usa, cars_uk, cars_germany, and cars_japan.    
 
 ### Steps:
 1. Launch Command Prompt
@@ -50,7 +50,7 @@ draft: false
 
 7. Run the command:
     ```commandline
-    python demo/launch_silver_fanout_demo.py --uc_catalog_name=<<uc catalog name>> --cloud_provider_name=aws
+    python demo/launch_refinery_fanout_demo.py --uc_catalog_name=<<uc catalog name>> --cloud_provider_name=aws
     ```
     - uc_catalog_name : aws or azure
     - cloud_provider_name : aws or azure
@@ -72,6 +72,6 @@ draft: false
 
         - Paste to command prompt
 
-    ![silver_fanout_workflow.png](/images/silver_fanout_workflow.png)
+    ![refinery_fanout_workflow.png](/images/refinery_fanout_workflow.png)
     
-    ![silver_fanout_dlt.png](/images/silver_fanout_dlt.png)
+    ![refinery_fanout_dlt.png](/images/refinery_fanout_dlt.png)

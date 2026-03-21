@@ -76,17 +76,19 @@ draft: false
    4. Job URL will automatically open in your default browser.
 
 
-- Once onboarding jobs is finished deploy `bronze` and `silver` Lakeflow Declarative Pipeline using below command
+- Once onboarding job is finished, deploy `landing`, `refinery`, and `treasury` Lakeflow Declarative Pipeline using below command
 
-## DLT-META Lakeflow Declarative Pipeline: 
+## DLT-META Lakeflow Declarative Pipeline:
 
-#### Deploy ```Bronze``` and ```Silver``` layer into single pipeline
+#### Deploy Multiple Layers into Single Pipeline
+
+You can deploy pipelines for different layer combinations:
  ```shell 
         databricks labs dlt-meta deploy
    ```
 - Above command will prompt you to provide pipeline details. Please provide respective details for schema which you provided in above steps
 
-![deployingDLTMeta_bronze_silver.gif](/images/deployingDLTMeta_bronze_silver.gif)
+![deployingDLTMeta_landing_refinery.gif](/images/deployingDLTMeta_landing_refinery.gif)
 
 - Above deploy cli command will:
    1. Deploy Lakeflow Declarative pipeline with dlt-meta configuration like ```layer```, ```group```, ```dataflowSpec table details``` etc to your databricks workspace

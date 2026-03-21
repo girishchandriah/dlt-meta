@@ -1,5 +1,5 @@
 clean:
-	rm -fr build .databricks dlt_meta.egg-info
+	rm -fr build .databricks dlt_meta_cds.egg-info
 
 dev:
 	python3 -m venv .databricks

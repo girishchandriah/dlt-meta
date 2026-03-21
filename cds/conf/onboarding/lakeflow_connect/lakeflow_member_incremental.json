@@ -1,0 +1,33 @@
+{
+  "data_flow_id": "6002",
+  "data_flow_group": "federated_oracle_members",
+  "source_system": "oracle_member_db",
+  "source_format": "delta",
+
+  "source_details": {
+    "source_catalog": "main",
+    "source_database": "staging",
+    "source_table": "vw_member_customer_cdc"
+  },
+
+  "landing_catalog_prod": "main",
+  "landing_database_prod": "landing",
+  "landing_table": "member_customer_data",
+
+  "landing_table_properties": {
+    "delta.autoOptimize.optimizeWrite": "true",
+    "delta.autoOptimize.autoCompact": "true",
+    "delta.enableChangeDataFeed": "true"
+  },
+
+  "refinery_catalog_prod": "main",
+  "refinery_database_prod": "refinery",
+  "refinery_table": "member_customer_data",
+
+  "refinery_cdc_apply_changes": {
+    "keys": ["CUSTOMER_ID"],
+    "sequence_by": "LAST_UPDATE",
+    "scd_type": "2",
+    "except_column_list": ["_ingestion_timestamp", "_extraction_timestamp"]
+  }
+}

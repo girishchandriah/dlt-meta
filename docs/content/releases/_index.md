@@ -9,7 +9,7 @@ draft: false
 ## ⚠️ Breaking Changes
 - **DPM Mode Removal**: DLT-META v0.0.9 pipelines using DPM mode flag must be migrated to the default publishing mode before upgrading. This change is metadata-only and doesn't impact existing datasets, but is irreversible.
 - **Multi-Level Namespace Changes**: Custom schema qualification in table names is no longer supported. Tables must be created without database qualifiers.
-- **invoke_dlt_pipeline Argument Changes**: Method arguments now require layer-specific prefixes (bronze_ or silver_) to support apply_changes_from_snapshot in both layers. This affects existing pipeline configurations using the previous argument naming.
+- **invoke_dlt_pipeline Argument Changes**: Method arguments now require layer-specific prefixes (landing_ or refinery_) to support apply_changes_from_snapshot in both layers. This affects existing pipeline configurations using the previous argument naming.
 
 ## Migration Guide
 1. **DPM Mode Migration**:
@@ -23,32 +23,32 @@ draft: false
      invoke_dlt_pipeline(
          spark,
          layer,
-         bronze_custom_transform_func=None,    # Previously: custom_transform_func
-         silver_custom_transform_func=None,    # New in v0.0.10
-         bronze_next_snapshot_and_version=None,  # Previously: next_snapshot_and_version
-         silver_next_snapshot_and_version=None   # New in v0.0.10
+         landing_custom_transform_func=None,    # Previously: custom_transform_func
+         refinery_custom_transform_func=None,    # New in v0.0.10
+         landing_next_snapshot_and_version=None,  # Previously: next_snapshot_and_version
+         refinery_next_snapshot_and_version=None   # New in v0.0.10
      )
      ```
-   - Layer-specific functions allow different transformations for bronze and silver layers
-   - Existing code using single custom_transform_func should move to bronze_custom_transform_func
-   - Existing code using next_snapshot_and_version should move to bronze_next_snapshot_and_version
+   - Layer-specific functions allow different transformations for landing and refinery layers
+   - Existing code using single custom_transform_func should move to landing_custom_transform_func
+   - Existing code using next_snapshot_and_version should move to landing_next_snapshot_and_version
    - Review and update all pipeline configurations using this method
 
 ## Enhancements
-- Added apply_changes_from_snapshot support in silver layer [PR](https://github.com/databrickslabs/dlt-meta/pull/187)
+- Added apply_changes_from_snapshot support in refinery layer [PR](https://github.com/databrickslabs/dlt-meta/pull/187)
 - Added UI using databricks lakehouse app for onboarding/deploy commands [PR](https://github.com/databrickslabs/dlt-meta/pull/168)
 - Added support for non-Delta as sinks(delta, kafka) [PR](https://github.com/databrickslabs/dlt-meta/pull/157)
-- Added quarantine support in silver layer for data quality rules [PR](https://github.com/databrickslabs/dlt-meta/pull/191)
+- Added quarantine support in refinery layer for data quality rules [PR](https://github.com/databrickslabs/dlt-meta/pull/191)
 - Added support for table comments, column comments, and cluster_by [PR](https://github.com/databrickslabs/dlt-meta/pull/91)
 - Added catalog support for sourceDetails and targetDetails [PR](https://github.com/databrickslabs/dlt-meta/issues/173)
 - Added DBDemos for dlt-meta [PR](https://github.com/databrickslabs/dlt-meta/issues/183)
 - Added YAML support for onboarding [PR](https://github.com/databrickslabs/dlt-meta/issues/184)
-- Fixed issue cluster by not working with bronze append only table [PR](https://github.com/databrickslabs/dlt-meta/issues/197)
+- Fixed issue cluster by not working with landing append only table [PR](https://github.com/databrickslabs/dlt-meta/issues/197)
 - Fixed issue view name containing period when using DPM [PR](https://github.com/databrickslabs/dlt-meta/issues/169)
 - Fixed issue CLI onboarding overwrite option always set to True [PR](https://github.com/databrickslabs/dlt-meta/issues/163)
-- Fixed issue Silver Lakeflow Declarative Pipeline not creating based on passed database [PR](https://github.com/databrickslabs/dlt-meta/issues/160)
+- Fixed issue refinery Lakeflow Declarative Pipeline not creating based on passed database [PR](https://github.com/databrickslabs/dlt-meta/issues/160)
 - Fixed issue PyPI download stats display [PR](https://github.com/databrickslabs/dlt-meta/issues/200)
-- Fixed issue Silver Data Quality not working [PR](https://github.com/databrickslabs/dlt-meta/issues/156)
+- Fixed issue refinery Data Quality not working [PR](https://github.com/databrickslabs/dlt-meta/issues/156)
 - Fixed issue Removed DPM flag check inside dataflowpipeline [PR](https://github.com/databrickslabs/dlt-meta/issues/177)
 - Fixed issue Updated dlt-meta demos into Delta Live Tables Notebook github [PR](https://github.com/databrickslabs/dlt-meta/issues/158)
 - Fixed issue Adding multiple col support for auto_cdc api [PR](https://github.com/databrickslabs/dlt-meta/pull/224)
@@ -56,18 +56,18 @@ draft: false
 
 # v0.0.9
 ## Enhancements
-- Added  apply_changes_from_snapshot api support in bronze layer: [PR](https://github.com/databrickslabs/dlt-meta/pull/124)
-- Added dlt append_flow api support for silver layer: [PR](https://github.com/databrickslabs/dlt-meta/pull/63)
+- Added  apply_changes_from_snapshot api support in landing layer: [PR](https://github.com/databrickslabs/dlt-meta/pull/124)
+- Added dlt append_flow api support for refinery layer: [PR](https://github.com/databrickslabs/dlt-meta/pull/63)
 - Added support for file metadata columns for autoloader: [PR](https://github.com/databrickslabs/dlt-meta/pull/56)
 - Added support for Bring your own custom transformation: [Issue](https://github.com/databrickslabs/dlt-meta/issues/68)
 - Added support to Unify PyPI releases with GitHub OIDC: [PR](https://github.com/databrickslabs/dlt-meta/pull/62)
 - Added demo for append_flow and file_metadata options: [PR](https://github.com/databrickslabs/dlt-meta/issues/74)
-- Added Demo for silver fanout architecture: [PR](https://github.com/databrickslabs/dlt-meta/pull/83)
+- Added Demo for refinery fanout architecture: [PR](https://github.com/databrickslabs/dlt-meta/pull/83)
 - Added  hugo-theme-relearn themee: [PR](https://github.com/databrickslabs/dlt-meta/pull/132)
-- Added unit tests to showcase silver layer fanout examples: [PR](https://github.com/databrickslabs/dlt-meta/pull/67)
+- Added unit tests to showcase refinery layer fanout examples: [PR](https://github.com/databrickslabs/dlt-meta/pull/67)
 - Added liquid cluster support: [PR](https://github.com/databrickslabs/dlt-meta/pull/136)
 - Added support for UC Volume + Serverless support for CLI, Integration tests and Demos: [PR](https://github.com/databrickslabs/dlt-meta/pull/105)
-- Added Chaining bronze/silver pipelines into single DLT: [PR](https://github.com/databrickslabs/dlt-meta/pull/130)
+- Added Chaining landing/refinery pipelines into single DLT: [PR](https://github.com/databrickslabs/dlt-meta/pull/130)
 #### Updates 
 - Fixed issue for No such file or directory: '/demo' :[PR](https://github.com/databrickslabs/dlt-meta/issues/59)
 - Fixed issue DLT-META CLI onboard command issue for Azure: databricks.sdk.errors.platform.ResourceAlreadyExists :[PR](https://github.com/databrickslabs/dlt-meta/issues/51)
@@ -79,14 +79,14 @@ draft: false
 # v0.0.8
 ## Enhancements
 - Added dlt append_flow api support: [PR](https://github.com/databrickslabs/dlt-meta/pull/58)
-- Added dlt append_flow api support for silver layer: [PR](https://github.com/databrickslabs/dlt-meta/pull/63)
+- Added dlt append_flow api support for refinery layer: [PR](https://github.com/databrickslabs/dlt-meta/pull/63)
 - Added support for file metadata columns for autoloader: [PR](https://github.com/databrickslabs/dlt-meta/pull/56)
 - Added support for Bring your own custom transformation: [Issue](https://github.com/databrickslabs/dlt-meta/issues/68)
 - Added support to Unify PyPI releases with GitHub OIDC: [PR](https://github.com/databrickslabs/dlt-meta/pull/62)
 - Added demo for append_flow and file_metadata options: [PR](https://github.com/databrickslabs/dlt-meta/issues/74)
-- Added Demo for silver fanout architecture: [PR](https://github.com/databrickslabs/dlt-meta/pull/83)
+- Added Demo for refinery fanout architecture: [PR](https://github.com/databrickslabs/dlt-meta/pull/83)
 - Added documentation in docs site for new features: [PR](https://github.com/databrickslabs/dlt-meta/pull/64)
-- Added unit tests to showcase silver layer fanout examples: [PR](https://github.com/databrickslabs/dlt-meta/pull/67)
+- Added unit tests to showcase refinery layer fanout examples: [PR](https://github.com/databrickslabs/dlt-meta/pull/67)
 #### Updates 
 - Fixed issue for No such file or directory: '/demo' :[PR](https://github.com/databrickslabs/dlt-meta/issues/59)
 - Fixed issue DLT-META CLI onboard command issue for Azure: databricks.sdk.errors.platform.ResourceAlreadyExists :[PR](https://github.com/databrickslabs/dlt-meta/issues/51)
@@ -106,7 +106,7 @@ draft: false
 ### 1. Migrate to create_streaming_table api from create_streaming_live_table [#37](https://github.com/databrickslabs/dlt-meta/pull/39)
 #### Updates 
 - Readme and docs to include above features
-- Added Data Quality support for silver layer
+- Added Data Quality support for refinery layer
 - Updated existing demos to incorporate unity catalog and integration test framework
 - integration tests framework which can be used to launch demos
 
@@ -139,10 +139,10 @@ draft: false
 
 # v0.0.2
 ### New Features
-- Table properties support for bronze, quarantine and silver tables using create_streaming_live_table api call
+- Table properties support for landing, quarantine and refinery tables using create_streaming_live_table api call
 - Support for track history column using apply_changes api
 - Support for delta as source
-- Validation for bronze/silver onboarding
+- Validation for landing/refinery onboarding
 ### Bug Fixes
 - Input schema parsing issue in onboarding
 ### Updates

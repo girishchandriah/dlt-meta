@@ -1,4 +1,4 @@
-# Bronze and Silver DLT Meta Onboarding for People Data
+# landing and refinery DLT Meta Onboarding for People Data
 # yaml-language-server: $schema=../bundle_config_schema.json
 
 resources:
@@ -8,41 +8,41 @@ resources:
       description: "Job to onboard DLT META data"
 
       tasks:
-        - task_key: onboard_bronze_silver_tables
+        - task_key: onboard_landing_refinery_tables
           python_wheel_task:
-            package_name: dlt_meta
+            package_name: dlt_meta_cds
             entry_point: run
             named_parameters:
               database: ${var.${bundle.target}_catalog_name}.${var.dlt_meta_schema}
               onboarding_file_path: ${var.people_onboarding_file_path}
-              bronze_dataflowspec_table: ${var.bronze_dataflowspecTable}
-              silver_dataflowspec_table: ${var.silver_dataflowspecTable}
+              landing_dataflowspec_table: ${var.landing_dataflowspecTable}
+              refinery_dataflowspec_table: ${var.refinery_dataflowspecTable}
               uc_enabled: ${var.uc_enabled}
               import_author: ${var.author}
               version: ${var.version}
-              onboard_layer: bronze_silver
+              onboard_layer: landing_refinery
               overwrite: "True"
               env: ${bundle.target}
 
           # job_cluster_key: my_job_cluster
           environment_key: default
 
-        - task_key: onboard_silver_fanout_tables
+        - task_key: onboard_refinery_fanout_tables
           python_wheel_task:
-            package_name: dlt_meta
+            package_name: dlt_meta_cds
             entry_point: run
             named_parameters:
               database: ${var.${bundle.target}_catalog_name}.${var.dlt_meta_schema}
               onboarding_file_path: ${var.people_fanout_onboarding_file_path}
-              silver_dataflowspec_table: ${var.silver_dataflowspecTable}
+              refinery_dataflowspec_table: ${var.refinery_dataflowspecTable}
               uc_enabled: ${var.uc_enabled}
               import_author: ${var.author}
               version: ${var.version}
-              onboard_layer: silver
+              onboard_layer: refinery
               overwrite: "False"
               env: ${bundle.target}
           depends_on:
-            - task_key: onboard_bronze_silver_tables
+            - task_key: onboard_landing_refinery_tables
 
           environment_key: default
 
@@ -55,19 +55,19 @@ resources:
 
     execute_pipelines_people:
       name: People - Raw_Br_Si Job
-      description: "Job to execute the Bronze and Silver DLT-META pipelines"
+      description: "Job to execute the landing and refinery DLT-META pipelines"
 
       tasks:
-        - task_key: execute_bronze_people
-          description: "Run DLT pipeline for Bronze People"
+        - task_key: execute_landing_people
+          description: "Run DLT pipeline for landing People"
           pipeline_task:
-            pipeline_id: ${resources.pipelines.pipeline_bronze_people.id}
+            pipeline_id: ${resources.pipelines.pipeline_landing_people.id}
             full_refresh: true
 
-        - task_key: execute_silver_people
-          description: "Run DLT pipeline for Silver People"
+        - task_key: execute_refinery_people
+          description: "Run DLT pipeline for refinery People"
           pipeline_task:
-            pipeline_id: ${resources.pipelines.pipeline_silver_people.id}
+            pipeline_id: ${resources.pipelines.pipeline_refinery_people.id}
             full_refresh: true
           depends_on:
-            - task_key: execute_bronze_people
+            - task_key: execute_landing_people

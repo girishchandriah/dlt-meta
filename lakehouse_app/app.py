@@ -207,8 +207,14 @@ def index():
 
 @app.route('/start_command', methods=['POST'])
 def start_command():
-    data = request.json
-    command = data.get('command')
+    try:
+        print("here")
+        data = request.json
+        command = data.get('command')
+    except Exception as e:
+        error_msg = f"Failed to parse request: {str(e)}"
+        logger.error(error_msg)
+        return jsonify({'error': error_msg, 'status': 'failed'}), 400
 
     if command == 'setup':
         try:
@@ -221,36 +227,121 @@ def start_command():
             current_directory = os.getcwd()
 
         command_id = None
-        # Chain commands with && to ensure they run in sequence
-        if 'PYTHONPATH' not in os.environ or not os.path.isdir(os.environ.get('PYTHONPATH', '')):
-            commands = [
-                "pip install databricks-cli",
-                "git clone https://github.com/databrickslabs/dlt-meta.git",
-                f"python -m venv {current_directory}/dlt-meta/.venv",
-                f"export HOME={current_directory}",
-                "cd dlt-meta",
-                "source .venv/bin/activate",
-                f"export PYTHONPATH={current_directory}/dlt-meta/",
-                "pwd",
-                "pip install databricks-sdk",
-                "pip install PyYAML",
-            ]
-            print("Start setting up dlt-meta environment")
-            for c in commands:
-                try:
-                    command_id = str(time.time())
 
-                    input_queue = queue.Queue()
-                    output_queue = queue.Queue()
+        # Always use /app/python/source_code as base directory to avoid nested directories
+        source_code_dir = "/app/python/source_code"
+        dlt_meta_path = f"{source_code_dir}/dlt-meta"
 
-                    command_queues[command_id] = input_queue
-                    response_queues[command_id] = output_queue
-                    run_command(command_id, c, input_queue, output_queue, False)
-                    print(f"complete setup command : {c}")
-                except Exception as e:
-                    logger.error(f"Error starting command: {str(e)}")
-                    print(f"Error starting command: {str(e)}")
-            print("Completed setting up dlt-meta environment")
+        print("Start setting up dlt-meta environment (pulling latest code and creating fresh environment)...")
+        print(f"Target installation directory: {dlt_meta_path}")
+
+        # Use subprocess for synchronous execution with proper error handling
+        try:
+            # Create source_code directory if it doesn't exist
+            print("Step 1: Creating source_code directory...")
+            subprocess.run(f"mkdir -p {source_code_dir}", shell=True, check=True, capture_output=True, text=True)
+            print("✓ Source code directory created")
+
+            # Remove existing dlt-meta directory
+            print("Step 2: Removing old dlt-meta installation...")
+            subprocess.run(f"rm -rf {dlt_meta_path}", shell=True, check=True, capture_output=True, text=True)
+            print("✓ Old installation removed")
+
+            # Clone fresh copy - try feature branch first, fallback to main
+            print("Step 3: Cloning dlt-meta from GitHub...")
+            clone_result = subprocess.run(
+                f"cd {source_code_dir} && git clone -b 'feature/layer-terminology-update' https://github.com/girishchandriah/dlt-meta.git 2>&1",
+                shell=True, capture_output=True, text=True
+            )
+
+            if clone_result.returncode != 0:
+                print(f"Feature branch not found, trying main branch...")
+                clone_result = subprocess.run(
+                    f"cd {source_code_dir} && git clone https://github.com/girishchandriah/dlt-meta.git 2>&1",
+                    shell=True, check=True, capture_output=True, text=True
+                )
+
+            print(f"✓ Repository cloned successfully")
+            print(f"Clone output: {clone_result.stdout}")
+
+            # Verify clone was successful
+            if not os.path.exists(f"{dlt_meta_path}/src"):
+                raise Exception(f"Clone failed - {dlt_meta_path}/src directory not found")
+
+            # Create virtual environment
+            print("Step 4: Creating virtual environment...")
+            # Use 'python' not 'python3' as the container may not have python3 command
+            subprocess.run(f"python -m venv {dlt_meta_path}/.venv", shell=True, check=True, capture_output=True, text=True)
+            print("✓ Virtual environment created")
+
+            # Verify pip exists in venv
+            venv_pip = f"{dlt_meta_path}/.venv/bin/pip"
+            venv_python = f"{dlt_meta_path}/.venv/bin/python"
+
+            if not os.path.exists(venv_pip):
+                print("⚠ Warning: pip not found in venv, attempting to install it...")
+                # Try to bootstrap pip
+                subprocess.run(f"curl https://bootstrap.pypa.io/get-pip.py | {venv_python}",
+                             shell=True, capture_output=True, text=True)
+
+            print(f"Using venv pip: {venv_pip}")
+
+            # Install dependencies using pip directly (not python -m pip)
+            print("Step 5: Installing dependencies...")
+            subprocess.run(f"{venv_pip} install --upgrade pip", shell=True, check=True, capture_output=True, text=True)
+            print("✓ Pip upgraded")
+
+            subprocess.run(f"{venv_pip} install databricks-sdk", shell=True, check=True, capture_output=True, text=True)
+            print("✓ databricks-sdk installed")
+
+            subprocess.run(f"{venv_pip} install PyYAML", shell=True, check=True, capture_output=True, text=True)
+            print("✓ PyYAML installed")
+
+            # Verify installations
+            print("Step 6: Verifying installations...")
+            verify_result = subprocess.run(
+                f"{venv_python} -c 'import databricks.sdk; import yaml; print(\"All packages verified\")'",
+                shell=True, capture_output=True, text=True
+            )
+            if verify_result.returncode == 0:
+                print("✓ All packages verified successfully")
+            else:
+                print(f"⚠ Warning: Package verification failed: {verify_result.stderr}")
+
+        except subprocess.CalledProcessError as e:
+            error_msg = f"Setup failed at command: {e.cmd}\nError: {e.stderr}\nOutput: {e.stdout}"
+            logger.error(error_msg)
+            print(error_msg)
+            return jsonify({'command_id': None, 'error': error_msg, 'status': 'failed'})
+        except Exception as e:
+            error_msg = f"Setup failed: {str(e)}"
+            logger.error(error_msg)
+            print(error_msg)
+            return jsonify({'command_id': None, 'error': error_msg, 'status': 'failed'})
+
+        # Update environment variables after successful setup
+        os.environ['PYTHONPATH'] = dlt_meta_path
+        os.environ['HOME'] = source_code_dir
+        os.environ['VIRTUAL_ENV'] = f"{dlt_meta_path}/.venv"
+        os.environ['PATH'] = f"{dlt_meta_path}/.venv/bin:{os.environ.get('PATH', '')}"
+
+        print(f"✅ Completed setting up dlt-meta environment at: {dlt_meta_path}")
+        print(f"PYTHONPATH set to: {os.environ['PYTHONPATH']}")
+        print(f"HOME set to: {os.environ['HOME']}")
+
+        # Verify installation
+        if os.path.exists(f"{dlt_meta_path}/src") and os.path.exists(f"{dlt_meta_path}/.venv"):
+            print(f"✓ Installation verified - src directory and venv found")
+            # List key directories
+            try:
+                dirs = os.listdir(dlt_meta_path)
+                print(f"✓ Directories in dlt-meta: {', '.join(dirs)}")
+            except:
+                pass
+            return jsonify({'command_id': 'setup_complete', 'status': 'success', 'message': 'Setup completed successfully'})
+        else:
+            print(f"⚠ Warning: Installation may be incomplete")
+            return jsonify({'command_id': 'setup_incomplete', 'status': 'warning', 'message': 'Installation may be incomplete - src or venv not found'})
 
     else:
         command_id = str(time.time())
@@ -261,7 +352,7 @@ def start_command():
         thread = threading.Thread(target=run_command, args=(command_id, command, input_queue, output_queue))
         thread.daemon = True
         thread.start()
-    return jsonify({'command_id': command_id})
+        return jsonify({'command_id': command_id})
 
 
 @app.route('/send_input', methods=['POST'])
@@ -305,79 +396,264 @@ def cleanup():
 def handle_onboard_form():
 
     print(f"onboard details: {request.form}")
-    current_directory = os.environ['PYTHONPATH']  # os.getcwd()
+
+    # Get source directory - try multiple locations
+    current_directory = os.environ.get('PYTHONPATH')
+
+    if not current_directory:
+        # Try common locations where dlt-meta might be installed
+        possible_paths = [
+            '/app/python/source_code',  # Databricks App: dlt-meta root
+            os.getcwd(),  # Current working directory might be dlt-meta root
+            '/app/python/dlt-meta',
+            '/app/python/source_code/dlt-meta',
+            os.path.join(os.getcwd(), 'dlt-meta'),
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ]
+
+        print(f"PYTHONPATH not set. Searching for dlt-meta in: {possible_paths}")
+
+        for path in possible_paths:
+            cli_path = os.path.join(path, 'src', 'cli.py')
+            print(f"Checking: {cli_path} - exists: {os.path.exists(cli_path)}")
+            if os.path.exists(cli_path):
+                current_directory = path
+                break
+
+        if not current_directory:
+            return jsonify({
+                'modal_content': None,
+                'stdout': '',
+                'stderr': f"Could not find dlt-meta installation. Checked: {possible_paths}. Current working directory: {os.getcwd()}",
+                'returncode': 1
+            })
+
+    # Ensure no trailing slash
+    current_directory = current_directory.rstrip('/')
+
+    print(f"Using dlt-meta directory: {current_directory}")
 
     # Create JSON object from form data
     json_data = {
-        "unity_catalog_enabled": "1" if request.form.get('unity_catalog_enabled') == "1" else "0",
+        "unity_catalog_enabled": "1",  # Unity Catalog is always enabled
         "unity_catalog_name": request.form.get('unity_catalog_name', ''),
         "serverless": "1" if request.form.get('serverless') == "1" else "0",
-        "onboarding_file_path": request.form.get('onboarding_file_path', 'demo/conf/onboarding.template'),
-        "local_directory": request.form.get('local_directory', '/app/python/source_code/dlt-meta/demo/'),
+        "onboarding_file_path": request.form.get('onboarding_file_path', '/app/python/source_code/dlt-meta/cds/conf/onboarding/host_sales_ord_tran_0204/onboarding_sales_ord_tran.json'),
+        "local_directory": request.form.get('local_directory', '/app/python/source_code/dlt-meta/cds/'),
         "dlt_meta_schema": request.form.get('dlt_meta_schema',
-                                            'dlt_meta_dataflowspecs_4e6c360d3e5c4b5ca6687fec8ffe2e14'),
-        "bronze_schema": request.form.get('bronze_schema', 'dltmeta_bronze_9c1aa383b36a49198d3e99d25f7180a4'),
-        "silver_schema": request.form.get('silver_schema', 'dltmeta_silver_7b4e981029b843c799bf61a0a121b3ca'),
+                                            'dlt_meta_dataflowspecs_cds'),
         "dlt_meta_layer": request.form.get('dlt_meta_layer', '1'),
-        "bronze_table": request.form.get('bronze_table', 'bronze_dataflowspec'),
-        "silver_table": request.form.get('silver_table', 'silver_dataflowspec'),
-        "overwrite": "1" if request.form.get('overwrite') == "1" else "0",
+        "landing_table": request.form.get('landing_table', 'landing_dataflowspec_cds'),
+        "refinery_table": request.form.get('refinery_table', 'refinery_dataflowspec_cds'),
+        "treasury_table": request.form.get('treasury_table', 'treasury_dataflowspec_cds'),
+        "overwrite": "0",  # Never overwrite existing dataflow specs
         "version": request.form.get('version', 'v1'),
-        "environment": request.form.get('environment', 'prod'),
-        "author": request.form.get('author', 'app-40zbx9 meta-dlt'),
-        "update_paths": "1" if request.form.get('update_paths') == "1" else "0",
+        "environment": request.form.get('environment', 'nonprod'),
+        "author": request.form.get('author', 'app-6250cg demo-dltmeta-cds'),
         "command": "onboard_ui",
         "flags": {"log_level": "info"},
     }
 
     json_string = json.dumps(json_data)
-    result = subprocess.run(f"python {current_directory}src/cli.py '{json_string}'",
+
+    # Use virtual environment python if it exists and is executable, otherwise fall back to python3
+    # Check for both python3 and python in venv
+    venv_python3 = f"{current_directory}/.venv/bin/python3"
+    venv_python = f"{current_directory}/.venv/bin/python"
+
+    # Helper function to check if file is executable (not just a broken symlink)
+    def is_executable(path):
+        return os.path.isfile(path) and os.access(path, os.X_OK)
+
+    # Prefer python over python3 (python is more reliable in venvs with pip)
+    if is_executable(venv_python):
+        python_cmd = venv_python
+        venv_python_used = venv_python
+    elif is_executable(venv_python3):
+        python_cmd = venv_python3
+        venv_python_used = venv_python3
+    else:
+        python_cmd = "python3"
+        venv_python_used = None
+
+    print(f"DEBUG: current_directory = {current_directory}")
+    print(f"DEBUG: venv_python3 path = {venv_python3}")
+    print(f"DEBUG: venv_python3 exists = {os.path.exists(venv_python3)}, executable = {is_executable(venv_python3)}")
+    print(f"DEBUG: venv_python path = {venv_python}")
+    print(f"DEBUG: venv_python exists = {os.path.exists(venv_python)}, executable = {is_executable(venv_python)}")
+    print(f"DEBUG: Using python_cmd = {python_cmd}")
+
+    result = subprocess.run(f"{python_cmd} {current_directory}/src/cli.py '{json_string}'",
                             shell=True,
                             capture_output=True,
                             text=True
                             )
+
+    # If failed with module error, add debug info
+    if result.returncode != 0 and "ModuleNotFoundError" in result.stderr:
+        debug_info = (f"\n=== DEBUG INFO ===\n"
+                     f"current_directory: {current_directory}\n"
+                     f"venv_python3: {venv_python3} (exists={os.path.exists(venv_python3)}, executable={is_executable(venv_python3)})\n"
+                     f"venv_python: {venv_python} (exists={os.path.exists(venv_python)}, executable={is_executable(venv_python)})\n"
+                     f"python_cmd used: {python_cmd}\n"
+                     f"==================\n")
+
+        if python_cmd == "python3":
+            error_msg = (f"ERROR: Virtual environment not found!\n"
+                        f"Please run 'Setup dlt-meta project environment' first.\n"
+                        f"{debug_info}"
+                        f"Original error:\n{result.stderr}")
+        else:
+            error_msg = (f"ERROR: databricks-sdk not installed in venv!\n"
+                        f"Try running in CLI tab:\n"
+                        f"  {python_cmd} -m pip install databricks-sdk PyYAML\n"
+                        f"{debug_info}"
+                        f"Original error:\n{result.stderr}")
+
+        return jsonify({
+            'modal_content': None,
+            'stdout': result.stdout,
+            'stderr': error_msg,
+            'returncode': result.returncode
+        })
+
     return extract_command_output(result)
 
 
 @app.route('/deploy', methods=['POST'])
 def handle_deploy_form():
-    # Create JSON object from form data
-    print(f"deploy details: {request.form}")
-    current_directory = os.environ['PYTHONPATH']  # os.getcwd()
+    try:
+        # Create JSON object from form data
+        print(f"deploy details: {request.form}")
 
-    json_data = {
-        "uc_enabled": "1" if request.form.get('uc_enabled') == "1" else "0",
-        "uc_catalog_name": request.form.get('uc_catalog_name', ''),
-        "serverless": "1" if request.form.get('serverless') == "1" else "0",
-        "layer": request.form.get('deploylayer', 'bronze'),
-        "pipeline_name": request.form.get('pipeline_name', 'dlt_meta_pipeline'),
-        "dlt_target_schema": request.form.get("dlt_target_schema"),
-        "command": "deploy_ui",
-        "flags": {"log_level": "info"},
-        "onboard_bronze_group": request.form.get("onboard_bronze_group"),
-        "onboard_silver_group": request.form.get("onboard_silver_group"),
-        "dlt_meta_schema": request.form.get("spc_schema_name"),
-        "bronze_dataflowspec_table": request.form.get("bronze_dataflowspec_table"),
-        "dataflowspec_silver_table": request.form.get("silver_dataflowspec_table"),
-    }
+        # Get source directory - try multiple locations
+        current_directory = os.environ.get('PYTHONPATH')
 
-    json_string = json.dumps(json_data)
-    result = subprocess.run(f"python {current_directory}/src/cli.py '{json_string}'",
-                            shell=True,
-                            capture_output=True,
-                            text=True
-                            )
-    return extract_command_output(result)
+        if not current_directory:
+            # Try common locations where dlt-meta might be installed
+            possible_paths = [
+                '/app/python/source_code',  # Databricks App: dlt-meta root
+                os.getcwd(),  # Current working directory might be dlt-meta root
+                '/app/python/dlt-meta',
+                '/app/python/source_code/dlt-meta',
+                os.path.join(os.getcwd(), 'dlt-meta'),
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            ]
+
+            print(f"PYTHONPATH not set. Searching for dlt-meta in: {possible_paths}")
+
+            for path in possible_paths:
+                cli_path = os.path.join(path, 'src', 'cli.py')
+                print(f"Checking: {cli_path} - exists: {os.path.exists(cli_path)}")
+                if os.path.exists(cli_path):
+                    current_directory = path
+                    break
+
+            if not current_directory:
+                raise FileNotFoundError(
+                    f"Could not find dlt-meta installation. Checked: {possible_paths}. "
+                    f"Current working directory: {os.getcwd()}"
+                )
+
+        # Ensure no trailing slash
+        current_directory = current_directory.rstrip('/')
+
+        print(f"Using dlt-meta directory: {current_directory}")
+        print(f"CLI path: {current_directory}/src/cli.py")
+        print(f"CLI exists: {os.path.exists(current_directory + '/src/cli.py')}")
+
+        json_data = {
+            "uc_enabled": "1",  # Unity Catalog is always enabled
+            "uc_catalog_name": request.form.get('uc_catalog_name', ''),
+            "serverless": "1" if request.form.get('serverless') == "1" else "0",
+            "layer": request.form.get('deploylayer', 'landing'),
+            "pipeline_name": request.form.get('pipeline_name', 'dlt_meta_pipeline'),
+            "dlt_target_schema": request.form.get("dlt_target_schema"),
+            "command": "deploy_ui",
+            "flags": {"log_level": "info"},
+            "onboard_landing_group": request.form.get("onboard_landing_group"),
+            "onboard_refinery_group": request.form.get("onboard_refinery_group"),
+            "onboard_treasury_group": request.form.get("onboard_treasury_group"),
+            "dlt_meta_landing_schema": request.form.get("spc_schema_name"),
+            "dlt_meta_refinery_schema": request.form.get("spc_schema_name"),
+            "dlt_meta_treasury_schema": request.form.get("spc_schema_name"),
+            "dataflowspec_landing_table": request.form.get("landing_dataflowspec_table"),
+            "dataflowspec_refinery_table": request.form.get("refinery_dataflowspec_table"),
+            "dataflowspec_treasury_table": request.form.get("treasury_dataflowspec_table"),
+        }
+
+        json_string = json.dumps(json_data)
+
+        # Use virtual environment python if it exists, otherwise fall back to python3
+        # Check for both python3 and python in venv
+        venv_python3 = f"{current_directory}/.venv/bin/python3"
+        venv_python = f"{current_directory}/.venv/bin/python"
+
+        if os.path.exists(venv_python3):
+            python_cmd = venv_python3
+        elif os.path.exists(venv_python):
+            python_cmd = venv_python
+        else:
+            python_cmd = "python3"
+
+        print(f"DEBUG Deploy: Using python_cmd = {python_cmd}")
+
+        result = subprocess.run(f"{python_cmd} {current_directory}/src/cli.py '{json_string}'",
+                                shell=True,
+                                capture_output=True,
+                                text=True
+                                )
+        return extract_command_output(result)
+    except Exception as e:
+        print(f"Error in handle_deploy_form: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'modal_content': None,
+            'stdout': '',
+            'stderr': f"Application error: {str(e)}",
+            'returncode': 1
+        })
 
 
 @app.route('/rundemo', methods=['POST'])
 def run_demo():
     code_to_run = request.json.get('demo_name', '')
     print(f"processing demo for :{request.json}")
-    current_directory = os.environ['PYTHONPATH']
+
+    # Get source directory - try multiple locations
+    current_directory = os.environ.get('PYTHONPATH')
+
+    if not current_directory:
+        # Try common locations where dlt-meta might be installed
+        possible_paths = [
+            '/app/python/source_code',  # Databricks App: dlt-meta root
+            os.getcwd(),  # Current working directory might be dlt-meta root
+            '/app/python/dlt-meta',
+            '/app/python/source_code/dlt-meta',
+            os.path.join(os.getcwd(), 'dlt-meta'),
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ]
+
+        for path in possible_paths:
+            cli_path = os.path.join(path, 'src', 'cli.py')
+            if os.path.exists(cli_path):
+                current_directory = path
+                break
+
+        if not current_directory:
+            return jsonify({
+                'modal_content': None,
+                'stdout': '',
+                'stderr': f"Could not find dlt-meta installation. Checked: {possible_paths}. CWD: {os.getcwd()}",
+                'returncode': 1
+            })
+
+    # Ensure no trailing slash
+    current_directory = current_directory.rstrip('/')
     demo_dict = {"demo_cloudfiles": "demo/launch_af_cloudfiles_demo.py",
                  "demo_acf": "demo/launch_acfs_demo.py",
-                 "demo_silverfanout": "demo/launch_silver_fanout_demo.py",
+                 "demo_refineryfanout": "demo/launch_refinery_fanout_demo.py",
                  "demo_dias": "demo/launch_dais_demo.py",
                  "demo_dlt_sink": "demo/launch_dlt_sink_demo.py",
                  "demo_dabs": "demo/generate_dabs_resources.py"
@@ -385,10 +661,30 @@ def run_demo():
     demo_file = demo_dict.get(code_to_run, None)
     uc_name = request.json.get('uc_name', '')
 
+    # Use virtual environment python if it exists and is executable, otherwise fall back to python3
+    # Check for both python3 and python in venv
+    venv_python3 = f"{current_directory}/.venv/bin/python3"
+    venv_python = f"{current_directory}/.venv/bin/python"
+
+    # Helper function to check if file is executable (not just a broken symlink)
+    def is_executable(path):
+        return os.path.isfile(path) and os.access(path, os.X_OK)
+
+    # Prefer python over python3 (python is more reliable in venvs with pip)
+    if is_executable(venv_python):
+        python_cmd = venv_python
+        venv_python_used = venv_python
+    elif is_executable(venv_python3):
+        python_cmd = venv_python3
+        venv_python_used = venv_python3
+    else:
+        python_cmd = "python3"
+        venv_python_used = None
+
     if code_to_run == 'demo_dabs':
 
         # Step 1: Generate Databricks resources
-        subprocess.run(f"python {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
+        subprocess.run(f"{python_cmd} {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
                        f"--source=cloudfiles --profile DEFAULT",
                        shell=True,
                        capture_output=True,
@@ -422,7 +718,7 @@ def run_demo():
                                 )
         print(f"execution of pipeline completed: {result.stdout}")
     else:
-        result = subprocess.run(f"python {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
+        result = subprocess.run(f"{python_cmd} {current_directory}/{demo_file} --uc_catalog_name {uc_name} "
                                 f"--profile DEFAULT",
                                 shell=True,
                                 capture_output=True,

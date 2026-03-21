@@ -1,5 +1,49 @@
 # Changelog
 
+## [Unreleased]
+### ⚠️ Major Changes - Terminology Update
+- **Medallion Architecture Layer Naming**: Updated terminology to align with modern lakehouse best practices
+  - Bronze → **Landing** (raw ingestion layer)
+  - Silver → **Refinery** (cleaned and conformed data layer)
+  - Gold → **Treasury** (business-level aggregates layer)
+- **Backward Compatibility**: All existing parameter names (bronze_, silver_) are still supported for backward compatibility
+- **New Parameter Names**: Recommended to use new parameter names (landing_, refinery_, treasury_) for new implementations
+
+### Added
+- **Treasury (Gold) Layer Support**: Full support for treasury layer with SQL transformations and JOINs
+- **Enhanced SQL Transformations**: Refinery and treasury layers now support full SQL queries including:
+  - Complex SELECT statements with JOINs
+  - GROUP BY and aggregations
+  - WHERE clauses and filtering
+  - Multi-table queries and CTEs
+- **Extended Layer Support**: All major features now support all three layers:
+  - Data Quality Expectations: Landing, Refinery, Treasury
+  - Custom Transformations: Landing, Refinery, Treasury
+  - Liquid Clustering: Landing, Refinery, Treasury
+  - Sinks (delta, kafka): Landing, Refinery, Treasury
+  - Quarantine Tables: Landing, Refinery
+- **Pipeline Chaining Options**: New layer combination options:
+  - `layer=landing_refinery` - Combines landing and refinery layers
+  - `layer=refinery_treasury` - Combines refinery and treasury layers
+  - `layer=landing_refinery_treasury` - Combines all three layers
+- **New Demo Configurations**:
+  - refinery_transformations.json - Demonstrates SQL transformations for refinery layer
+  - treasury_transformations.json - Demonstrates SQL JOINs and aggregations for treasury layer
+
+### Documentation Updates
+- Updated all documentation to reflect new terminology
+- Added comprehensive examples for SQL transformations with JOINs
+- Updated CLI and manual guides with new parameter names
+- Expanded FAQ with information about all three layers
+- Updated demo documentation to use new terminology
+
+### Migration Notes
+- **No Breaking Changes**: Existing configurations with bronze/silver parameters will continue to work
+- **Recommended Updates**: For clarity and future compatibility, update configurations to use new terminology
+- **API Parameters**: Both old and new parameter names are accepted:
+  - Old: bronze_dataflowspec_table, silver_dataflowspec_table, onboard_layer="bronze_silver"
+  - New: landing_dataflowspec_table, refinery_dataflowspec_table, onboard_layer="landing_refinery"
+
 ## [v0.0.10]
 ### ⚠️ Breaking Changes
 - **DPM Mode Flag Removal from v0.0.9**: DLT-META v0.0.9 pipelines using DPM mode flag must be migrated to the default publishing mode before upgrading. This change is metadata-only and doesn't impact existing datasets, but is irreversible.

@@ -1,0 +1,1 @@
+landing_key: string, data_source_ts: timestamp, data_source_date_part: string,   kafka_partition: int, kafka_offset: bigint, kafka_key: string, kafka_header: string, insert_ts: timestamp

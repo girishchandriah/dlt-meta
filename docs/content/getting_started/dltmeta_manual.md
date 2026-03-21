@@ -30,30 +30,30 @@ draft: false
 11. In Parameters, select keyword argument then select JSON. Past below json parameters with :
 - Without Unity Cataglog
 ```json 
-    {                   
-        "onboard_layer": "bronze_silver",
+    {
+        "onboard_layer": "landing_refinery",
         "database": "dlt_demo",
         "onboarding_file_path": "dbfs:/dlt-meta/conf/onboarding.json",
-        "silver_dataflowspec_table": "silver_dataflowspec_table",
-        "silver_dataflowspec_path": "dbfs:/onboarding_tables_cdc/silver",
-        "bronze_dataflowspec_table": "bronze_dataflowspec_table",
+        "refinery_dataflowspec_table": "refinery_dataflowspec_table",
+        "refinery_dataflowspec_path": "dbfs:/onboarding_tables_cdc/refinery",
+        "landing_dataflowspec_table": "landing_dataflowspec_table",
         "import_author": "Ravi",
         "version": "v1",
-        "bronze_dataflowspec_path": "dbfs:/onboarding_tables_cdc/bronze",
-        "onboard_layer": "bronze_silver",
+        "landing_dataflowspec_path": "dbfs:/onboarding_tables_cdc/landing",
+        "onboard_layer": "landing_refinery",
         "uc_enabled": "False",
         "overwrite": "True",
         "env": "dev"
     } 
 ```
 - with Unity catalog
-```json 
-    {                   
-        "onboard_layer": "bronze_silver",
+```json
+    {
+        "onboard_layer": "landing_refinery",
         "database": "uc_name.dlt_demo",
         "onboarding_file_path": "dbfs:/dlt-meta/conf/onboarding.json",
-        "silver_dataflowspec_table": "silver_dataflowspec_table",
-        "bronze_dataflowspec_table": "bronze_dataflowspec_table",
+        "refinery_dataflowspec_table": "refinery_dataflowspec_table",
+        "landing_dataflowspec_table": "landing_dataflowspec_table",
         "import_author": "Ravi",
         "version": "v1",
         "uc_enabled": "True",
@@ -69,7 +69,9 @@ Alternatly you can enter keyword arguments, click + Add and enter a key and valu
 
 13. Run now
 
-14. Make sure job run successfully. Verify metadata in your dataflow spec tables entered in step: 11 e.g ```dlt_demo.bronze_dataflowspec_table``` , ```dlt_demo.silver_dataflowspec_table```
+14. Make sure job runs successfully. Verify metadata in your dataflow spec tables entered in step: 11 e.g ```dlt_demo.landing_dataflowspec_table```, ```dlt_demo.refinery_dataflowspec_table```
+
+**Note:** The framework also supports legacy parameter names (landing_dataflowspec_table, refinery_dataflowspec_table) for backward compatibility.
 
 ### Option#2: Databricks Notebook 
 1. Copy below code to databricks notebook cells
@@ -79,10 +81,10 @@ Alternatly you can enter keyword arguments, click + Add and enter a key and valu
 onboarding_params_map = {
 		"database": "dlt_demo",
 		"onboarding_file_path": "dbfs:/dlt-meta/conf/onboarding.json",
-		"bronze_dataflowspec_table": "bronze_dataflowspec_table", 
-		"bronze_dataflowspec_path": "dbfs:/onboarding_tables_cdc/bronze",                       
-		"silver_dataflowspec_table": "silver_dataflowspec_table",
-		"silver_dataflowspec_path": "dbfs:/onboarding_tables_cdc/silver",
+		"landing_dataflowspec_table": "landing_dataflowspec_table",
+		"landing_dataflowspec_path": "dbfs:/onboarding_tables_cdc/landing",
+		"refinery_dataflowspec_table": "refinery_dataflowspec_table",
+		"refinery_dataflowspec_path": "dbfs:/onboarding_tables_cdc/refinery",
 		"overwrite": "True",
 		"env": "dev",
 		"version": "v1",
@@ -93,12 +95,12 @@ from src.onboard_dataflowspec import OnboardDataflowspec
 OnboardDataflowspec(spark, onboarding_params_map).onboard_dataflow_specs()
 ```
 - with unity catalog
-```python 
+```python
 onboarding_params_map = {
 		"database": "uc_name.dlt_demo",
-		"onboarding_file_path": "dbfs:/dlt-meta/conf/onboarding.json",,
-		"bronze_dataflowspec_table": "bronze_dataflowspec_table", 
-		"silver_dataflowspec_table": "silver_dataflowspec_table",
+		"onboarding_file_path": "dbfs:/dlt-meta/conf/onboarding.json",
+		"landing_dataflowspec_table": "landing_dataflowspec_table",
+		"refinery_dataflowspec_table": "refinery_dataflowspec_table",
 		"overwrite": "True",
 		"env": "dev",
 		"version": "v1",
@@ -131,11 +133,11 @@ OnboardDataflowspec(spark, onboarding_params_map, uc_enabled=True).onboard_dataf
         from src.dataflow_pipeline import DataflowPipeline
         DataflowPipeline.invoke_dlt_pipeline(spark, layer)
     ```
-### Create Bronze Lakeflow Declarative Pipeline
+### Create landing Lakeflow Declarative Pipeline
 
 1. Click Jobs Icon Workflows in the sidebar, click the Lakeflow Declarative Pipelines tab, and click Create Pipeline.
 
-2. Give the pipeline a name e.g. DLT_META_BRONZE and click File Picker Icon to select a notebook ```dlt_meta_pipeline``` created in step: ```Create a dlt launch notebook```.
+2. Give the pipeline a name e.g. DLT_META_LANDING and click File Picker Icon to select a notebook ```dlt_meta_pipeline``` created in step: ```Create a dlt launch notebook```.
 
 3. Optionally enter a storage location for output data from the pipeline. The system uses a default location if you leave Storage location empty.
 
@@ -143,22 +145,22 @@ OnboardDataflowspec(spark, onboarding_params_map, uc_enabled=True).onboard_dataf
 
 5. Enter Configuration parameters e.g.
     ```
-    "layer": "bronze",
-    "bronze.dataflowspecTable": "dataflowspec table name",
-    "bronze.group": "enter group name from metadata e.g. G1",
+    "layer": "landing",
+    "landing.dataflowspecTable": "dataflowspec table name",
+    "landing.group": "enter group name from metadata e.g. G1",
     ```
 
-6. Enter target schema where you wants your bronze tables to be created
+6. Enter target schema where you want your landing tables to be created
 
 7. Click Create.
 
-8. Start pipeline: click the Start button on in top panel. The system returns a message confirming that your pipeline is starting 
+8. Start pipeline: click the Start button in top panel. The system returns a message confirming that your pipeline is starting
 
-### Create Silver Lakeflow Declarative Pipelines
+### Create Refinery Lakeflow Declarative Pipelines
 
 1. Click Jobs Icon Workflows in the sidebar, click the Lakeflow Declarative Pipelines tab, and click Create Pipeline.
 
-2. Give the pipeline a name e.g. DLT_META_SILVER and click File Picker Icon to select a notebook ```dlt_meta_pipeline``` created in step: ```Create a dlt launch notebook```.
+2. Give the pipeline a name e.g. DLT_META_REFINERY and click File Picker Icon to select a notebook ```dlt_meta_pipeline``` created in step: ```Create a dlt launch notebook```.
 
 3. Optionally enter a storage location for output data from the pipeline. The system uses a default location if you leave Storage location empty.
 
@@ -166,12 +168,34 @@ OnboardDataflowspec(spark, onboarding_params_map, uc_enabled=True).onboard_dataf
 
 5. Enter Configuration parameters e.g.
     ```
-    "layer": "silver",
-    "silver.dataflowspecTable": "dataflowspec table name",
-    "silver.group": "enter group name from metadata e.g. G1",
+    "layer": "refinery",
+    "refinery.dataflowspecTable": "dataflowspec table name",
+    "refinery.group": "enter group name from metadata e.g. G1",
     ```
 
-6. Enter target schema where you wants your silver tables to be created
+6. Enter target schema where you want your refinery tables to be created
+
+### Create Treasury Lakeflow Declarative Pipelines (Gold Layer)
+
+Follow the same steps as above for the Treasury layer:
+
+1. Click Jobs Icon Workflows in the sidebar, click the Lakeflow Declarative Pipelines tab, and click Create Pipeline.
+
+2. Give the pipeline a name e.g. DLT_META_TREASURY and select the ```dlt_meta_pipeline``` notebook.
+
+3. Enter Configuration parameters e.g.
+    ```
+    "layer": "treasury",
+    "treasury.dataflowspecTable": "dataflowspec table name",
+    "treasury.group": "enter group name from metadata e.g. G1",
+    ```
+
+**Alternative: Combined Layer Pipelines**
+
+You can also create pipelines that span multiple layers:
+- `layer=landing_refinery` - Combines landing and refinery layers
+- `layer=refinery_treasury` - Combines refinery and treasury layers
+- `layer=landing_refinery_treasury` - Combines all three layers
 
 7. Click Create.
 

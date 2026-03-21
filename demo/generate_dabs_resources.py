@@ -54,15 +54,15 @@ class DLTMETADABDemo(DLTMETARunner):
             uc_catalog_name=self.args["uc_catalog_name"],
             int_tests_dir="demo/dabs",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            bronze_schema=f"dlt_meta_bronze_demo_{run_id}",
-            silver_schema=f"dlt_meta_silver_demo_{run_id}",
+            landing_schema=f"dlt_meta_landing_demo_{run_id}",
+            refinery_schema=f"dlt_meta_refinery_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_demo/{run_id}",
             source="cloudfiles",
             env="demo",
-            cloudfiles_template="demo/dabs/conf/onboarding_bronze_silver_people.template",
-            onboarding_file_path="demo/dabs/conf/onboarding_bronze_silver_people.json",
-            onboarding_fanout_templates="demo/dabs/conf/onboarding_silver_fanout_people.template",
-            onboarding_fanout_file_path="demo/dabs/conf/onboarding_silver_fanout_people.json",
+            cloudfiles_template="demo/dabs/conf/onboarding_landing_refinery_people.template",
+            onboarding_file_path="demo/dabs/conf/onboarding_landing_refinery_people.json",
+            onboarding_fanout_templates="demo/dabs/conf/onboarding_refinery_fanout_people.template",
+            onboarding_fanout_file_path="demo/dabs/conf/onboarding_refinery_fanout_people.json",
             runners_full_local_path='./demo/dabs/notebooks/',
             test_output_file_path=(
                 f"/Users/{self.wsi._my_username}/dlt_meta_demo/"
@@ -92,15 +92,15 @@ class DLTMETADABDemo(DLTMETARunner):
                     "type": "string",
                     "default": f"{runner_conf.dlt_meta_schema}"
                 },
-                "bronze_schema": {
-                    "description": "The schema name for the bronze pipelines",
+                "landing_schema": {
+                    "description": "The schema name for the landing pipelines",
                     "type": "string",
-                    "default": f"{runner_conf.bronze_schema}"
+                    "default": f"{runner_conf.landing_schema}"
                 },
-                "silver_schema": {
-                    "description": "The schema name for the silver pipelines",
+                "refinery_schema": {
+                    "description": "The schema name for the refinery pipelines",
                     "type": "string",
-                    "default": f"{runner_conf.silver_schema}"
+                    "default": f"{runner_conf.refinery_schema}"
                 },
                 "photon_enabled": {
                     "description": "Whether Photon is enabled for the pipelines",
@@ -112,15 +112,15 @@ class DLTMETADABDemo(DLTMETARunner):
                     "type": "bool",
                     "default": True
                 },
-                "bronze_dataflowspecTable": {
-                    "description": "The table name for the bronze data flow specification",
+                "landing_dataflowspecTable": {
+                    "description": "The table name for the landing data flow specification",
                     "type": "string",
-                    "default": "bronze_dataflowspec_table"
+                    "default": "landing_dataflowspec_table"
                 },
-                "silver_dataflowspecTable": {
-                    "description": "The table name for the silver data flow specification",
+                "refinery_dataflowspecTable": {
+                    "description": "The table name for the refinery data flow specification",
                     "type": "string",
-                    "default": "silver_dataflowspec_table"
+                    "default": "refinery_dataflowspec_table"
                 },
                 "author": {
                     "description": "The author of the import",
@@ -130,17 +130,17 @@ class DLTMETADABDemo(DLTMETARunner):
                 "people_onboarding_file_path": {
                     "description": "The path to the onboarding file for people",
                     "type": "string",
-                    "default": f"{uc_vol_full_path}/conf/onboarding_bronze_silver_people.json"
+                    "default": f"{uc_vol_full_path}/conf/onboarding_landing_refinery_people.json"
                 },
                 "people_fanout_onboarding_file_path": {
                     "description": "The path to the onboarding file for people",
                     "type": "string",
-                    "default": f"{uc_vol_full_path}/conf/onboarding_silver_fanout_people.json"
+                    "default": f"{uc_vol_full_path}/conf/onboarding_refinery_fanout_people.json"
                 },
                 "dummy_param": {
                     "description": "A dummy parameter for testing purposes",
                     "type": "string",
-                    "default": "Hello Bronze 2"
+                    "default": "Hello landing 2"
                 },
                 "version": {
                     "description": "The version of the data flow specification",
@@ -173,8 +173,8 @@ class DLTMETADABDemo(DLTMETARunner):
         string_subs = {
             "{uc_volume_path}": runner_conf.uc_volume_path,
             "{uc_catalog_name}": runner_conf.uc_catalog_name,
-            "{bronze_schema}": runner_conf.bronze_schema,
-            "{silver_schema}": runner_conf.silver_schema,
+            "{landing_schema}": runner_conf.landing_schema,
+            "{refinery_schema}": runner_conf.refinery_schema,
         }
         if runner_conf.cloudfiles_template:
             with open(f"{runner_conf.cloudfiles_template}", "r") as f:

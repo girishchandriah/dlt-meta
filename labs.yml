@@ -7,6 +7,6 @@ entrypoint: src/cli.py
 min_python: 3.8
 commands:
   - name: onboard
-    description: onboards dlt-meta configuration for bronze and silver layers
+    description: onboards dlt-meta configuration for landing and refinery layers
   - name: deploy
-    description: Deploys DLT-Meta pipelines for bronze and silver layers after onboarding dataflowspecs is complete
+    description: Deploys DLT-Meta pipelines for landing and refinery layers after onboarding dataflowspecs is complete

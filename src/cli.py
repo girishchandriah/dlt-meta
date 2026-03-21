@@ -19,8 +19,9 @@ logger = logging.getLogger('databricks.labs.dltmeta')
 
 
 DLT_META_RUNNER_NOTEBOOK = """
-# Databricks notebook source
-# MAGIC %pip install dlt-meta=={version}
+#  Databricks notebook source
+# MAGIC dlt_meta_whl = spark.conf.get("dlt_meta_whl")
+# MAGIC %pip install $dlt_meta_whl
 # MAGIC dbutils.library.restartPython()
 
 # COMMAND ----------
@@ -46,17 +47,19 @@ class OnboardCommand:
     cloud: str = None
     dbr_version: str = None
     serverless: bool = True
-    bronze_schema: str = None
-    silver_schema: str = None
-    uc_enabled: bool = False
+    landing_schema: str = None
+    refinery_schema: str = None
+    treasury_schema: str = None
+    uc_enabled: bool = True  # Unity Catalog is always enabled
     uc_catalog_name: str = None
     uc_volume_path: str = None
-    overwrite: bool = True
-    bronze_dataflowspec_table: str = "bronze_dataflowspec"
-    silver_dataflowspec_table: str = "silver_dataflowspec"
-    bronze_dataflowspec_path: str = None
-    silver_dataflowspec_path: str = None
-    update_paths: bool = True
+    overwrite: bool = False  # Never overwrite existing dataflow specs
+    landing_dataflowspec_table: str = "landing_dataflowspec"
+    refinery_dataflowspec_table: str = "refinery_dataflowspec"
+    treasury_dataflowspec_table: str = "treasury_dataflowspec"
+    landing_dataflowspec_path: str = None
+    refinery_dataflowspec_path: str = None
+    treasury_dataflowspec_path: str = None
 
     def __post_init__(self):
         if not self.onboarding_file_path or self.onboarding_file_path == "":
@@ -65,8 +68,8 @@ class OnboardCommand:
             raise ValueError("onboarding_files_dir_path is required")
         if not self.onboard_layer or self.onboard_layer == "":
             raise ValueError("onboard_layer is required")
-        if self.onboard_layer.lower() not in ["bronze", "silver", "bronze_silver"]:
-            raise ValueError("onboard_layer must be one of bronze, silver, bronze_silver")
+        if self.onboard_layer.lower() not in ["landing", "refinery", "treasury", "landing_refinery", "landing_refinery_treasury"]:
+            raise ValueError("onboard_layer must be one of landing, refinery, treasury, landing_refinery, landing_refinery_treasury")
         # if self.uc_enabled == "":
         #     raise ValueError("uc_enabled is required, please set to True or False")
         if not self.uc_enabled and not self.dbfs_path:
@@ -76,22 +79,31 @@ class OnboardCommand:
                 raise ValueError("cloud is required")
             if not self.dbr_version:
                 raise ValueError("dbr_version is required")
-        if self.onboard_layer and self.onboard_layer.lower() == "bronze_silver":
+        if self.onboard_layer and self.onboard_layer.lower() in ["landing_refinery", "landing_refinery_treasury"]:
             if not self.uc_enabled:
-                if not self.bronze_dataflowspec_path or self.silver_dataflowspec_path == "":
-                    raise ValueError("bronze_dataflowspec_path is required")
-                if not self.silver_dataflowspec_path or self.silver_dataflowspec_path == "":
-                    raise ValueError("silver_dataflowspec_path is required")
-        elif self.onboard_layer.lower() == "bronze":
+                if not self.landing_dataflowspec_path or self.refinery_dataflowspec_path == "":
+                    raise ValueError("landing_dataflowspec_path is required")
+                if not self.refinery_dataflowspec_path or self.refinery_dataflowspec_path == "":
+                    raise ValueError("refinery_dataflowspec_path is required")
+                if self.onboard_layer.lower() == "landing_refinery_treasury":
+                    if not self.treasury_dataflowspec_path or self.treasury_dataflowspec_path == "":
+                        raise ValueError("treasury_dataflowspec_path is required")
+        elif self.onboard_layer.lower() == "landing":
             if not self.uc_enabled:
-                if not self.bronze_dataflowspec_path:
-                    raise ValueError("bronze_dataflowspec_path is required")
-        elif self.onboard_layer.lower() == "silver":
-            if not self.silver_dataflowspec_table:
-                raise ValueError("silver_dataflowspec_table is required")
+                if not self.landing_dataflowspec_path:
+                    raise ValueError("landing_dataflowspec_path is required")
+        elif self.onboard_layer.lower() == "refinery":
+            if not self.refinery_dataflowspec_table:
+                raise ValueError("refinery_dataflowspec_table is required")
             if not self.uc_enabled:
-                if not self.silver_dataflowspec_path:
-                    raise ValueError("silver_dataflowspec_path is required")
+                if not self.refinery_dataflowspec_path:
+                    raise ValueError("refinery_dataflowspec_path is required")
+        elif self.onboard_layer.lower() == "treasury":
+            if not self.treasury_dataflowspec_table:
+                raise ValueError("treasury_dataflowspec_table is required")
+            if not self.uc_enabled:
+                if not self.treasury_dataflowspec_path:
+                    raise ValueError("treasury_dataflowspec_path is required")
         if not self.dlt_meta_schema:
             raise ValueError("dlt_meta_schema is required")
         if not self.import_author:
@@ -108,17 +120,21 @@ class DeployCommand:
     layer: str
     pipeline_name: str
     dlt_target_schema: str
-    onboard_bronze_group: str = None
-    onboard_silver_group: str = None
-    dlt_meta_bronze_schema: str = None
-    dlt_meta_silver_schema: str = None
-    dataflowspec_bronze_table: str = None
-    dataflowspec_silver_table: str = None
+    onboard_landing_group: str = None
+    onboard_refinery_group: str = None
+    onboard_treasury_group: str = None
+    dlt_meta_landing_schema: str = None
+    dlt_meta_refinery_schema: str = None
+    dlt_meta_treasury_schema: str = None
+    dataflowspec_landing_table: str = None
+    dataflowspec_refinery_table: str = None
+    dataflowspec_treasury_table: str = None
     num_workers: int = None
     uc_catalog_name: str = None
-    dataflowspec_bronze_path: str = None
-    dataflowspec_silver_path: str = None
-    uc_enabled: bool = False
+    dataflowspec_landing_path: str = None
+    dataflowspec_refinery_path: str = None
+    dataflowspec_treasury_path: str = None
+    uc_enabled: bool = True  # Unity Catalog is always enabled
     serverless: bool = False
     dbfs_path: str = None
 
@@ -129,20 +145,27 @@ class DeployCommand:
             raise ValueError("num_workers is required")
         if not self.layer:
             raise ValueError("layer is required")
-        if self.layer in ["bronze", "bronze_silver"]:
-            if not self.onboard_bronze_group:
-                raise ValueError("onboard_bronze_group is required")
-            if self.uc_enabled and not self.dataflowspec_bronze_table:
-                raise ValueError("dataflowspec_bronze_table is required")
-            if not self.uc_enabled and not self.dataflowspec_bronze_path:
-                raise ValueError("dataflowspec_bronze_path is required")
-        if self.layer in ["silver", "bronze_silver"]:
-            if not self.onboard_silver_group:
-                raise ValueError("onboard_silver_group is required")
-            if self.uc_enabled and not self.dataflowspec_silver_table:
-                raise ValueError("dataflowspec_silver_table is required")
-            if not self.uc_enabled and not self.dataflowspec_silver_path:
-                raise ValueError("dataflowspec_silver_path is required")
+        if self.layer in ["landing", "landing_refinery", "landing_refinery_treasury"]:
+            if not self.onboard_landing_group:
+                raise ValueError("onboard_landing_group is required")
+            if self.uc_enabled and not self.dataflowspec_landing_table:
+                raise ValueError("dataflowspec_landing_table is required")
+            if not self.uc_enabled and not self.dataflowspec_landing_path:
+                raise ValueError("dataflowspec_landing_path is required")
+        if self.layer in ["refinery", "landing_refinery", "refinery_treasury", "landing_refinery_treasury"]:
+            if not self.onboard_refinery_group:
+                raise ValueError("onboard_refinery_group is required")
+            if self.uc_enabled and not self.dataflowspec_refinery_table:
+                raise ValueError("dataflowspec_refinery_table is required")
+            if not self.uc_enabled and not self.dataflowspec_refinery_path:
+                raise ValueError("dataflowspec_refinery_path is required")
+        if self.layer in ["treasury", "refinery_treasury", "landing_refinery_treasury"]:
+            if not self.onboard_treasury_group:
+                raise ValueError("onboard_treasury_group is required")
+            if self.uc_enabled and not self.dataflowspec_treasury_table:
+                raise ValueError("dataflowspec_treasury_table is required")
+            if not self.uc_enabled and not self.dataflowspec_treasury_path:
+                raise ValueError("dataflowspec_treasury_path is required")
         if not self.pipeline_name:
             raise ValueError("pipeline_name is required")
         if not self.dlt_target_schema:
@@ -167,12 +190,23 @@ class DLTMeta:
     def copy_to_uc_volume(self, src, dst):
         main_dir = src.replace('file:', '')
         base_dir_name = os.path.basename(os.path.normpath(main_dir))
+        file_count = 0
+        error_count = 0
+        logger.info(f"Starting UC Volume copy from {main_dir} to {dst}")
         for root, dirs, files in os.walk(main_dir):
             for filename in files:
                 target_dir = root[root.index(main_dir) + len(main_dir):len(root)]
                 uc_volume_path = f"{dst}/{base_dir_name}/{target_dir}/{filename}".replace("//", "/")
-                contents = open(os.path.join(root, filename), "rb")
-                self._ws.files.upload(file_path=uc_volume_path, contents=contents, overwrite=True)
+                local_file_path = os.path.join(root, filename)
+                try:
+                    with open(local_file_path, "rb") as contents:
+                        self._ws.files.upload(file_path=uc_volume_path, contents=contents, overwrite=True)
+                    logger.info(f"✓ Uploaded: {local_file_path} → {uc_volume_path}")
+                    file_count += 1
+                except Exception as e:
+                    logger.error(f"✗ FAILED to upload {local_file_path} → {uc_volume_path}: {e}")
+                    error_count += 1
+        logger.info(f"UC Volume copy complete: {file_count} files uploaded, {error_count} errors")
 
     def copy_to_dbfs(self, src, dst):
         dst = dst.replace('//', '/')
@@ -185,31 +219,49 @@ class DLTMeta:
             base_dir_name = main_dir[main_dir.rfind('/') + 1:]
         else:
             base_dir_name = base_dir_name[base_dir_name.rfind('/') + 1:]
+        file_count = 0
+        error_count = 0
+        logger.info(f"Starting DBFS copy from {main_dir} to {dst}")
         for root, dirs, files in os.walk(main_dir):
             for filename in files:
                 target_dir = root[root.index(main_dir) + len(main_dir):len(root)]
                 dbfs_path = f"{dst}/{base_dir_name}/{target_dir}/{filename}"
-                contents = open(os.path.join(root, filename), "rb")
-                logger.info(
-                    f"local_path={os.path.join(root, filename)} "
-                    f"dbfs_path={dst}/{base_dir_name}/{target_dir}/{filename}"
-                )
-                self._ws.dbfs.upload(dbfs_path, contents, overwrite=True)
+                local_file_path = os.path.join(root, filename)
+                try:
+                    with open(local_file_path, "rb") as contents:
+                        self._ws.dbfs.upload(dbfs_path, contents, overwrite=True)
+                    logger.info(f"✓ Uploaded: {local_file_path} → {dbfs_path}")
+                    file_count += 1
+                except Exception as e:
+                    logger.error(f"✗ FAILED to upload {local_file_path} → {dbfs_path}: {e}")
+                    error_count += 1
+        logger.info(f"DBFS copy complete: {file_count} files uploaded, {error_count} errors")
 
     def create_uc_volume(self, uc_catalog_name, dlt_meta_schema):
         try:
             self._ws.volumes.create(
                 catalog_name=uc_catalog_name,
                 schema_name=dlt_meta_schema,
-                name=dlt_meta_schema,
+                name="dlt_meta_files",
                 volume_type=VolumeType.MANAGED,
             )
         except Exception:
-            logger.info(f"Volume {dlt_meta_schema} already exists")
-        return f"/Volumes/{uc_catalog_name}/{dlt_meta_schema}/{dlt_meta_schema}/"
+            logger.info(f"Volume dlt_meta_files already exists")
+        return f"/Volumes/{uc_catalog_name}/{dlt_meta_schema}/dlt_meta_files/"
 
     def onboard(self, cmd: OnboardCommand):
         """launch the onboarding job."""
+        # Validate onboarding file exists
+        if not os.path.exists(cmd.onboarding_file_path):
+            error_msg = f"Onboarding file not found: {cmd.onboarding_file_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
+
+        # Log file info for debugging
+        logger.info(f"Onboarding file path: {cmd.onboarding_file_path}")
+        logger.info(f"File exists: {os.path.exists(cmd.onboarding_file_path)}")
+        logger.info(f"File size: {os.path.getsize(cmd.onboarding_file_path)} bytes")
+
         onboarding_filename = os.path.basename(cmd.onboarding_file_path)
         ob_file = open(cmd.onboarding_file_path, "rb")
 
@@ -217,6 +269,13 @@ class DLTMeta:
             self.create_uc_schema(cmd.uc_catalog_name, cmd.dlt_meta_schema)
             cmd.uc_volume_path = self.create_uc_volume(cmd.uc_catalog_name, cmd.dlt_meta_schema)
             self.update_ws_onboarding_paths(cmd)
+            # Upload the specific onboarding.json file to the correct location
+            onboarding_json_filename = os.path.basename(cmd.onboarding_file_path)
+            onboarding_json_uc_path = f"{cmd.uc_volume_path}dltmeta_conf/{onboarding_json_filename}".replace("//", "/")
+            with open(cmd.onboarding_file_path, "rb") as onboarding_json_file:
+                self._ws.files.upload(file_path=onboarding_json_uc_path, contents=onboarding_json_file, overwrite=True)
+            logger.info(f"Uploaded onboarding file to {onboarding_json_uc_path}")
+            # Also copy all other files from the directory
             self.copy_to_uc_volume(cmd.onboarding_files_dir_path, cmd.uc_volume_path + "/dltmeta_conf/")
             logger.info(f"uploading to  {cmd.uc_volume_path}/dltmeta_conf complete!!!")
         else:
@@ -257,8 +316,26 @@ class DLTMeta:
 
     def create_onnboarding_job(self, cmd: OnboardCommand):
         """Create the onboarding job."""
+        # Build and upload the wheel to Databricks
+        uc_volume_path = cmd.uc_volume_path if cmd.uc_enabled else None
+        wheel_path = self._wsi._upload_wheel(uc_volume_path=uc_volume_path)
+        logger.info(f"Wheel uploaded to: {wheel_path}")
+
+        # For serverless, libraries must be in environment, not task libraries
         if cmd.serverless:
             cluster_spec = None
+            # Create environment with wheel dependency for serverless
+            environments = [
+                jobs.JobEnvironment(
+                    environment_key="dlt_meta_env",
+                    spec=jobs.compute.Environment(
+                        client="1",
+                        dependencies=[wheel_path]
+                    )
+                )
+            ]
+            environment_key = "dlt_meta_env"
+            task_libraries = None
         else:
             cluster_spec = compute.ClusterSpec(
                 spark_version=cmd.dbr_version,
@@ -272,35 +349,32 @@ class DLTMeta:
                     "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
                 }
             )
+            environments = None
+            environment_key = None
+            task_libraries = [
+                jobs.compute.Library(
+                    whl=wheel_path
+                )
+            ]
+
         named_parameters = self._get_onboarding_named_parameters(cmd)
-        dltmeta_environments = [
-            jobs.JobEnvironment(
-                environment_key="dl_meta_cli_env",
-                spec=compute.Environment(client="1",
-                                         dependencies=[f"dlt-meta=={self.version}"]
-                                         )
-            )
-        ]
+
         return self._ws.jobs.create(
             name="dlt_meta_onboarding_job",
-            environments=None if not cmd.serverless else dltmeta_environments,
+            environments=environments,
             tasks=[
                 jobs.Task(
                     task_key="dlt_meta_onbarding_task",
                     description="test",
                     new_cluster=cluster_spec if not cmd.serverless else None,
-                    environment_key="dl_meta_cli_env" if cmd.serverless else None,
+                    environment_key=environment_key,
                     timeout_seconds=0,
                     python_wheel_task=jobs.PythonWheelTask(
-                        package_name="dlt_meta",
+                        package_name="dlt_meta_cds",
                         entry_point="run",
                         named_parameters=named_parameters,
                     ),
-                    libraries=[
-                        jobs.compute.Library(
-                            pypi=compute.PythonPyPiLibrary(package=f"dlt-meta=={self.version}")
-                        )
-                    ] if not cmd.serverless else None,
+                    libraries=task_libraries,
                 ),
             ]
         )
@@ -317,24 +391,44 @@ class DLTMeta:
             "env": cmd.env,
             "uc_enabled": "True" if cmd.uc_enabled else "False"
         }
+        # Extract just the filename from the onboarding_file_path
+        onboarding_filename = os.path.basename(cmd.onboarding_file_path)
         if cmd.uc_enabled:
-            named_parameters["onboarding_file_path"] = f"{cmd.uc_volume_path}/dltmeta_conf/{cmd.onboarding_file_path}"
+            named_parameters["onboarding_file_path"] = f"{cmd.uc_volume_path}/dltmeta_conf/{onboarding_filename}"
         else:
-            named_parameters["onboarding_file_path"] = f"{cmd.dbfs_path}/dltmeta_conf/{cmd.onboarding_file_path}"
-        if cmd.onboard_layer == "bronze_silver":
-            named_parameters["bronze_dataflowspec_table"] = cmd.bronze_dataflowspec_table
-            named_parameters["silver_dataflowspec_table"] = cmd.silver_dataflowspec_table
+            named_parameters["onboarding_file_path"] = f"{cmd.dbfs_path}/dltmeta_conf/{onboarding_filename}"
+
+        # Handle landing_refinery_treasury layer
+        if cmd.onboard_layer == "landing_refinery_treasury":
+            named_parameters["landing_dataflowspec_table"] = cmd.landing_dataflowspec_table
+            named_parameters["refinery_dataflowspec_table"] = cmd.refinery_dataflowspec_table
+            named_parameters["treasury_dataflowspec_table"] = cmd.treasury_dataflowspec_table
             if not cmd.uc_enabled:
-                named_parameters["bronze_dataflowspec_path"] = cmd.bronze_dataflowspec_path
-                named_parameters["silver_dataflowspec_path"] = cmd.silver_dataflowspec_path
-        elif cmd.onboard_layer == "bronze":
-            named_parameters["bronze_dataflowspec_table"] = cmd.bronze_dataflowspec_table
+                named_parameters["landing_dataflowspec_path"] = cmd.landing_dataflowspec_path
+                named_parameters["refinery_dataflowspec_path"] = cmd.refinery_dataflowspec_path
+                named_parameters["treasury_dataflowspec_path"] = cmd.treasury_dataflowspec_path
+        # Handle landing_refinery layer
+        elif cmd.onboard_layer == "landing_refinery":
+            named_parameters["landing_dataflowspec_table"] = cmd.landing_dataflowspec_table
+            named_parameters["refinery_dataflowspec_table"] = cmd.refinery_dataflowspec_table
             if not cmd.uc_enabled:
-                named_parameters["bronze_dataflowspec_path"] = cmd.bronze_dataflowspec_path
-        elif cmd.onboard_layer == "silver":
-            named_parameters["silver_dataflowspec_table"] = cmd.silver_dataflowspec_table
+                named_parameters["landing_dataflowspec_path"] = cmd.landing_dataflowspec_path
+                named_parameters["refinery_dataflowspec_path"] = cmd.refinery_dataflowspec_path
+        # Handle landing layer
+        elif cmd.onboard_layer == "landing":
+            named_parameters["landing_dataflowspec_table"] = cmd.landing_dataflowspec_table
             if not cmd.uc_enabled:
-                named_parameters["silver_dataflowspec_path"] = cmd.silver_dataflowspec_path
+                named_parameters["landing_dataflowspec_path"] = cmd.landing_dataflowspec_path
+        # Handle refinery layer
+        elif cmd.onboard_layer == "refinery":
+            named_parameters["refinery_dataflowspec_table"] = cmd.refinery_dataflowspec_table
+            if not cmd.uc_enabled:
+                named_parameters["refinery_dataflowspec_path"] = cmd.refinery_dataflowspec_path
+        # Handle treasury layer
+        elif cmd.onboard_layer == "treasury":
+            named_parameters["treasury_dataflowspec_table"] = cmd.treasury_dataflowspec_table
+            if not cmd.uc_enabled:
+                named_parameters["treasury_dataflowspec_path"] = cmd.treasury_dataflowspec_path
         return named_parameters
 
     def _install_folder(self):
@@ -349,32 +443,62 @@ class DLTMeta:
         except DatabricksError as e:
             logger.error(e)
         self._ws.workspace.upload(runner_notebook_path, runner_notebook_py, overwrite=True)
+
+        # Upload wheel and get path for configuration
+        if cmd.uc_enabled and cmd.uc_catalog_name:
+            # For UC-enabled, construct uc_volume_path and upload wheel there
+            landing_schema = cmd.dlt_meta_landing_schema or cmd.dlt_meta_refinery_schema or cmd.dlt_meta_treasury_schema
+            if not landing_schema:
+                raise ValueError("At least one of dlt_meta_landing_schema, dlt_meta_refinery_schema, or dlt_meta_treasury_schema must be provided")
+            uc_volume_path = f"/Volumes/{cmd.uc_catalog_name}/{landing_schema}/dlt_meta_files/"
+            logger.info(f"Uploading wheel to UC Volume: {uc_volume_path}")
+            wheel_path = self._wsi._upload_wheel(uc_volume_path=uc_volume_path)
+        else:
+            # For non-UC, upload to workspace
+            wheel_path = self._wsi._upload_wheel(uc_volume_path=None)
+
+        if not wheel_path:
+            raise ValueError("Wheel upload failed - wheel_path is None")
+
+        logger.info(f"Wheel uploaded to: {wheel_path}")
+
         configuration = {
             "layer": cmd.layer,
+            "dlt_meta_whl": wheel_path,
         }
-        if cmd.layer in ["bronze", "silver", "bronze_silver"]:
-            if cmd.layer in ["bronze", "bronze_silver"]:
-                configuration["bronze.group"] = cmd.onboard_bronze_group
+        if cmd.layer in ["landing", "refinery", "landing_refinery", "treasury", "refinery_treasury", "landing_refinery_treasury"]:
+            if cmd.layer in ["landing", "landing_refinery", "landing_refinery_treasury"]:
+                configuration["landing.group"] = cmd.onboard_landing_group
                 if cmd.uc_catalog_name:
-                    configuration["bronze.dataflowspecTable"] = (
-                        f"{cmd.uc_catalog_name}.{cmd.dlt_meta_bronze_schema}.{cmd.dataflowspec_bronze_table}"
+                    configuration["landing.dataflowspecTable"] = (
+                        f"{cmd.uc_catalog_name}.{cmd.dlt_meta_landing_schema}.{cmd.dataflowspec_landing_table}"
                     )
                 else:
-                    configuration["bronze.dataflowspecTable"] = (
-                        f"{cmd.dlt_meta_bronze_schema}.{cmd.dataflowspec_bronze_table}"
+                    configuration["landing.dataflowspecTable"] = (
+                        f"{cmd.dlt_meta_landing_schema}.{cmd.dataflowspec_landing_table}"
                     )
-            if cmd.layer in ["silver", "bronze_silver"]:
-                configuration["silver.group"] = cmd.onboard_silver_group
+            if cmd.layer in ["refinery", "landing_refinery", "refinery_treasury", "landing_refinery_treasury"]:
+                configuration["refinery.group"] = cmd.onboard_refinery_group
                 if cmd.uc_catalog_name:
-                    configuration["silver.dataflowspecTable"] = (
-                        f"{cmd.uc_catalog_name}.{cmd.dlt_meta_silver_schema}.{cmd.dataflowspec_silver_table}"
+                    configuration["refinery.dataflowspecTable"] = (
+                        f"{cmd.uc_catalog_name}.{cmd.dlt_meta_refinery_schema}.{cmd.dataflowspec_refinery_table}"
                     )
                 else:
-                    configuration["silver.dataflowspecTable"] = (
-                        f"{cmd.dlt_meta_silver_schema}.{cmd.dataflowspec_silver_table}"
+                    configuration["refinery.dataflowspecTable"] = (
+                        f"{cmd.dlt_meta_refinery_schema}.{cmd.dataflowspec_refinery_table}"
+                    )
+            if cmd.layer in ["treasury", "refinery_treasury", "landing_refinery_treasury"]:
+                configuration["treasury.group"] = cmd.onboard_treasury_group
+                if cmd.uc_catalog_name:
+                    configuration["treasury.dataflowspecTable"] = (
+                        f"{cmd.uc_catalog_name}.{cmd.dlt_meta_treasury_schema}.{cmd.dataflowspec_treasury_table}"
+                    )
+                else:
+                    configuration["treasury.dataflowspecTable"] = (
+                        f"{cmd.dlt_meta_treasury_schema}.{cmd.dataflowspec_treasury_table}"
                     )
         else:
-            raise ValueError("layer must be one of bronze, silver, bronze_silver ")
+            raise ValueError("layer must be one of landing, refinery, landing_refinery, treasury, refinery_treasury, landing_refinery_treasury")
         created = None
         configuration["version"] = self.version
         if cmd.uc_catalog_name:
@@ -431,16 +555,11 @@ class DLTMeta:
 
     def _load_onboard_config(self) -> OnboardCommand:
         onboard_cmd_dict = {}
-        onboard_cmd_dict["uc_enabled"] = self._wsi._choice(
-            "Run onboarding with unity catalog enabled?", ['True', 'False'])
-        onboard_cmd_dict["uc_enabled"] = True if onboard_cmd_dict["uc_enabled"] == "True" else False
-        if onboard_cmd_dict["uc_enabled"]:
-            onboard_cmd_dict["dbfs_path"] = None
-            onboard_cmd_dict["uc_catalog_name"] = self._wsi._question(
-                "Provide unity catalog name")
-        else:
-            onboard_cmd_dict["dbfs_path"] = self._wsi._question(
-                "Provide dbfs path", default=f"dbfs:/dlt-meta_cli_demo_{uuid.uuid4().hex}")
+        # Unity Catalog is always enabled
+        onboard_cmd_dict["uc_enabled"] = True
+        onboard_cmd_dict["dbfs_path"] = None
+        onboard_cmd_dict["uc_catalog_name"] = self._wsi._question(
+            "Provide unity catalog name")
         onboard_cmd_dict["serverless"] = self._wsi._choice(
             "Run onboarding with serverless?", ['True', 'False'])
         onboard_cmd_dict["serverless"] = True if onboard_cmd_dict["serverless"] == 'True' else False
@@ -460,36 +579,32 @@ class DLTMeta:
         onboard_cmd_dict["onboarding_files_dir_path"] = f"file:/{onboarding_files_dir_path}"
         onboard_cmd_dict["dlt_meta_schema"] = self._wsi._question(
             "Provide dlt meta schema name", default=f'dlt_meta_dataflowspecs_{uuid.uuid4().hex}')
-        onboard_cmd_dict["bronze_schema"] = self._wsi._question(
-            "Provide dlt meta bronze layer schema name", default=f'dltmeta_bronze_{uuid.uuid4().hex}')
-        onboard_cmd_dict["silver_schema"] = self._wsi._question(
-            "Provide dlt meta silver layer schema name", default=f'dltmeta_silver_{uuid.uuid4().hex}')
+        onboard_cmd_dict["landing_schema"] = self._wsi._question(
+            "Provide dlt meta landing layer schema name", default=f'dltmeta_landing_{uuid.uuid4().hex}')
+        onboard_cmd_dict["refinery_schema"] = self._wsi._question(
+            "Provide dlt meta refinery layer schema name", default=f'dltmeta_refinery_{uuid.uuid4().hex}')
         onboard_cmd_dict["onboard_layer"] = self._wsi._choice(
-            "Provide dlt meta layer", ['bronze', 'silver', 'bronze_silver'])
-        if onboard_cmd_dict["onboard_layer"] in ["bronze", "bronze_silver"]:
-            onboard_cmd_dict["bronze_dataflowspec_table"] = self._wsi._question(
-                "Provide bronze dataflow spec table name", default='bronze_dataflowspec')
+            "Provide dlt meta layer", ['landing', 'refinery', 'landing_refinery'])
+        if onboard_cmd_dict["onboard_layer"] in ["landing", "landing_refinery"]:
+            onboard_cmd_dict["landing_dataflowspec_table"] = self._wsi._question(
+                "Provide landing dataflow spec table name", default='landing_dataflowspec')
             if not onboard_cmd_dict["uc_enabled"]:
-                onboard_cmd_dict["bronze_dataflowspec_path"] = self._wsi._question(
-                    "Provide bronze dataflow spec path", default=f'{self._install_folder()}/bronze_dataflow_specs')
-        if onboard_cmd_dict["onboard_layer"] in ["silver", "bronze_silver"]:
-            onboard_cmd_dict["silver_dataflowspec_table"] = self._wsi._question(
-                "Provide silver dataflow spec table name", default='silver_dataflowspec')
+                onboard_cmd_dict["landing_dataflowspec_path"] = self._wsi._question(
+                    "Provide landing dataflow spec path", default=f'{self._install_folder()}/landing_dataflow_specs')
+        if onboard_cmd_dict["onboard_layer"] in ["refinery", "landing_refinery"]:
+            onboard_cmd_dict["refinery_dataflowspec_table"] = self._wsi._question(
+                "Provide refinery dataflow spec table name", default='refinery_dataflowspec')
             if not onboard_cmd_dict["uc_enabled"]:
-                onboard_cmd_dict["silver_dataflowspec_path"] = self._wsi._question(
-                    "Provide silver dataflow spec path", default=f'{self._install_folder()}/silver_dataflow_specs')
-        onboard_cmd_dict["overwrite"] = self._wsi._choice(
-            "Overwrite dataflow spec?", ['True', 'False'])
-        onboard_cmd_dict["overwrite"] = True if onboard_cmd_dict["overwrite"] == 'True' else False
+                onboard_cmd_dict["refinery_dataflowspec_path"] = self._wsi._question(
+                    "Provide refinery dataflow spec path", default=f'{self._install_folder()}/refinery_dataflow_specs')
+        # Never overwrite existing dataflow specs
+        onboard_cmd_dict["overwrite"] = False
         onboard_cmd_dict["version"] = self._wsi._question(
             "Provide dataflow spec version", default='v1')
         onboard_cmd_dict["env"] = self._wsi._question(
             "Provide environment name", default='prod')
         onboard_cmd_dict["import_author"] = self._wsi._question(
             "Provide import author name", default=self._wsi._short_name)
-        onboard_cmd_dict["update_paths"] = self._wsi._choice(
-            "Update workspace/dbfs uc volume paths, unity catalog name, bronze/silver schema names in onboarding file?",
-            ['True', 'False'])
         with open("onboarding_job_details.json", "w") as oc_file:
             json.dump(onboard_cmd_dict, oc_file, indent=4)
         cmd = OnboardCommand(**onboard_cmd_dict)
@@ -523,61 +638,57 @@ class DLTMeta:
             else:
                 deploy_cmd_dict["serverless"] = False
             deploy_cmd_dict["layer"] = self._wsi._choice(
-                "Provide dlt meta layer", ['bronze', 'silver', 'bronze_silver'])
-            if deploy_cmd_dict["layer"] == "bronze" or deploy_cmd_dict["layer"] == "bronze_silver":
+                "Provide dlt meta layer", ['landing', 'refinery', 'landing_refinery'])
+            if deploy_cmd_dict["layer"] == "landing" or deploy_cmd_dict["layer"] == "landing_refinery":
                 if deploy_cmd_dict["uc_enabled"]:
-                    deploy_cmd_dict["dlt_meta_bronze_schema"] = oc_job_details_json["dlt_meta_schema"]
-                    deploy_cmd_dict["dataflowspec_bronze_table"] = oc_job_details_json["bronze_dataflowspec_table"]
+                    deploy_cmd_dict["dlt_meta_landing_schema"] = oc_job_details_json["dlt_meta_schema"]
+                    deploy_cmd_dict["dataflowspec_landing_table"] = oc_job_details_json["landing_dataflowspec_table"]
                 else:
-                    deploy_cmd_dict["dataflowspec_bronze_path"] = oc_job_details_json["bronze_dataflowspec_path"]
-                deploy_cmd_dict["onboard_bronze_group"] = self._wsi._question(
-                    "Provide dlt meta bronze onboard group")
-            if deploy_cmd_dict["layer"] == "silver" or deploy_cmd_dict["layer"] == "bronze_silver":
+                    deploy_cmd_dict["dataflowspec_landing_path"] = oc_job_details_json["landing_dataflowspec_path"]
+                deploy_cmd_dict["onboard_landing_group"] = self._wsi._question(
+                    "Provide dlt meta landing onboard group")
+            if deploy_cmd_dict["layer"] == "refinery" or deploy_cmd_dict["layer"] == "landing_refinery":
                 if deploy_cmd_dict["uc_enabled"]:
-                    deploy_cmd_dict["dlt_meta_silver_schema"] = oc_job_details_json["dlt_meta_schema"]
-                    deploy_cmd_dict["dataflowspec_silver_table"] = oc_job_details_json["silver_dataflowspec_table"]
+                    deploy_cmd_dict["dlt_meta_refinery_schema"] = oc_job_details_json["dlt_meta_schema"]
+                    deploy_cmd_dict["dataflowspec_refinery_table"] = oc_job_details_json["refinery_dataflowspec_table"]
                 else:
-                    deploy_cmd_dict["dataflowspec_silver_path"] = oc_job_details_json["silver_dataflowspec_path"]
-                deploy_cmd_dict["onboard_silver_group"] = self._wsi._question(
-                    "Provide dlt meta silver onboard group")
+                    deploy_cmd_dict["dataflowspec_refinery_path"] = oc_job_details_json["refinery_dataflowspec_path"]
+                deploy_cmd_dict["onboard_refinery_group"] = self._wsi._question(
+                    "Provide dlt meta refinery onboard group")
             if not deploy_cmd_dict["serverless"]:
                 deploy_cmd_dict["num_workers"] = int(self._wsi._question(
                     "Provide number of workers", default=4))
         else:
-            deploy_cmd_dict["uc_enabled"] = self._wsi._choice(
-                "Deploy DLT-META with unity catalog enabled?", ["True", "False"])
-            deploy_cmd_dict["uc_enabled"] = True if deploy_cmd_dict["uc_enabled"] == "True" else False
-            if deploy_cmd_dict["uc_enabled"]:
-                deploy_cmd_dict["uc_catalog_name"] = self._wsi._question(
-                    "Provide unity catalog name")
-                deploy_cmd_dict["serverless"] = self._wsi._choice(
-                    "Deploy DLT-META with serverless?", ["True", "False"])
-                deploy_cmd_dict["serverless"] = True if deploy_cmd_dict["serverless"] == "True" else False
-            else:
-                deploy_cmd_dict["serverless"] = False
+            # Unity Catalog is always enabled
+            deploy_cmd_dict["uc_enabled"] = True
+            deploy_cmd_dict["uc_catalog_name"] = self._wsi._question(
+                "Provide unity catalog name")
+            deploy_cmd_dict["serverless"] = self._wsi._choice(
+                "Deploy DLT-META with serverless?", ["True", "False"])
+            deploy_cmd_dict["serverless"] = True if deploy_cmd_dict["serverless"] == "True" else False
             deploy_cmd_dict["layer"] = self._wsi._choice(
-                "Provide dlt meta layer", ['bronze', 'silver', 'bronze_silver'])
-            if deploy_cmd_dict["layer"] in ["bronze", "bronze_silver"]:
-                deploy_cmd_dict["onboard_bronze_group"] = self._wsi._question(
-                    "Provide dlt meta onboard bronze group")
-                deploy_cmd_dict["dlt_meta_bronze_schema"] = self._wsi._question(
-                    "Provide dlt_meta bronze dataflowspec schema name")
-                deploy_cmd_dict["dataflowspec_bronze_table"] = self._wsi._question(
-                    "Provide bronze dataflowspec table name", default='bronze_dataflowspec')
+                "Provide dlt meta layer", ['landing', 'refinery', 'landing_refinery'])
+            if deploy_cmd_dict["layer"] in ["landing", "landing_refinery"]:
+                deploy_cmd_dict["onboard_landing_group"] = self._wsi._question(
+                    "Provide dlt meta onboard landing group")
+                deploy_cmd_dict["dlt_meta_landing_schema"] = self._wsi._question(
+                    "Provide dlt_meta landing dataflowspec schema name")
+                deploy_cmd_dict["dataflowspec_landing_table"] = self._wsi._question(
+                    "Provide landing dataflowspec table name", default='landing_dataflowspec')
                 if not deploy_cmd_dict["uc_enabled"]:
-                    deploy_cmd_dict["dataflowspec_bronze_path"] = self._wsi._question(
-                        "Provide bronze dataflowspec path", default=f'{self._install_folder()}/bronze_dataflow_specs')
-            if deploy_cmd_dict["layer"] in ["silver", "bronze_silver"]:
-                deploy_cmd_dict["onboard_silver_group"] = self._wsi._question(
-                    "Provide dlt meta silver onboard group")
-                deploy_cmd_dict["dlt_meta_silver_schema"] = self._wsi._question(
-                    "Provide dlt_meta silver dataflowspec schema name")
-                deploy_cmd_dict["dataflowspec_silver_table"] = self._wsi._question(
-                    "Provide silver dataflowspec table name", default='silver_dataflowspec')
+                    deploy_cmd_dict["dataflowspec_landing_path"] = self._wsi._question(
+                        "Provide landing dataflowspec path", default=f'{self._install_folder()}/landing_dataflow_specs')
+            if deploy_cmd_dict["layer"] in ["refinery", "landing_refinery"]:
+                deploy_cmd_dict["onboard_refinery_group"] = self._wsi._question(
+                    "Provide dlt meta refinery onboard group")
+                deploy_cmd_dict["dlt_meta_refinery_schema"] = self._wsi._question(
+                    "Provide dlt_meta refinery dataflowspec schema name")
+                deploy_cmd_dict["dataflowspec_refinery_table"] = self._wsi._question(
+                    "Provide refinery dataflowspec table name", default='refinery_dataflowspec')
                 if not deploy_cmd_dict["uc_enabled"]:
                     deploy_cmd_dict["dataflowspec_path"] = self._wsi._question(
-                        "Provide silver dataflowspec path",
-                        default=f'{self._install_folder()}/silver_dataflow_specs')
+                        "Provide refinery dataflowspec path",
+                        default=f'{self._install_folder()}/refinery_dataflow_specs')
             if not deploy_cmd_dict["serverless"]:
                 deploy_cmd_dict["num_workers"] = int(self._wsi._question(
                     "Provide number of workers", default=4))
@@ -591,13 +702,10 @@ class DLTMeta:
     def _load_onboard_config_ui(self, form_data) -> OnboardCommand:
         onboard_cmd_dict = {}
 
-        # Get unity catalog settings
-        onboard_cmd_dict["uc_enabled"] = True if form_data.get('unity_catalog_enabled') == "1" else False
-        if onboard_cmd_dict["uc_enabled"]:
-            onboard_cmd_dict["dbfs_path"] = None
-            onboard_cmd_dict["uc_catalog_name"] = form_data.get('unity_catalog_name')
-        else:
-            onboard_cmd_dict["dbfs_path"] = f"dbfs:/dlt-meta_cli_demo_{uuid.uuid4().hex}"
+        # Unity Catalog is always enabled
+        onboard_cmd_dict["uc_enabled"] = True
+        onboard_cmd_dict["dbfs_path"] = None
+        onboard_cmd_dict["uc_catalog_name"] = form_data.get('unity_catalog_name')
 
         # Get serverless setting
         onboard_cmd_dict["serverless"] = True if form_data.get('serverless') == "1" else False
@@ -620,34 +728,41 @@ class DLTMeta:
         onboard_cmd_dict["dlt_meta_schema"] = form_data.get(
             'dlt_meta_schema', f'dlt_meta_dataflowspecs_{uuid.uuid4().hex}'
         )
-        onboard_cmd_dict["bronze_schema"] = form_data.get('bronze_schema', f'dltmeta_bronze_{uuid.uuid4().hex}')
-        onboard_cmd_dict["silver_schema"] = form_data.get('silver_schema', f'dltmeta_silver_{uuid.uuid4().hex}')
+        onboard_cmd_dict["landing_schema"] = form_data.get('landing_schema', f'dltmeta_landing_{uuid.uuid4().hex}')
+        onboard_cmd_dict["refinery_schema"] = form_data.get('refinery_schema', f'dltmeta_refinery_{uuid.uuid4().hex}')
+        onboard_cmd_dict["treasury_schema"] = form_data.get('treasury_schema', f'dltmeta_treasury_{uuid.uuid4().hex}')
 
         # Map dlt_meta_layer value from form to expected values
         layer_map = {
-            "0": "bronze",
-            "1": "bronze_silver",
-            "2": "silver"
+            "0": "landing",
+            "1": "landing_refinery",
+            "2": "refinery",
+            "3": "treasury",
+            "4": "landing_refinery_treasury"
         }
-        onboard_cmd_dict["onboard_layer"] = layer_map.get(form_data.get('dlt_meta_layer'), 'bronze_silver')
+        onboard_cmd_dict["onboard_layer"] = layer_map.get(form_data.get('dlt_meta_layer'), 'landing_refinery')
 
         # Handle layer-specific settings
-        if onboard_cmd_dict["onboard_layer"] == "bronze" or onboard_cmd_dict["onboard_layer"] == "bronze_silver":
-            onboard_cmd_dict["bronze_dataflowspec_table"] = form_data.get('bronze_table', 'bronze_dataflowspec')
+        if onboard_cmd_dict["onboard_layer"] in ["landing", "landing_refinery", "landing_refinery_treasury"]:
+            onboard_cmd_dict["landing_dataflowspec_table"] = form_data.get('landing_table', 'landing_dataflowspec')
             if not onboard_cmd_dict["uc_enabled"]:
-                onboard_cmd_dict["bronze_dataflowspec_path"] = f'{self._install_folder()}/bronze_dataflow_specs'
+                onboard_cmd_dict["landing_dataflowspec_path"] = f'{self._install_folder()}/landing_dataflow_specs'
 
-        if onboard_cmd_dict["onboard_layer"] == "silver" or onboard_cmd_dict["onboard_layer"] == "bronze_silver":
-            onboard_cmd_dict["silver_dataflowspec_table"] = form_data.get('silver_table', 'silver_dataflowspec')
+        if onboard_cmd_dict["onboard_layer"] in ["refinery", "landing_refinery", "landing_refinery_treasury"]:
+            onboard_cmd_dict["refinery_dataflowspec_table"] = form_data.get('refinery_table', 'refinery_dataflowspec')
             if not onboard_cmd_dict["uc_enabled"]:
-                onboard_cmd_dict["silver_dataflowspec_path"] = f'{self._install_folder()}/silver_dataflow_specs'
+                onboard_cmd_dict["refinery_dataflowspec_path"] = f'{self._install_folder()}/refinery_dataflow_specs'
+
+        if onboard_cmd_dict["onboard_layer"] in ["treasury", "landing_refinery_treasury"]:
+            onboard_cmd_dict["treasury_dataflowspec_table"] = form_data.get('treasury_table', 'treasury_dataflowspec')
+            if not onboard_cmd_dict["uc_enabled"]:
+                onboard_cmd_dict["treasury_dataflowspec_path"] = f'{self._install_folder()}/treasury_dataflow_specs'
 
         # Get other settings
-        onboard_cmd_dict["overwrite"] = True if form_data.get('overwrite') == "1" else False
+        onboard_cmd_dict["overwrite"] = False  # Never overwrite existing dataflow specs
         onboard_cmd_dict["version"] = form_data.get('version', 'v1')
         onboard_cmd_dict["env"] = form_data.get('environment', 'prod')
         onboard_cmd_dict["import_author"] = form_data.get('author', self._wsi._short_name)
-        onboard_cmd_dict["update_paths"] = True if form_data.get('update_paths') == "1" else False
 
         # Save to file
         with open("onboarding_job_details.json", "w") as oc_file:
@@ -667,56 +782,64 @@ class DLTMeta:
 
         if load_from_ojd_json and oc_job_details_json:
             oc_job_details_json = json.loads(oc_job_details_json)
-            deploy_cmd_dict["uc_enabled"] = input_params.get("uc_enabled", False)
-            if deploy_cmd_dict["uc_enabled"]:
-                deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
-                deploy_cmd_dict["serverless"] = input_params.get("serverless", False)
-            else:
-                deploy_cmd_dict["serverless"] = False
+            # Unity Catalog is always enabled
+            deploy_cmd_dict["uc_enabled"] = True
+            deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
+            serverless_value = input_params.get("serverless", False)
+            deploy_cmd_dict["serverless"] = serverless_value == "1" or serverless_value is True
             deploy_cmd_dict["layer"] = input_params.get("layer")
-            if deploy_cmd_dict["layer"] in ["bronze", "bronze_silver"]:
+            if deploy_cmd_dict["layer"] in ["landing", "landing_refinery"]:
                 if deploy_cmd_dict["uc_enabled"]:
-                    deploy_cmd_dict["dlt_meta_bronze_schema"] = oc_job_details_json["dlt_meta_schema"]
-                    deploy_cmd_dict["dataflowspec_bronze_table"] = oc_job_details_json["bronze_dataflowspec_table"]
+                    deploy_cmd_dict["dlt_meta_landing_schema"] = oc_job_details_json["dlt_meta_schema"]
+                    deploy_cmd_dict["dataflowspec_landing_table"] = oc_job_details_json["landing_dataflowspec_table"]
                 else:
-                    deploy_cmd_dict["dataflowspec_bronze_path"] = oc_job_details_json["bronze_dataflowspec_path"]
-                deploy_cmd_dict["onboard_bronze_group"] = input_params.get("onboard_bronze_group")
-            if deploy_cmd_dict["layer"] in ["silver", "bronze_silver"]:
+                    deploy_cmd_dict["dataflowspec_landing_path"] = oc_job_details_json["landing_dataflowspec_path"]
+                deploy_cmd_dict["onboard_landing_group"] = input_params.get("onboard_landing_group")
+            if deploy_cmd_dict["layer"] in ["refinery", "landing_refinery"]:
                 if deploy_cmd_dict["uc_enabled"]:
-                    deploy_cmd_dict["dlt_meta_silver_schema"] = oc_job_details_json["dlt_meta_schema"]
-                    deploy_cmd_dict["dataflowspec_silver_table"] = oc_job_details_json["silver_dataflowspec_table"]
+                    deploy_cmd_dict["dlt_meta_refinery_schema"] = oc_job_details_json["dlt_meta_schema"]
+                    deploy_cmd_dict["dataflowspec_refinery_table"] = oc_job_details_json["refinery_dataflowspec_table"]
                 else:
-                    deploy_cmd_dict["dataflowspec_silver_path"] = oc_job_details_json["silver_dataflowspec_path"]
-                deploy_cmd_dict["onboard_silver_group"] = input_params.get("onboard_silver_group")
+                    deploy_cmd_dict["dataflowspec_refinery_path"] = oc_job_details_json["refinery_dataflowspec_path"]
+                deploy_cmd_dict["onboard_refinery_group"] = input_params.get("onboard_refinery_group")
             if not deploy_cmd_dict["serverless"]:
                 deploy_cmd_dict["num_workers"] = input_params.get("num_workers", 4)
         else:
-            deploy_cmd_dict["uc_enabled"] = input_params.get("uc_enabled", False)
-            if deploy_cmd_dict["uc_enabled"]:
-                deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
-                deploy_cmd_dict["serverless"] = input_params.get("serverless", False)
-            else:
-                deploy_cmd_dict["serverless"] = False
+            # Unity Catalog is always enabled
+            deploy_cmd_dict["uc_enabled"] = True
+            deploy_cmd_dict["uc_catalog_name"] = input_params.get("uc_catalog_name")
+            serverless_value = input_params.get("serverless", False)
+            deploy_cmd_dict["serverless"] = serverless_value == "1" or serverless_value is True
             deploy_cmd_dict["layer"] = input_params.get("layer")
-            if deploy_cmd_dict["layer"] in ["bronze", "bronze_silver"]:
-                deploy_cmd_dict["onboard_bronze_group"] = input_params.get("onboard_bronze_group")
-                deploy_cmd_dict["dlt_meta_bronze_schema"] = input_params.get("dlt_meta_bronze_schema")
-                deploy_cmd_dict["dataflowspec_bronze_table"] = input_params.get("dataflowspec_bronze_table",
-                                                                                "bronze_dataflowspec")
+            if deploy_cmd_dict["layer"] in ["landing", "landing_refinery", "landing_refinery_treasury"]:
+                deploy_cmd_dict["onboard_landing_group"] = input_params.get("onboard_landing_group")
+                deploy_cmd_dict["dlt_meta_landing_schema"] = input_params.get("dlt_meta_landing_schema")
+                deploy_cmd_dict["dataflowspec_landing_table"] = input_params.get("dataflowspec_landing_table",
+                                                                                "landing_dataflowspec")
                 if not deploy_cmd_dict["uc_enabled"]:
-                    deploy_cmd_dict["dataflowspec_bronze_path"] = input_params.get(
-                        "dataflowspec_bronze_path",
-                        f'{self._install_folder()}/bronze_dataflow_specs'
+                    deploy_cmd_dict["dataflowspec_landing_path"] = input_params.get(
+                        "dataflowspec_landing_path",
+                        f'{self._install_folder()}/landing_dataflow_specs'
                     )
-            if deploy_cmd_dict["layer"] in ["silver", "bronze_silver"]:
-                deploy_cmd_dict["onboard_silver_group"] = input_params.get("onboard_silver_group")
-                deploy_cmd_dict["dlt_meta_silver_schema"] = input_params.get("dlt_meta_silver_schema")
-                deploy_cmd_dict["dataflowspec_silver_table"] = input_params.get("dataflowspec_silver_table",
-                                                                                "silver_dataflowspec")
+            if deploy_cmd_dict["layer"] in ["refinery", "landing_refinery", "refinery_treasury", "landing_refinery_treasury"]:
+                deploy_cmd_dict["onboard_refinery_group"] = input_params.get("onboard_refinery_group")
+                deploy_cmd_dict["dlt_meta_refinery_schema"] = input_params.get("dlt_meta_refinery_schema")
+                deploy_cmd_dict["dataflowspec_refinery_table"] = input_params.get("dataflowspec_refinery_table",
+                                                                                "refinery_dataflowspec")
                 if not deploy_cmd_dict["uc_enabled"]:
-                    deploy_cmd_dict["dataflowspec_silver_path"] = input_params.get(
-                        "dataflowspec_silver_path",
-                        f'{self._install_folder()}/silver_dataflow_specs'
+                    deploy_cmd_dict["dataflowspec_refinery_path"] = input_params.get(
+                        "dataflowspec_refinery_path",
+                        f'{self._install_folder()}/refinery_dataflow_specs'
+                    )
+            if deploy_cmd_dict["layer"] in ["treasury", "refinery_treasury", "landing_refinery_treasury"]:
+                deploy_cmd_dict["onboard_treasury_group"] = input_params.get("onboard_treasury_group")
+                deploy_cmd_dict["dlt_meta_treasury_schema"] = input_params.get("dlt_meta_treasury_schema")
+                deploy_cmd_dict["dataflowspec_treasury_table"] = input_params.get("dataflowspec_treasury_table",
+                                                                                "treasury_dataflowspec")
+                if not deploy_cmd_dict["uc_enabled"]:
+                    deploy_cmd_dict["dataflowspec_treasury_path"] = input_params.get(
+                        "dataflowspec_treasury_path",
+                        f'{self._install_folder()}/treasury_dataflow_specs'
                     )
             if not deploy_cmd_dict["serverless"]:
                 deploy_cmd_dict["num_workers"] = input_params.get("num_workers", 4)
@@ -730,22 +853,60 @@ class DLTMeta:
 
     def update_ws_onboarding_paths(self, cmd: OnboardCommand):
         """Create onboarding file for cloudfiles as source."""
+        # Support both {placeholder} and <PLACEHOLDER> formats
         string_subs = {
-            "{uc_volume_path}": f"{cmd.uc_volume_path}/dltmeta_conf/",
-            "{uc_catalog_name}": cmd.uc_catalog_name,
-            "{bronze_schema}": cmd.bronze_schema,
-            "{silver_schema}": cmd.silver_schema,
+            "{uc_volume_path}": f"{cmd.uc_volume_path}dltmeta_conf/",
+            "{uc_catalog_name}": cmd.uc_catalog_name if cmd.uc_catalog_name else "",
+            "{landing_schema}": cmd.landing_schema if cmd.landing_schema else "",
+            "{refinery_schema}": cmd.refinery_schema if cmd.refinery_schema else "",
+            "{treasury_schema}": cmd.treasury_schema if cmd.treasury_schema else "",
+            "<CATALOG>": cmd.uc_catalog_name if cmd.uc_catalog_name else "",
+            "<LANDING_SCHEMA>": cmd.landing_schema if cmd.landing_schema else "",
+            "<REFINERY_SCHEMA>": cmd.refinery_schema if cmd.refinery_schema else "",
+            "<TREASURY_SCHEMA>": cmd.treasury_schema if cmd.treasury_schema else "",
         }
-        with open(f"{cmd.onboarding_file_path}") as f:
-            onboard_json = f.read()
+        try:
+            # Read the onboarding file
+            logger.info(f"Reading onboarding file from: {cmd.onboarding_file_path}")
+            with open(f"{cmd.onboarding_file_path}") as f:
+                onboard_json = f.read()
+
+            # Log file size and beginning
+            logger.info(f"File size: {len(onboard_json)} bytes")
+            logger.info(f"File starts with: {onboard_json[:100]}")
+
+            # Perform placeholder replacements
             for key, val in string_subs.items():
-                val = "" if val is None else val  # Ensure val is a string
-                onboard_json = onboard_json.replace(key, val)
-        onboarding_filename = os.path.basename(cmd.onboarding_file_path)
-        updated_ob_file_path = cmd.onboarding_file_path.replace(onboarding_filename, "onboarding.json")
-        with open(updated_ob_file_path, "w") as onboarding_file:
-            json.dump(json.loads(onboard_json), onboarding_file, indent=4)
-        cmd.onboarding_file_path = updated_ob_file_path
+                if key in onboard_json:
+                    onboard_json = onboard_json.replace(key, val)
+                    logger.info(f"Replaced placeholder {key} with {val}")
+
+            # Validate it's valid JSON before writing
+            try:
+                parsed_json = json.loads(onboard_json)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in onboarding file after placeholder replacement!")
+                logger.error(f"Error at position {e.pos}: {e.msg}")
+                logger.error(f"Content around error: {onboard_json[max(0, e.pos-50):min(len(onboard_json), e.pos+50)]}")
+                raise ValueError(f"Onboarding file is not valid JSON: {e.msg} at position {e.pos}")
+
+            # Write the updated file
+            onboarding_filename = os.path.basename(cmd.onboarding_file_path)
+            updated_ob_file_path = cmd.onboarding_file_path.replace(onboarding_filename, "onboarding.json")
+            logger.info(f"Writing updated onboarding file to: {updated_ob_file_path}")
+
+            with open(updated_ob_file_path, "w") as onboarding_file:
+                json.dump(parsed_json, onboarding_file, indent=4)
+
+            cmd.onboarding_file_path = updated_ob_file_path
+            logger.info(f"Successfully created updated onboarding file")
+
+        except FileNotFoundError as e:
+            logger.error(f"Onboarding file not found: {cmd.onboarding_file_path}")
+            raise ValueError(f"Onboarding file not found: {cmd.onboarding_file_path}")
+        except Exception as e:
+            logger.error(f"Failed to process onboarding file: {str(e)}")
+            raise
 
 
 def onboard(dltmeta: DLTMeta):

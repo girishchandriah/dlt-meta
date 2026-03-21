@@ -1,0 +1,10 @@
+[
+  {
+    "target_table": "customer_order_summary",
+    "sql_query": "SELECT c.customer_id, c.full_name, COUNT(t.transaction_id) as order_count, SUM(t.amount) as total_revenue FROM refinery_customers c LEFT JOIN refinery_transactions t ON c.customer_id = t.customer_id GROUP BY c.customer_id, c.full_name"
+  },
+  {
+    "target_table": "product_sales_metrics",
+    "sql_query": "SELECT p.product_id, p.name as product_name, COUNT(t.transaction_id) as total_transactions, SUM(t.amount) as total_sales FROM refinery_products p LEFT JOIN refinery_transactions t ON p.product_id = t.product_id GROUP BY p.product_id, p.name"
+  }
+]

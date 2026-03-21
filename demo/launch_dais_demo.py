@@ -38,8 +38,8 @@ class DLTMETADAISDemo(DLTMETARunner):
             username=self._my_username(self.ws),
             int_tests_dir="demo",
             dlt_meta_schema=f"dlt_meta_dataflowspecs_demo_{run_id}",
-            bronze_schema=f"dlt_meta_bronze_dais_demo_{run_id}",
-            silver_schema=f"dlt_meta_silver_dais_demo_{run_id}",
+            landing_schema=f"dlt_meta_landing_dais_demo_{run_id}",
+            refinery_schema=f"dlt_meta_refinery_dais_demo_{run_id}",
             runners_nb_path=f"/Users/{self.wsi._my_username}/dlt_meta_dais_demo/{run_id}",
             runners_full_local_path="demo/notebooks/dais_runners",
             # node_type_id=cloud_node_type_id_dict[self.args.__dict__['cloud_provider_name']],
@@ -65,7 +65,7 @@ class DLTMETADAISDemo(DLTMETARunner):
         """
         try:
             self.init_dltmeta_runner_conf(runner_conf)
-            self.create_bronze_silver_dlt(runner_conf)
+            self.create_landing_refinery_dlt(runner_conf)
             self.launch_workflow(runner_conf)
         except Exception as e:
             print(e)
@@ -112,21 +112,21 @@ class DLTMETADAISDemo(DLTMETARunner):
                     environment_key="dl_meta_int_env",
                     timeout_seconds=0,
                     python_wheel_task=jobs.PythonWheelTask(
-                        package_name="dlt_meta",
+                        package_name="dlt_meta_cds",
                         entry_point="run",
                         named_parameters={
-                            "onboard_layer": "bronze_silver",
+                            "onboard_layer": "landing_refinery",
                             "database": f"{runner_conf.uc_catalog_name}.{runner_conf.dlt_meta_schema}",
                             "onboarding_file_path": f"{runner_conf.uc_volume_path}/demo/conf/onboarding.json",
-                            "silver_dataflowspec_table": "silver_dataflowspec_cdc",
-                            "silver_dataflowspec_path": (
-                                f"{runner_conf.uc_volume_path}/demo/resources/data/dlt_spec/silver"
+                            "refinery_dataflowspec_table": "refinery_dataflowspec_cdc",
+                            "refinery_dataflowspec_path": (
+                                f"{runner_conf.uc_volume_path}/demo/resources/data/dlt_spec/refinery"
                             ),
-                            "bronze_dataflowspec_table": "bronze_dataflowspec_cdc",
+                            "landing_dataflowspec_table": "landing_dataflowspec_cdc",
                             "import_author": "Ravi",
                             "version": "v1",
-                            "bronze_dataflowspec_path": (
-                                f"{runner_conf.uc_volume_path}/demo/resources/data/dlt_spec/bronze"
+                            "landing_dataflowspec_path": (
+                                f"{runner_conf.uc_volume_path}/demo/resources/data/dlt_spec/landing"
                             ),
                             "overwrite": "True",
                             "env": runner_conf.env,
@@ -135,23 +135,23 @@ class DLTMETADAISDemo(DLTMETARunner):
                     )
                 ),
                 jobs.Task(
-                    task_key="bronze_initial_run",
+                    task_key="landing_initial_run",
                     depends_on=[jobs.TaskDependency(task_key="setup_dlt_meta_pipeline_spec")],
                     pipeline_task=jobs.PipelineTask(
-                        pipeline_id=runner_conf.bronze_pipeline_id
+                        pipeline_id=runner_conf.landing_pipeline_id
                     ),
                 ),
                 jobs.Task(
-                    task_key="silver_initial_run",
-                    depends_on=[jobs.TaskDependency(task_key="bronze_initial_run")],
+                    task_key="refinery_initial_run",
+                    depends_on=[jobs.TaskDependency(task_key="landing_initial_run")],
                     pipeline_task=jobs.PipelineTask(
-                        pipeline_id=runner_conf.silver_pipeline_id
+                        pipeline_id=runner_conf.refinery_pipeline_id
                     )
                 ),
                 jobs.Task(
                     task_key="load_incremental_data",
                     description="Load Incremental Data",
-                    depends_on=[jobs.TaskDependency(task_key="silver_initial_run")],
+                    depends_on=[jobs.TaskDependency(task_key="refinery_initial_run")],
                     notebook_task=jobs.NotebookTask(
                         notebook_path=f"{runner_conf.runners_nb_path}/runners/load_incremental_data.py",
                         base_parameters={
@@ -161,17 +161,17 @@ class DLTMETADAISDemo(DLTMETARunner):
                 ),
 
                 jobs.Task(
-                    task_key="bronze_incremental_run",
+                    task_key="landing_incremental_run",
                     depends_on=[jobs.TaskDependency(task_key="load_incremental_data")],
                     pipeline_task=jobs.PipelineTask(
-                        pipeline_id=runner_conf.bronze_pipeline_id
+                        pipeline_id=runner_conf.landing_pipeline_id
                     ),
                 ),
                 jobs.Task(
-                    task_key="silver_incremental_run",
-                    depends_on=[jobs.TaskDependency(task_key="bronze_incremental_run")],
+                    task_key="refinery_incremental_run",
+                    depends_on=[jobs.TaskDependency(task_key="landing_incremental_run")],
                     pipeline_task=jobs.PipelineTask(
-                        pipeline_id=runner_conf.silver_pipeline_id
+                        pipeline_id=runner_conf.refinery_pipeline_id
                     )
                 )
             ]

@@ -1,6 +1,35 @@
+# Databricks App Configuration for dlt-meta
+app:
+  name: dlt-meta-lakehouse-app
+  description: DLT-META Onboarding and Deployment Application
+
+# Enable OAuth authentication
+auth:
+  enabled: true
+  oauth_scope:
+    - user:read
+    - workspace-access
+
+# Required permissions for the app
+permissions:
+  - scope: WORKSPACE
+    resource: clusters
+    permission: CAN_ATTACH_TO
+  - scope: WORKSPACE
+    resource: jobs
+    permission: CAN_MANAGE_RUN
+
 command: [
   "flask",
   "--app",
   "app.py",
-  "run"
+  "run",
+  "--host=0.0.0.0",
+  "--port=8080"
 ]
+
+# Environment configuration
+env:
+  FLASK_ENV: production
+  DATABRICKS_HOST: ${DATABRICKS_HOST}
+  DATABRICKS_TOKEN: ${DATABRICKS_TOKEN}

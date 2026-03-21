@@ -11,7 +11,7 @@
         * {
             margin: 0;
             padding: 0;
-        / / box-sizing: border-box;
+            box-sizing: border-box;
         }
 
         body {
@@ -135,7 +135,7 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
-        / / max-width: 800 px;
+            max-width: 800 px;
             margin: 0 auto;
             border: 1px solid #f0f0f0;
         }
@@ -151,7 +151,7 @@
             min-width: 200px;
             padding: 10px;
             border-radius: 4px;
-        / / border: 1 px solid #f0f0f0;
+            border: 1 px solid #f0f0f0;
             transition: all 0.2s ease;
             margin-bottom: 5px;
         }
@@ -291,7 +291,7 @@
             font-weight: 500;
             display: block;
             margin: 10px;
-        / / width: 200 px;
+            width: 200 px;
             transition: all 0.2s ease;
         }
 
@@ -343,7 +343,7 @@
             color: #3366cc;
             font-size: 15px;
             margin-bottom: 15px;
-        / / text-transform: uppercase;
+            text-transform: uppercase;
             font-weight: 500;
         }
 
@@ -563,22 +563,6 @@
                             <!-- Unity Catalog Settings -->
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Run onboarding with unity catalog enabled?</label>
-                                    <div class="radio-group">
-
-                                        <div class="radio-option">
-                                            <input checked id="unity_catalog_true" name="unity_catalog_enabled"
-                                                   type="radio" value="1">
-                                            <label for="unity_catalog_true"> True</label>
-                                        </div>
-                                        <div class="radio-option">
-                                            <input id="unity_catalog_false" name="unity_catalog_enabled" type="radio"
-                                                   value="0">
-                                            <label for="unity_catalog_false"> False</label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group" id="unity_catalog_name_group">
                                     <label>Provide unity catalog name:</label>
                                     <input id="unity_catalog_name" name="unity_catalog_name"
                                            placeholder="Enter unity catalog name" type="text">
@@ -606,13 +590,13 @@
                                     <label>Provide onboarding file path:</label>
                                     <input id="onboarding_file_path" name="onboarding_file_path"
                                            placeholder="Enter file path"
-                                           type="text" value="demo/conf/onboarding.template">
+                                           type="text" value="/app/python/source_code/dlt-meta/cds/conf/onboarding/host_sales_ord_tran_0204/onboarding_sales_ord_tran.json">
                                 </div>
                                 <div class="form-group">
                                     <label>Provide onboarding files local directory:</label>
                                     <input id="local_directory" name="local_directory"
                                            placeholder="Enter local directory"
-                                           type="text" value="/app/python/source_code/dlt-meta/demo/">
+                                           type="text" value="/app/python/source_code/dlt-meta/cds/">
                                 </div>
                             </div>
 
@@ -621,29 +605,19 @@
                                 <div class="form-group">
                                     <label>Provide dlt meta schema name:</label>
                                     <input id="dlt_meta_schema" name="dlt_meta_schema" placeholder="Enter schema name"
-                                           type="text" value="dlt_meta_dataflowspecs_4e6c360d3e5c4b5ca6687fec8ffe2e14">
-                                </div>
-                                <div class="form-group">
-                                    <label>Provide dlt meta bronze layer schema name:</label>
-                                    <input id="bronze_schema" name="bronze_schema"
-                                           placeholder="Enter bronze schema name"
-                                           type="text" value="dltmeta_bronze_9c1aa383b36a49198d3e99d25f7180a4">
+                                           type="text" value="dlt_meta_dataflowspecs_cds">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Provide dlt meta silver layer schema name:</label>
-                                    <input id="silver_schema" name="silver_schema"
-                                           placeholder="Enter silver schema name"
-                                           type="text" value="dltmeta_silver_7b4e981029b843c799bf61a0a121b3ca">
-                                </div>
-                                <div class="form-group">
                                     <label>Provide dlt meta layer:</label>
                                     <select id="dlt_meta_layer" name="dlt_meta_layer">
-                                        <option value="0">bronze</option>
-                                        <option value="1">bronze_silver</option>
-                                        <option value="2">silver</option>
+                                        <option value="0">landing</option>
+                                        <option value="1">landing_refinery</option>
+                                        <option value="2">refinery</option>
+                                        <option value="3">treasury</option>
+                                        <option value="4">landing_refinery_treasury</option>
                                     </select>
                                 </div>
                             </div>
@@ -651,27 +625,19 @@
                             <!-- Table and Version Settings -->
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Provide bronze dataflow spec table name:</label>
-                                    <input id="bronze_table" name="bronze_table" placeholder="Enter bronze table name"
-                                           type="text" value="bronze_dataflowspec">
+                                    <label>Provide landing dataflow spec table name:</label>
+                                    <input id="landing_table" name="landing_table" placeholder="Enter landing table name"
+                                           type="text" value="landing_dataflowspec">
                                 </div>
                                 <div class="form-group">
-                                    <label>Provide silver dataflow spec table name:</label>
-                                    <input id="silver_table" name="silver_table" placeholder="Enter silver table name"
-                                           type="text" value="silver_dataflowspec">
+                                    <label>Provide refinery dataflow spec table name:</label>
+                                    <input id="refinery_table" name="refinery_table" placeholder="Enter refinery table name"
+                                           type="text" value="refinery_dataflowspec">
                                 </div>
                                 <div class="form-group">
-                                    <label>Overwrite dataflow spec?</label>
-                                    <div class="radio-group">
-                                        <div class="radio-option">
-                                            <input id="overwrite_false" name="overwrite" type="radio" value="0">
-                                            <label for="overwrite_false"> False</label>
-                                        </div>
-                                        <div class="radio-option">
-                                            <input checked id="overwrite_true" name="overwrite" type="radio" value="1">
-                                            <label for="overwrite_true"> True</label>
-                                        </div>
-                                    </div>
+                                    <label>Provide treasury dataflow spec table name:</label>
+                                    <input id="treasury_table" name="treasury_table" placeholder="Enter treasury table name"
+                                           type="text" value="treasury_dataflowspec">
                                 </div>
                             </div>
 
@@ -684,7 +650,7 @@
                                 <div class="form-group">
                                     <label>Provide environment name:</label>
                                     <input id="environment" name="environment" placeholder="Enter environment name"
-                                           type="text" value="prod">
+                                           type="text" value="nonprod">
                                 </div>
                             </div>
 
@@ -692,26 +658,7 @@
                                 <div class="form-group">
                                     <label>Provide import author name:</label>
                                     <input id="author" name="author" placeholder="Enter author name" type="text"
-                                           value="app-40zbx9 meta-dlt">
-                                </div>
-                            </div>
-
-                            <!-- Path Update Option -->
-                            <div class="form-row">
-                                <div class="form-group full-width">
-                                    <label>Update workspace/dbfs uc volume paths, unity catalog name, bronze/silver
-                                        schema names in onboarding file?</label>
-                                    <div class="radio-group">
-                                        <div class="radio-option">
-                                            <input checked id="update_paths_false" name="update_paths" type="radio"
-                                                   value="0">
-                                            <label for="update_paths_false"> False</label>
-                                        </div>
-                                        <div class="radio-option">
-                                            <input id="update_paths_true" name="update_paths" type="radio" value="1">
-                                            <label for="update_paths_true"> True</label>
-                                        </div>
-                                    </div>
+                                           value="app-6250cg demo-dltmeta-cds">
                                 </div>
                             </div>
                         </div>
@@ -727,21 +674,6 @@
                             <!-- Unity Catalog Settings -->
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Run onboarding with unity catalog enabled?</label>
-                                    <div class="radio-group">
-                                        <div class="radio-option">
-                                            <input checked id="unity_catalog_true" name="uc_enabled" type="radio"
-                                                   value="1">
-                                            <label for="unity_catalog_true"> True</label>
-                                        </div>
-                                        <div class="radio-option">
-                                            <input id="unity_catalog_false" name="uc_enabled" type="radio" value="0">
-                                            <label for="unity_catalog_false"> False</label>
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="form-group" id="unity_catalog_name_group">
                                     <label>Provide unity catalog name:</label>
                                     <input id="uc_catalog_name" name="uc_catalog_name"
                                            placeholder="Enter unity catalog name" type="text">
@@ -781,23 +713,34 @@
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>Onboard Bronze Group Name:</label>
-                                    <input id="group_name" name="onboard_bronze_group"
-                                           placeholder="Enter bronze group name"
+                                    <label>Onboard Landing Group Name:</label>
+                                    <input id="landing_group_name" name="onboard_landing_group"
+                                           placeholder="Enter landing group name"
                                            type="text" value="A1">
                                 </div>
                                 <div class="form-group">
-                                    <label>Onboard Silver Group Name:</label>
-                                    <input id="group_name" name="onboard_silver_group"
-                                           placeholder="Enter silver group name"
+                                    <label>Onboard Refinery Group Name:</label>
+                                    <input id="refinery_group_name" name="onboard_refinery_group"
+                                           placeholder="Enter refinery group name"
                                            type="text" value="A1">
                                 </div>
+                                <div class="form-group">
+                                    <label>Onboard Treasury Group Name:</label>
+                                    <input id="treasury_group_name" name="onboard_treasury_group"
+                                           placeholder="Enter treasury group name"
+                                           type="text" value="A1">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
                                 <div class="form-group">
                                     <label>Provide dlt meta layer:</label>
                                     <select id="dlt_meta_layer" name="deploylayer">
-                                        <option value="bronze">bronze</option>
-                                        <option value="bronze_silver">bronze_silver</option>
-                                        <option value="silver">silver</option>
+                                        <option value="landing">landing</option>
+                                        <option value="landing_refinery">landing_refinery</option>
+                                        <option value="refinery">refinery</option>
+                                        <option value="treasury">treasury</option>
+                                        <option value="landing_refinery_treasury">landing_refinery_treasury</option>
                                     </select>
                                 </div>
                             </div>
@@ -805,17 +748,26 @@
                             <!-- Table and Version Settings -->
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label> Dataflow Spec Bronze Table Name:</label>
-                                    <input id="bronze_dataflowspec_table" name="bronze_dataflowspec_table"
-                                           placeholder="Enter bronze spec table name"
+                                    <label> Dataflow Spec Landing Table Name:</label>
+                                    <input id="landing_dataflowspec_table" name="landing_dataflowspec_table"
+                                           placeholder="Enter landing spec table name"
                                            type="text">
                                 </div>
                                 <div class="form-group">
-                                    <label> Dataflow Spec Silver Table Name:</label>
-                                    <input id="silver_dataflowspec_table" name="silver_dataflowspec_table"
-                                           placeholder="Enter silver spec table name"
+                                    <label> Dataflow Spec Refinery Table Name:</label>
+                                    <input id="refinery_dataflowspec_table" name="refinery_dataflowspec_table"
+                                           placeholder="Enter refinery spec table name"
                                            type="text">
                                 </div>
+                                <div class="form-group">
+                                    <label> Dataflow Spec Treasury Table Name:</label>
+                                    <input id="treasury_dataflowspec_table" name="treasury_dataflowspec_table"
+                                           placeholder="Enter treasury spec table name"
+                                           type="text">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
 
                                 <div class="form-group">
                                     <label>Pipeline Name:</label>
@@ -844,7 +796,7 @@
                 <div class="command-suggestions">
                     <button class="command-button2" data-command="demo_cloudfiles">Demo Cloud Files</button>
                     <button class="command-button2" data-command="demo_acf">Demo Apply Changes Snapshot</button>
-                    <button class="command-button2" data-command="demo_silverfanout">Demo Silver fanout</button>
+                    <button class="command-button2" data-command="demo_refineryfanout">Demo refinery fanout</button>
                     <button class="command-button2" data-command="demo_dias">Demo Dias</button>
                     <button class="command-button2" data-command="demo_dlt_sink">Demo Sink</button>
 

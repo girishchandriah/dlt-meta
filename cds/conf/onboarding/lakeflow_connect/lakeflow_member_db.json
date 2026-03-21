@@ -1,0 +1,32 @@
+{
+  "data_flow_id": "6001",
+  "data_flow_group": "federated_oracle_member_db",
+  "source_system": "oracle_member_db",
+  "source_format": "snapshot",
+
+  "source_details": {
+    "snapshot_format": "delta",
+    "catalog_nonprod": "_member_db_catalog",
+    "database_nonprod": "member",
+    "table": "CUSTOMERS"
+  },
+
+  "refinery_catalog_nonprod": "dataservices_nonprod",
+  "refinery_database_nonprod": "refinery_nonprod",
+  "refinery_table": "memberdb_customers",
+  "refinery_partition_columns": "LAST_MODIFIED",
+
+  "refinery_table_properties": {
+    "delta.autoOptimize.optimizeWrite": "true",
+    "delta.autoOptimize.autoCompact": "true",
+    "delta.tuneFileSizesForRewrites": "true",
+    "delta.targetFileSize": "256mb"
+  },
+
+  "refinery_apply_changes_from_snapshot": {
+    "keys": ["CUSTOMER_ID"],
+    "scd_type": "1"
+  },
+
+  "refinery_transformation_json_nonprod": "/Volumes/dataservices_nonprod/dlt_meta_dataflowspecs_cds/dlt_meta_files/dltmeta_conf/cds/conf/onboarding/lakeflow_connect/transformations/memberdb_customers_refinery.yaml"
+}

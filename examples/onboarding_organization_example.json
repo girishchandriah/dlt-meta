@@ -1,0 +1,141 @@
+{
+  "organizational_structure": {
+    "description": "Example of how to organize 100s of ETLs using dataFlowGroup",
+
+    "grouping_strategy": {
+      "format": "{domain}_{source_system}",
+      "examples": [
+        "finance_sap",
+        "sales_salesforce",
+        "marketing_adobe",
+        "hr_workday"
+      ]
+    },
+
+    "id_ranges": {
+      "finance": "1000-1999",
+      "sales": "2000-2999",
+      "marketing": "3000-3999",
+      "hr": "4000-4999",
+      "supply_chain": "5000-5999"
+    },
+
+    "directory_structure": {
+      "onboarding": "conf/onboarding/{domain}/{table_name}.json",
+      "dqe": "conf/dqe/{domain}/{table_name}_dqe.json",
+      "transformations": "conf/transformations/{domain}/{transformation_name}.json",
+      "schemas": "conf/schemas/{domain}/{table_name}.ddl"
+    },
+
+    "pipeline_strategy": {
+      "approach": "one_pipeline_per_group",
+      "pipelines": [
+        {
+          "name": "finance_sap_pipeline",
+          "configuration": {
+            "layer": "landing_refinery",
+            "landing.group": "finance_sap",
+            "refinery.group": "finance_sap"
+          },
+          "schedule": "0 */1 * * *",
+          "cluster_size": "medium"
+        },
+        {
+          "name": "sales_salesforce_pipeline",
+          "configuration": {
+            "layer": "landing_refinery",
+            "landing.group": "sales_salesforce",
+            "refinery.group": "sales_salesforce"
+          },
+          "schedule": "0 */4 * * *",
+          "cluster_size": "large"
+        }
+      ]
+    }
+  },
+
+  "example_files": {
+    "finance_domain": {
+      "onboarding_files": [
+        "conf/onboarding/finance/gl_journal_entries.json",
+        "conf/onboarding/finance/gl_accounts.json",
+        "conf/onboarding/finance/ap_invoices.json",
+        "conf/onboarding/finance/ap_vendors.json"
+      ],
+      "dqe_files": [
+        "conf/dqe/finance/gl_journal_entries_landing_dqe.json",
+        "conf/dqe/finance/gl_journal_entries_refinery_dqe.json"
+      ],
+      "transformation_files": [
+        "conf/transformations/finance/gl_enrichment.json",
+        "conf/transformations/finance/ap_aggregation.json"
+      ]
+    },
+
+    "sales_domain": {
+      "onboarding_files": [
+        "conf/onboarding/sales/opportunities.json",
+        "conf/onboarding/sales/accounts.json",
+        "conf/onboarding/sales/contacts.json"
+      ],
+      "dqe_files": [
+        "conf/dqe/sales/opportunities_landing_dqe.json",
+        "conf/dqe/sales/accounts_refinery_dqe.json"
+      ],
+      "transformation_files": [
+        "conf/transformations/sales/customer_360.json"
+      ]
+    }
+  },
+
+  "sample_onboarding_finance": {
+    "file": "conf/onboarding/finance/gl_journal_entries.json",
+    "content": [
+      {
+        "data_flow_id": "1001",
+        "data_flow_group": "finance_sap",
+        "source_system": "sap_erp",
+        "source_format": "cloudFiles",
+        "source_details": {
+          "source_database": "sap_financials",
+          "source_table": "journal_entries",
+          "source_path_prod": "/Volumes/privacy_nonprod/dlt_meta_dataflowspecs/dlt_meta_files/finance/sap/journal_entries"
+        },
+        "landing_catalog_prod": "privacy_nonprod",
+        "landing_database_prod": "dltmeta_landing",
+        "landing_table": "finance_sap_journal_entries",
+        "landing_reader_options": {
+          "cloudFiles.format": "csv",
+          "header": "true"
+        },
+        "landing_data_quality_expectations_json_prod": "/Volumes/privacy_nonprod/dlt_meta_dataflowspecs/dlt_meta_files/conf/dqe/finance/journal_entries_landing_dqe.json",
+        "refinery_catalog_prod": "privacy_nonprod",
+        "refinery_database_prod": "dltmeta_refinery",
+        "refinery_table": "finance_sap_journal_entries",
+        "refinery_transformation_json_prod": "/Volumes/privacy_nonprod/dlt_meta_dataflowspecs/dlt_meta_files/conf/transformations/finance/gl_enrichment.json"
+      }
+    ]
+  },
+
+  "naming_conventions": {
+    "dataFlowId": "{domain_prefix}{sequential_number}",
+    "dataFlowGroup": "{domain}_{source_system}",
+    "table_names": "{domain}_{source}_{table}",
+    "file_names": "{table_name}.json",
+    "dqe_files": "{table_name}_{layer}_dqe.json",
+    "transformation_files": "{transformation_name}.json"
+  },
+
+  "best_practices": [
+    "Use one onboarding file per table for large scale (>50 tables)",
+    "Group by business domain + source system",
+    "Use ID ranges by domain (1000s for finance, 2000s for sales, etc.)",
+    "Create shared DQE templates for common validations",
+    "Separate complex SQL transformations into external files",
+    "One pipeline per dataFlowGroup for isolation and scalability",
+    "Version control all configuration files",
+    "Document ownership and SLAs per group",
+    "Start with critical tables, then scale incrementally",
+    "Set up monitoring at the group level"
+  ]
+}

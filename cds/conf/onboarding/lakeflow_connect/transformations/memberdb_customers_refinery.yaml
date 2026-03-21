@@ -1,0 +1,8 @@
+target_table: memberdb_customers
+transformation_name: Member DB CUSTOMERS Refinery Transformation
+description: "Load from source view created by dlt-meta. Source is _member_db_catalog.member.CUSTOMERS."
+sql_query: |
+  select
+    *
+  from source_6001
+  limit 10000

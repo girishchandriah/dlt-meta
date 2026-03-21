@@ -7,10 +7,11 @@ import dlt
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import expr, struct
 from pyspark.sql.types import StructType, StructField
-from src.dataflow_spec import BronzeDataflowSpec, SilverDataflowSpec, DataflowSpecUtils
+from src.dataflow_spec import LandingDataflowSpec, RefineryDataflowSpec, TreasuryDataflowSpec, DataflowSpecUtils
 from src.pipeline_writers import AppendFlowWriter, DLTSinkWriter
 from src.__about__ import __version__
 from src.pipeline_readers import PipelineReaders
+from src.table_precreator import TablePreCreator
 
 logger = logging.getLogger('databricks.labs.dltmeta')
 logger.setLevel(logging.INFO)
@@ -35,7 +36,7 @@ class DataflowPipeline:
                 view_name={view_name},
                 view_name_quarantine={view_name_quarantine}"""
         )
-        if isinstance(dataflow_spec, BronzeDataflowSpec) or isinstance(dataflow_spec, SilverDataflowSpec):
+        if isinstance(dataflow_spec, LandingDataflowSpec) or isinstance(dataflow_spec, RefineryDataflowSpec) or isinstance(dataflow_spec, TreasuryDataflowSpec):
             self.__initialize_dataflow_pipeline(
                 spark, dataflow_spec, view_name, view_name_quarantine, custom_transform_func, next_snapshot_and_version
             )
@@ -85,6 +86,33 @@ class DataflowPipeline:
         """Get table properties as a proper dictionary."""
         return self._get_dict_as_dict(self.dataflowSpec.tableProperties)
 
+    def _is_treasury_streaming(self):
+        """Check if treasury layer is configured for streaming mode.
+
+        Returns:
+            bool: True if treasury should use streaming, False for batch mode
+
+        Treasury uses streaming when:
+        - readChangeFeed is set to 'true' in treasury_reader_options
+        - CDC apply changes is configured
+        - sourceFormat is not 'snapshot'
+        """
+        if not isinstance(self.dataflowSpec, TreasuryDataflowSpec):
+            return False
+
+        # Check for CDC configuration
+        if self.cdcApplyChanges:
+            # If CDC is configured, check reader options for streaming flag
+            reader_config_opts = self._get_reader_config_options()
+            if reader_config_opts and reader_config_opts.get('readChangeFeed', '').lower() == 'true':
+                return True
+
+        # Check sourceFormat - snapshot means batch, others mean streaming
+        if hasattr(self.dataflowSpec, 'sourceFormat') and self.dataflowSpec.sourceFormat:
+            return self.dataflowSpec.sourceFormat.lower() != "snapshot"
+
+        return False
+
     def __initialize_dataflow_pipeline(
         self, spark, dataflow_spec, view_name, view_name_quarantine, custom_transform_func: Callable,
         next_snapshot_and_version: Callable
@@ -104,20 +132,22 @@ class DataflowPipeline:
             self.cdcApplyChanges = DataflowSpecUtils.get_cdc_apply_changes(self.dataflowSpec.cdcApplyChanges)
         else:
             self.cdcApplyChanges = None
-        if dataflow_spec.appendFlows:
+        # appendFlows only exists for Landing and Refinery layers
+        if hasattr(dataflow_spec, 'appendFlows') and dataflow_spec.appendFlows:
             self.appendFlows = DataflowSpecUtils.get_append_flows(dataflow_spec.appendFlows)
         else:
             self.appendFlows = None
-        if dataflow_spec.applyChangesFromSnapshot:
+        # applyChangesFromSnapshot only exists for Landing and Refinery layers
+        if hasattr(dataflow_spec, 'applyChangesFromSnapshot') and dataflow_spec.applyChangesFromSnapshot:
             self.applyChangesFromSnapshot = DataflowSpecUtils.get_apply_changes_from_snapshot(
                 self.dataflowSpec.applyChangesFromSnapshot
             )
-        if isinstance(dataflow_spec, BronzeDataflowSpec):
+        if isinstance(dataflow_spec, LandingDataflowSpec):
             if dataflow_spec.schema is not None:
                 self.schema_json = json.loads(dataflow_spec.schema)
             else:
                 self.schema_json = None
-        elif isinstance(dataflow_spec, SilverDataflowSpec):
+        elif isinstance(dataflow_spec, RefineryDataflowSpec) or isinstance(dataflow_spec, TreasuryDataflowSpec):
             self.schema_json = None
         self.next_snapshot_and_version = None
         self.next_snapshot_and_version = next_snapshot_and_version
@@ -126,7 +156,7 @@ class DataflowPipeline:
             self.snapshot_source_format = self.dataflowSpec.sourceDetails["snapshot_format"]
         else:
             self.snapshot_source_format = None
-        self.silver_schema = None
+        self.refinery_schema = None
 
     def table_has_expectations(self):
         """Table has expectations check."""
@@ -151,15 +181,21 @@ class DataflowPipeline:
     def read(self):
         """Read DLT."""
         logger.info("In read function")
-        if isinstance(self.dataflowSpec, BronzeDataflowSpec) and self.is_create_view():
+        if isinstance(self.dataflowSpec, LandingDataflowSpec) and self.is_create_view():
             dlt.view(
-                self.read_bronze,
+                self.read_landing,
                 name=self.view_name,
                 comment=f"input dataset view for {self.view_name}",
             )
-        elif isinstance(self.dataflowSpec, SilverDataflowSpec) and self.is_create_view():
+        elif isinstance(self.dataflowSpec, RefineryDataflowSpec) and self.is_create_view():
             dlt.view(
-                self.read_silver,
+                self.read_refinery,
+                name=self.view_name,
+                comment=f"input dataset view for {self.view_name}",
+            )
+        elif isinstance(self.dataflowSpec, TreasuryDataflowSpec) and self.is_create_view():
+            dlt.view(
+                self.read_treasury,
                 name=self.view_name,
                 comment=f"input dataset view for {self.view_name}",
             )
@@ -170,8 +206,8 @@ class DataflowPipeline:
             self.read_append_flows()
 
     def read_append_flows(self):
-        if self.dataflowSpec.appendFlows:
-            append_flows_schema_map = self.dataflowSpec.appendFlowsSchemas
+        if hasattr(self.dataflowSpec, 'appendFlows') and self.dataflowSpec.appendFlows:
+            append_flows_schema_map = getattr(self.dataflowSpec, 'appendFlowsSchemas', None)
             for append_flow in self.appendFlows:
                 flow_schema = None
                 if append_flows_schema_map:
@@ -194,10 +230,20 @@ class DataflowPipeline:
                              comment=f"append flow input dataset view for {append_flow.name}_view"
                              )
                 elif append_flow.source_format == "eventhub" or append_flow.source_format == "kafka":
-                    dlt.view(pipeline_reader.read_kafka,
-                             name=f"{append_flow.name}_view",
-                             comment=f"append flow input dataset view for {append_flow.name}_view"
-                             )
+                    # Check if Schema Registry is configured for Kafka append flows
+                    if (append_flow.source_format == "kafka" and
+                        append_flow.source_details.get("schema.registry.url") and
+                        append_flow.source_details.get("schema.registry.subject")):
+                        logger.info(f"Using Kafka with Schema Registry for append flow: {append_flow.name}")
+                        dlt.view(pipeline_reader.read_kafka_with_schema_registry,
+                                 name=f"{append_flow.name}_view",
+                                 comment=f"append flow input dataset view for {append_flow.name}_view with Schema Registry"
+                                 )
+                    else:
+                        dlt.view(pipeline_reader.read_kafka,
+                                 name=f"{append_flow.name}_view",
+                                 comment=f"append flow input dataset view for {append_flow.name}_view"
+                                 )
         else:
             raise Exception(f"Append Flows not found for dataflowSpec={self.dataflowSpec}")
 
@@ -207,10 +253,12 @@ class DataflowPipeline:
             dlt_sinks = DataflowSpecUtils.get_sinks(self.dataflowSpec.sinks, self.spark)
             for dlt_sink in dlt_sinks:
                 DLTSinkWriter(dlt_sink, self.view_name).write_to_sink()
-        if isinstance(self.dataflowSpec, BronzeDataflowSpec):
-            self.write_bronze()
-        elif isinstance(self.dataflowSpec, SilverDataflowSpec):
-            self.write_silver()
+        if isinstance(self.dataflowSpec, LandingDataflowSpec):
+            self.write_landing()
+        elif isinstance(self.dataflowSpec, RefineryDataflowSpec):
+            self.write_refinery()
+        elif isinstance(self.dataflowSpec, TreasuryDataflowSpec):
+            self.write_treasury()
         else:
             raise Exception(f"Dataflow write not supported for type= {type(self.dataflowSpec)}")
 
@@ -225,18 +273,17 @@ class DataflowPipeline:
         target_table = f"{target_cl_name}{target_db_name}.{target_table_name}"
         return target_path, target_table, target_table_name
 
-    def _get_table_comment(self, target_table, is_bronze=True):
+    def _get_table_comment(self, target_table, layer_name="landing"):
         """Generate appropriate comment for the table."""
-        layer_name = "bronze" if is_bronze else "silver"
         target_details = self._get_target_details()
         if 'comment' in target_details:
             return target_details.get('comment')
         return f"{layer_name} dlt table{target_table}"
 
-    def _write_standard_table(self, is_bronze=True):
-        """Write standard DLT table for bronze or silver layer."""
+    def _write_standard_table(self, layer_name="landing"):
+        """Write standard DLT table for landing, refinery, or treasury layer."""
         target_path, target_table, target_table_name = self._get_target_table_info()
-        comment = self._get_table_comment(target_table, is_bronze)
+        comment = self._get_table_comment(target_table, layer_name)
         dlt.table(
             self.write_to_delta,
             name=f"{target_table}",
@@ -247,62 +294,123 @@ class DataflowPipeline:
             comment=comment,
         )
 
+    def _write_treasury_batch_cdc(self):
+        """Write treasury batch data - for CDC with batch sources, write to intermediate table.
+
+        Treasury batch CDC limitation: DLT's create_auto_cdc_flow requires streaming sources.
+        For batch treasury with CDC config, this writes to an intermediate table per flow.
+        User should manually create final merge logic or use a post-processing step.
+        """
+        target_path, target_table, target_table_name = self._get_target_table_info()
+
+        # For batch CDC, write to intermediate table with flow ID suffix
+        # Final table merge must be handled separately by user
+        data_flow_id = str(self.dataflowSpec.dataFlowId).replace('-', '_').replace('.', '_')
+        intermediate_table_name = f"{target_table_name}_{data_flow_id}"
+
+        target_details = self._get_target_details()
+        target_cl = target_details.get('catalog', None)
+        target_cl_name = f"{target_cl}." if target_cl is not None else ''
+        target_db_name = target_details['database']
+        intermediate_table = f"{target_cl_name}{target_db_name}.{intermediate_table_name}"
+
+        comment = f"Treasury intermediate table for batch CDC flow {self.dataflowSpec.dataFlowId}. " \
+                  f"Merge into {target_table} using separate DLT table or post-processing."
+
+        logger.warning(
+            f"Treasury batch CDC limitation: Writing to intermediate table {intermediate_table}. "
+            f"Create a separate DLT table to merge intermediate tables into {target_table_name}."
+        )
+
+        dlt.table(
+            self.write_to_delta,
+            name=intermediate_table,
+            partition_cols=DataflowSpecUtils.get_partition_cols(self.dataflowSpec.partitionColumns),
+            cluster_by=DataflowSpecUtils.get_partition_cols(self.dataflowSpec.clusterBy),
+            table_properties=self.dataflowSpec.tableProperties,
+            path=target_path if target_path else None,
+            comment=comment,
+        )
+
     def write_layer_table(self):
-        """Write Bronze or Silver tables using unified logic."""
-        is_bronze = isinstance(self.dataflowSpec, BronzeDataflowSpec)
+        """Write Landing, Refinery, or Treasury tables using unified logic."""
+        is_landing = isinstance(self.dataflowSpec, LandingDataflowSpec)
+        is_refinery = isinstance(self.dataflowSpec, RefineryDataflowSpec)
+        is_treasury = isinstance(self.dataflowSpec, TreasuryDataflowSpec)
+
+        layer_name = "landing" if is_landing else ("refinery" if is_refinery else "treasury")
+
         # Handle special cases first
-        if is_bronze:
-            bronze_spec = self.dataflowSpec
-            # Handle snapshot format for bronze
-            if bronze_spec.sourceFormat and bronze_spec.sourceFormat.lower() == "snapshot":
+        if is_landing:
+            landing_spec = self.dataflowSpec
+            # Handle snapshot format for landing
+            if landing_spec.sourceFormat and landing_spec.sourceFormat.lower() == "snapshot":
                 if self.next_snapshot_and_version:
                     self.apply_changes_from_snapshot()
                 else:
                     raise Exception("Snapshot reader function not provided!")
                 self._handle_append_flows()
                 return
-            # Handle data quality expectations for bronze
-            if bronze_spec.dataQualityExpectations:
+            # Handle data quality expectations for landing
+            if landing_spec.dataQualityExpectations:
                 self.write_layer_with_dqe()
                 self._handle_append_flows()
                 return
-        else:
-            # Handle apply changes from snapshot for silver
-            silver_spec = self.dataflowSpec
-            if silver_spec.applyChangesFromSnapshot:
+        elif is_refinery:
+            # Handle apply changes from snapshot for refinery
+            refinery_spec = self.dataflowSpec
+            if refinery_spec.applyChangesFromSnapshot:
                 self.apply_changes_from_snapshot()
                 self._handle_append_flows()
                 return
-            # Handle data quality expectations for silver
-            if silver_spec.dataQualityExpectations:
+            # Handle data quality expectations for refinery
+            if refinery_spec.dataQualityExpectations:
                 self.write_layer_with_dqe()
                 self._handle_append_flows()
                 return
-        # Handle CDC apply changes (common to both)
+        elif is_treasury:
+            # Handle data quality expectations for treasury
+            treasury_spec = self.dataflowSpec
+            if treasury_spec.dataQualityExpectations:
+                self.write_layer_with_dqe()
+                return
+
+        # Handle CDC apply changes
         if self.dataflowSpec.cdcApplyChanges and not self.dataflowSpec.dataQualityExpectations:
-            self.cdc_apply_changes()
+            # Check if treasury is using streaming mode
+            if is_treasury and not self._is_treasury_streaming():
+                # Treasury batch CDC: write to staging table (legacy batch mode)
+                self._write_treasury_batch_cdc()
+            else:
+                # Landing/Refinery/Treasury streaming: use streaming CDC
+                self.cdc_apply_changes()
         else:
             # Write standard table
-            self._write_standard_table(is_bronze)
-        # Handle append flows (common to both)
-        self._handle_append_flows()
+            self._write_standard_table(layer_name)
+        # Handle append flows (for landing and refinery)
+        if not is_treasury:
+            self._handle_append_flows()
 
     def _handle_append_flows(self):
         """Handle append flows if they exist."""
-        if self.dataflowSpec.appendFlows:
+        if hasattr(self.dataflowSpec, 'appendFlows') and self.dataflowSpec.appendFlows:
             self.write_append_flows()
 
-    def write_bronze(self):
-        """Write Bronze tables."""
+    def write_landing(self):
+        """Write Landing tables."""
         self.write_layer_table()
 
-    def write_silver(self):
-        """Write silver tables."""
+    def write_refinery(self):
+        """Write refinery tables."""
         self.write_layer_table()
 
-    def read_bronze(self) -> DataFrame:
-        """Read Bronze Table."""
-        logger.info("In read_bronze func")
+    def write_treasury(self):
+        """Write treasury tables."""
+        self.write_layer_table()
+
+    def read_landing(self) -> DataFrame:
+        """Read Landing Table with optional SQL transformation support."""
+        logger.info("In read_landing func")
         pipeline_reader = PipelineReaders(
             self.spark,
             self.dataflowSpec.sourceFormat,
@@ -310,16 +418,33 @@ class DataflowPipeline:
             self.dataflowSpec.readerConfigOptions,
             self.schema_json
         )
-        bronze_dataflow_spec: BronzeDataflowSpec = self.dataflowSpec
+        landing_dataflow_spec: LandingDataflowSpec = self.dataflowSpec
+        source_details = self._get_source_details()
         input_df = None
-        if bronze_dataflow_spec.sourceFormat == "cloudFiles":
+
+        if landing_dataflow_spec.sourceFormat == "cloudFiles":
             input_df = pipeline_reader.read_dlt_cloud_files()
-        elif bronze_dataflow_spec.sourceFormat == "delta" or bronze_dataflow_spec.sourceFormat == "snapshot":
+        elif landing_dataflow_spec.sourceFormat == "delta" or landing_dataflow_spec.sourceFormat == "snapshot":
             input_df = pipeline_reader.read_dlt_delta()
-        elif bronze_dataflow_spec.sourceFormat == "eventhub" or bronze_dataflow_spec.sourceFormat == "kafka":
-            input_df = pipeline_reader.read_kafka()
+        elif landing_dataflow_spec.sourceFormat == "eventhub" or landing_dataflow_spec.sourceFormat == "kafka":
+            # Check if Schema Registry is configured
+            if (landing_dataflow_spec.sourceFormat == "kafka" and
+                source_details.get("schema.registry.url") and
+                source_details.get("schema.registry.subject")):
+                logger.info("Using Kafka with Schema Registry integration")
+                input_df = pipeline_reader.read_kafka_with_schema_registry()
+            else:
+                logger.info("Using standard Kafka reader")
+                input_df = pipeline_reader.read_kafka()
         else:
-            raise Exception(f"{bronze_dataflow_spec.sourceFormat} source format not supported")
+            raise Exception(f"{landing_dataflow_spec.sourceFormat} source format not supported")
+
+        # Apply SQL transformation if provided (NEW FEATURE)
+        sql_query = landing_dataflow_spec.sqlQuery
+        if sql_query and sql_query.strip():
+            logger.info(f"Applying SQL transformation to landing layer for dataFlowId={landing_dataflow_spec.dataFlowId}")
+            input_df = self.execute_sql_transformation(input_df, sql_query)
+
         return self.apply_custom_transform_fun(input_df)
 
     def apply_custom_transform_fun(self, input_df):
@@ -327,96 +452,305 @@ class DataflowPipeline:
             input_df = self.custom_transform_func(input_df, self.dataflowSpec)
         return input_df
 
-    def get_silver_schema(self):
-        """Get Silver table Schema."""
-        silver_dataflow_spec: SilverDataflowSpec = self.dataflowSpec
-        source_details = self._get_source_details()
-        source_cl = source_details.get('catalog', None)
-        source_cl_name = f"{source_cl}." if source_cl is not None else ''
-        source_database = source_details["database"]
-        source_table = source_details["table"]
-        select_exp = silver_dataflow_spec.selectExp
-        where_clause = silver_dataflow_spec.whereClause
-        raw_delta_table_stream = self.spark.readStream.table(
-            f"{source_cl_name}{source_database}.{source_table}"
-        ).selectExpr(*select_exp) if self.uc_enabled else self.spark.readStream.load(
-            path=source_details.get("path"),
-            format="delta"
-        ).selectExpr(*select_exp)
-        raw_delta_table_stream = self.__apply_where_clause(where_clause, raw_delta_table_stream)
-        return raw_delta_table_stream.schema
+    def replace_sql_placeholders(self, sql_query: str) -> str:
+        """Replace placeholders in SQL query with actual catalog and database names.
 
-    def __apply_where_clause(self, where_clause, raw_delta_table_stream):
-        """This method apply where clause provided in silver transformations
+        Supports placeholders like:
+        - {landing_catalog}, {landing_database}
+        - {refinery_catalog}, {refinery_database}
+        - {treasury_catalog}, {treasury_database}
+
+        Tries to get values from:
+        1. DataflowSpec (current and source layers)
+        2. Spark configuration (fallback for cross-layer references)
 
         Args:
-            where_clause (_type_): _description_
-            raw_delta_table_stream (_type_): _description_
+            sql_query: SQL query with placeholders
 
         Returns:
-            _type_: _description_
+            SQL query with placeholders replaced
         """
-        if where_clause:
-            where_clause_str = " ".join(where_clause)
-            if len(where_clause_str.strip()) > 0:
-                for clause in where_clause:
-                    raw_delta_table_stream = raw_delta_table_stream.where(clause)
-        return raw_delta_table_stream
+        if not sql_query or not sql_query.strip():
+            return sql_query
 
-    def read_silver(self) -> DataFrame:
-        """Read Silver tables."""
-        silver_dataflow_spec: SilverDataflowSpec = self.dataflowSpec
+        # Get environment from spark config (e.g., 'nonprod', 'prod', 'preprod')
+        env = self.spark.conf.get("env", "prod")
+        logger.info(f"Replacing SQL placeholders for environment: {env}")
+
+        replacements = {}
+
+        # Helper function to safely get catalog/database with fallback to spark conf
+        def get_catalog_database(layer_name, details_dict=None):
+            """Get catalog and database for a layer from dict or spark conf."""
+            catalog = None
+            database = None
+
+            if details_dict:
+                catalog = details_dict.get('catalog', '')
+                database = details_dict.get('database', '')
+
+            # Fallback to spark conf if not found in dict
+            if not catalog:
+                catalog = self.spark.conf.get(f"{layer_name}.catalog", None)
+            if not database:
+                database = self.spark.conf.get(f"{layer_name}.database", None)
+
+            # Final fallback: use environment-based naming convention for cross-layer references
+            # This handles cases where refinery SQL references treasury tables
+            if not catalog or not database:
+                # Try to infer from current dataflowspec's naming pattern
+                current_target = self.dataflowSpec.targetDetails if hasattr(self.dataflowSpec, 'targetDetails') else {}
+                if current_target:
+                    current_catalog = current_target.get('catalog', '')
+                    current_database = current_target.get('database', '')
+
+                    # For nonprod/preprod/prod environments, apply common naming patterns
+                    if 'nonprod' in str(current_catalog).lower() or 'nonprod' in str(current_database).lower():
+                        if not catalog and layer_name == 'treasury':
+                            catalog = 'dataservices_nonprod'
+                        if not database and layer_name == 'treasury':
+                            database = 'treasury_teradata_base_nonprod'
+                    elif 'preprod' in str(current_catalog).lower() or 'preprod' in str(current_database).lower():
+                        if not catalog and layer_name == 'treasury':
+                            catalog = 'dataservices_preprod'
+                        if not database and layer_name == 'treasury':
+                            database = 'treasury_teradata_base_preprod'
+                    elif 'prod' in str(current_catalog).lower() or 'prod' in str(current_database).lower():
+                        if not catalog and layer_name == 'treasury':
+                            catalog = 'dataservices_treasury'
+                        if not database and layer_name == 'treasury':
+                            database = 'treasury_teradata_base'
+
+            return catalog, database
+
+        # Get landing catalog/database
+        if isinstance(self.dataflowSpec, LandingDataflowSpec):
+            target_details = dict(self.dataflowSpec.targetDetails) if self.dataflowSpec.targetDetails else {}
+            landing_catalog, landing_database = get_catalog_database('landing', target_details)
+        elif isinstance(self.dataflowSpec, RefineryDataflowSpec):
+            # For refinery, landing is the source
+            source_details = self._get_source_details()
+            landing_catalog, landing_database = get_catalog_database('landing', source_details)
+        else:
+            # Fallback for other layers
+            landing_catalog, landing_database = get_catalog_database('landing')
+
+        if landing_catalog:
+            replacements['{landing_catalog}'] = landing_catalog
+        if landing_database:
+            replacements['{landing_database}'] = landing_database
+
+        # Get refinery catalog/database
+        if isinstance(self.dataflowSpec, RefineryDataflowSpec):
+            target_details = dict(self.dataflowSpec.targetDetails) if self.dataflowSpec.targetDetails else {}
+            refinery_catalog, refinery_database = get_catalog_database('refinery', target_details)
+        elif isinstance(self.dataflowSpec, TreasuryDataflowSpec):
+            # For treasury, refinery is the source
+            source_details = self._get_source_details()
+            refinery_catalog, refinery_database = get_catalog_database('refinery', source_details)
+        else:
+            # Fallback for other layers
+            refinery_catalog, refinery_database = get_catalog_database('refinery')
+
+        if refinery_catalog:
+            replacements['{refinery_catalog}'] = refinery_catalog
+        if refinery_database:
+            replacements['{refinery_database}'] = refinery_database
+
+        # Get treasury catalog/database
+        if isinstance(self.dataflowSpec, TreasuryDataflowSpec):
+            target_details = dict(self.dataflowSpec.targetDetails) if self.dataflowSpec.targetDetails else {}
+            treasury_catalog, treasury_database = get_catalog_database('treasury', target_details)
+        else:
+            # Try to get from spark conf (for cross-layer references)
+            treasury_catalog, treasury_database = get_catalog_database('treasury')
+
+        if treasury_catalog:
+            replacements['{treasury_catalog}'] = treasury_catalog
+        if treasury_database:
+            replacements['{treasury_database}'] = treasury_database
+
+        # Perform replacements
+        replaced_query = sql_query
+        for placeholder, value in replacements.items():
+            if placeholder in replaced_query:
+                replaced_query = replaced_query.replace(placeholder, value)
+                logger.info(f"Replaced {placeholder} with {value}")
+
+        # Log if there are still unreplaced placeholders
+        import re
+        remaining_placeholders = re.findall(r'\{[^}]+\}', replaced_query)
+        if remaining_placeholders:
+            logger.warning(f"Unreplaced placeholders found in SQL: {remaining_placeholders}")
+            logger.warning(f"Available replacements were: {list(replacements.keys())}")
+
+        return replaced_query
+
+    def execute_sql_transformation(self, source_df: DataFrame, sql_query: str) -> DataFrame:
+        """Execute full SQL query with support for JOINs.
+
+        Args:
+            source_df: Source DataFrame
+            sql_query: Full SELECT query (e.g., "SELECT * FROM table WHERE ...")
+
+        Returns:
+            Transformed DataFrame
+        """
+        if not sql_query or not sql_query.strip():
+            return source_df
+
+        # Replace placeholders in SQL query before execution
+        sql_query = self.replace_sql_placeholders(sql_query)
+
+        # Create temp view for source table
+        source_view_name = f"source_{self.dataflowSpec.dataFlowId}"
+        source_df.createOrReplaceTempView(source_view_name)
+
+        try:
+            # Execute SQL query
+            result_df = self.spark.sql(sql_query)
+            return result_df
+        except Exception as e:
+            logger.error(f"SQL transformation failed for dataFlowId={self.dataflowSpec.dataFlowId}: {str(e)}")
+            logger.error(f"SQL Query: {sql_query}")
+            raise
+        finally:
+            # Clean up temp view
+            try:
+                self.spark.catalog.dropTempView(source_view_name)
+            except:
+                pass  # Ignore if view doesn't exist
+
+    def get_refinery_schema(self):
+        """Get Refinery table Schema."""
+        refinery_dataflow_spec: RefineryDataflowSpec = self.dataflowSpec
         source_details = self._get_source_details()
-        reader_config_opts = self._get_reader_config_options()
         source_cl = source_details.get('catalog', None)
         source_cl_name = f"{source_cl}." if source_cl is not None else ''
         source_database = source_details["database"]
         source_table = source_details["table"]
-        select_exp = silver_dataflow_spec.selectExp
-        where_clause = silver_dataflow_spec.whereClause
+        sql_query = refinery_dataflow_spec.sqlQuery
+
+        # Read source table
+        raw_delta_table_stream = self.spark.readStream.table(
+            f"{source_cl_name}{source_database}.{source_table}"
+        ) if self.uc_enabled else self.spark.readStream.load(
+            path=source_details.get("path"),
+            format="delta"
+        )
+
+        # Apply SQL transformation if provided
+        if sql_query and sql_query.strip():
+            raw_delta_table_stream = self.execute_sql_transformation(raw_delta_table_stream, sql_query)
+
+        return raw_delta_table_stream.schema
+
+    def read_refinery(self) -> DataFrame:
+        """Read Refinery tables with SQL transformations."""
+        refinery_dataflow_spec: RefineryDataflowSpec = self.dataflowSpec
+        source_details = self._get_source_details()
+        reader_config_opts = self._get_reader_config_options()
+
+        # Read from landing layer
+        source_cl = source_details.get('catalog', None)
+        source_cl_name = f"{source_cl}." if source_cl is not None else ''
+        source_database = source_details["database"]
+        source_table = source_details["table"]
+
         if reader_config_opts:
-            if silver_dataflow_spec.sourceFormat == "snapshot":
-                bronze_df = self.spark.read.options(**reader_config_opts).table(
+            if refinery_dataflow_spec.sourceFormat == "snapshot":
+                landing_df = self.spark.read.options(**reader_config_opts).table(
                     f"{source_cl_name}{source_database}.{source_table}"
-                ) if self.uc_enabled else self.spark.read.options(
-                    **reader_config_opts
-                ).load(
-                    path=source_details.get("path"),
-                    format="delta"
+                ) if self.uc_enabled else self.spark.read.options(**reader_config_opts).load(
+                    path=source_details.get("path"), format="delta"
                 )
             else:
-                bronze_df = self.spark.readStream.options(**reader_config_opts).table(
+                landing_df = self.spark.readStream.options(**reader_config_opts).table(
                     f"{source_cl_name}{source_database}.{source_table}"
-                ) if self.uc_enabled else self.spark.readStream.options(
-                    **reader_config_opts
-                ).load(
-                    path=source_details.get("path"),
-                    format="delta"
+                ) if self.uc_enabled else self.spark.readStream.options(**reader_config_opts).load(
+                    path=source_details.get("path"), format="delta"
                 )
         else:
-            if silver_dataflow_spec.sourceFormat == "snapshot":
-                bronze_df = self.spark.read.table(
+            if refinery_dataflow_spec.sourceFormat == "snapshot":
+                landing_df = self.spark.read.table(
                     f"{source_cl_name}{source_database}.{source_table}"
                 ) if self.uc_enabled else self.spark.read.load(
-                    path=source_details.get("path"),
-                    format="delta"
+                    path=source_details.get("path"), format="delta"
                 )
             else:
-                bronze_df = self.spark.readStream.table(
+                landing_df = self.spark.readStream.table(
                     f"{source_cl_name}{source_database}.{source_table}"
                 ) if self.uc_enabled else self.spark.readStream.load(
-                    path=source_details.get("path"),
-                    format="delta"
+                    path=source_details.get("path"), format="delta"
                 )
-        if select_exp:
-            bronze_df = bronze_df.selectExpr(*select_exp)
-        if where_clause:
-            where_clause_str = " ".join(where_clause)
-            if len(where_clause_str.strip()) > 0:
-                for where_clause in where_clause:
-                    bronze_df = bronze_df.where(where_clause)
-        bronze_df = self.apply_custom_transform_fun(bronze_df)
-        return bronze_df
+
+        # Apply SQL transformation
+        sql_query = refinery_dataflow_spec.sqlQuery
+        if sql_query and sql_query.strip():
+            refinery_df = self.execute_sql_transformation(landing_df, sql_query)
+        else:
+            refinery_df = landing_df
+
+        # Apply custom transform if provided
+        refinery_df = self.apply_custom_transform_fun(refinery_df)
+        return refinery_df
+
+    def read_treasury(self) -> DataFrame:
+        """Read Treasury tables with SQL transformations (supports both batch and streaming)."""
+        treasury_dataflow_spec: TreasuryDataflowSpec = self.dataflowSpec
+        source_details = self._get_source_details()
+        reader_config_opts = self._get_reader_config_options()
+
+        # Read from refinery layer (batch or streaming based on configuration)
+        source_cl = source_details.get('catalog', None)
+        source_cl_name = f"{source_cl}." if source_cl is not None else ''
+        source_database = source_details["database"]
+        source_table = source_details["table"]
+
+        # Determine if we should use streaming mode
+        use_streaming = self._is_treasury_streaming()
+
+        if reader_config_opts:
+            if use_streaming:
+                # Use streaming read for CDC/streaming use cases
+                refinery_df = self.spark.readStream.options(**reader_config_opts).table(
+                    f"{source_cl_name}{source_database}.{source_table}"
+                ) if self.uc_enabled else self.spark.readStream.options(**reader_config_opts).load(
+                    path=source_details.get("path"), format="delta"
+                )
+            else:
+                # Use batch read
+                refinery_df = self.spark.read.options(**reader_config_opts).table(
+                    f"{source_cl_name}{source_database}.{source_table}"
+                ) if self.uc_enabled else self.spark.read.options(**reader_config_opts).load(
+                    path=source_details.get("path"), format="delta"
+                )
+        else:
+            if use_streaming:
+                # Use streaming read for CDC/streaming use cases
+                refinery_df = self.spark.readStream.table(
+                    f"{source_cl_name}{source_database}.{source_table}"
+                ) if self.uc_enabled else self.spark.readStream.load(
+                    path=source_details.get("path"), format="delta"
+                )
+            else:
+                # Use batch read
+                refinery_df = self.spark.read.table(
+                    f"{source_cl_name}{source_database}.{source_table}"
+                ) if self.uc_enabled else self.spark.read.load(
+                    path=source_details.get("path"), format="delta"
+                )
+
+        # Apply SQL transformation
+        sql_query = treasury_dataflow_spec.sqlQuery
+        if sql_query and sql_query.strip():
+            treasury_df = self.execute_sql_transformation(refinery_df, sql_query)
+        else:
+            treasury_df = refinery_df
+
+        # Apply custom transform if provided
+        treasury_df = self.apply_custom_transform_fun(treasury_df)
+        return treasury_df
 
     def write_to_delta(self):
         """Write to Delta."""
@@ -450,21 +784,22 @@ class DataflowPipeline:
         )
 
     def write_layer_with_dqe(self):
-        """Write Bronze or Silver table with data quality expectations."""
-        is_bronze = isinstance(self.dataflowSpec, BronzeDataflowSpec)
+        """Write Landing, Refinery, or Treasury table with data quality expectations."""
+        is_landing = isinstance(self.dataflowSpec, LandingDataflowSpec)
         data_quality_expectations_json = json.loads(self.dataflowSpec.dataQualityExpectations)
 
         dlt_table_with_expectation = None
         expect_or_quarantine_dict = None
         expect_all_dict, expect_all_or_drop_dict, expect_all_or_fail_dict = self.get_dq_expectations()
-        # Both bronze and silver layers support quarantine tables
+        # Both landing and refinery layers support quarantine tables
         if "expect_or_quarantine" in data_quality_expectations_json:
             expect_or_quarantine_dict = data_quality_expectations_json["expect_or_quarantine"]
         if self.dataflowSpec.cdcApplyChanges:
             self.cdc_apply_changes()
         else:
             target_path, target_table, target_table_name = self._get_target_table_info()
-            target_comment = self._get_table_comment(target_table, is_bronze)
+            layer_name = "landing" if is_landing else ("refinery" if isinstance(self.dataflowSpec, RefineryDataflowSpec) else "treasury")
+            target_comment = self._get_table_comment(target_table, layer_name)
             # Create base table with expectations
             if expect_all_dict:
                 dlt_table_with_expectation = dlt.expect_all(expect_all_dict)(
@@ -510,7 +845,7 @@ class DataflowPipeline:
                 else:
                     dlt_table_with_expectation = dlt.expect_all_or_drop(expect_all_or_drop_dict)(
                         dlt_table_with_expectation)
-            # Handle quarantine table (Bronze and Silver layers)
+            # Handle quarantine table (landing and refinery layers)
         if expect_or_quarantine_dict:
             q_partition_cols = None
             q_cluster_by = None
@@ -548,7 +883,8 @@ class DataflowPipeline:
             quarantine_table = (
                 f"{quarantine_cl_name}{quarantine_db}.{quarantine_table_name}"
             )
-            layer_name = "bronze" if is_bronze else "silver"
+            is_landing = isinstance(self.dataflowSpec, LandingDataflowSpec)
+            layer_name = "landing" if is_landing else ("refinery" if isinstance(self.dataflowSpec, RefineryDataflowSpec) else "treasury")
             quarantine_comment = (
                 quarantine_target_details.get('comment')
                 if 'comment' in quarantine_target_details
@@ -559,7 +895,7 @@ class DataflowPipeline:
                 dlt.table(
                     self.write_to_delta,
                     name=f"{quarantine_table_name}",
-                    table_properties=self.dataflowSpec.quarantineTableProperties,
+                    table_properties=getattr(self.dataflowSpec, 'quarantineTableProperties', None),
                     partition_cols=q_partition_cols,
                     cluster_by=q_cluster_by,
                     path=quarantine_path,
@@ -586,8 +922,8 @@ class DataflowPipeline:
             if self.schema_json:
                 struct_schema = (
                     StructType.fromJson(self.schema_json)
-                    if isinstance(self.dataflowSpec, BronzeDataflowSpec)
-                    else self.silver_schema
+                    if isinstance(self.dataflowSpec, LandingDataflowSpec)
+                    else self.refinery_schema
                 )
             target_details = self._get_target_details()
             append_flow_writer = AppendFlowWriter(
@@ -612,7 +948,15 @@ class DataflowPipeline:
 
         target_path = None if self.uc_enabled else self.dataflowSpec.targetDetails["path"]
 
-        self.create_streaming_table(struct_schema, target_path)
+        # Determine if we should create streaming table
+        # For landing/refinery: always create streaming table
+        # For treasury: only create if using streaming mode (not batch)
+        is_treasury = isinstance(self.dataflowSpec, TreasuryDataflowSpec)
+        should_create_streaming_table = not is_treasury or self._is_treasury_streaming()
+
+        # Create streaming table only for streaming sources
+        if should_create_streaming_table:
+            self.create_streaming_table(struct_schema, target_path)
 
         apply_as_deletes = None
         if cdc_apply_changes.apply_as_deletes:
@@ -637,6 +981,12 @@ class DataflowPipeline:
             sequence_cols = [col.strip() for col in sequence_by.split(',')]
             sequence_by = struct(*sequence_cols)  # Use struct() from pyspark.sql.functions
 
+        # Auto-generate unique flow name if not provided (needed when multiple flows target same table)
+        flow_name = cdc_apply_changes.flow_name
+        if not flow_name:
+            data_flow_id = str(self.dataflowSpec.dataFlowId).replace('-', '_').replace('.', '_')
+            flow_name = f"{target_table_name}_{data_flow_id}_flow"
+
         dlt.create_auto_cdc_flow(
             target=target_table,
             source=self.view_name,
@@ -651,23 +1001,23 @@ class DataflowPipeline:
             stored_as_scd_type=cdc_apply_changes.scd_type,
             track_history_column_list=cdc_apply_changes.track_history_column_list,
             track_history_except_column_list=cdc_apply_changes.track_history_except_column_list,
-            flow_name=cdc_apply_changes.flow_name,
+            flow_name=flow_name,
             once=cdc_apply_changes.once,
             ignore_null_updates_column_list=cdc_apply_changes.ignore_null_updates_column_list,
             ignore_null_updates_except_column_list=cdc_apply_changes.ignore_null_updates_except_column_list
         )
 
     def modify_schema_for_cdc_changes(self, cdc_apply_changes):
-        if isinstance(self.dataflowSpec, BronzeDataflowSpec) and self.schema_json is None:
+        if isinstance(self.dataflowSpec, LandingDataflowSpec) and self.schema_json is None:
             return None
-        if isinstance(self.dataflowSpec, SilverDataflowSpec) and self.silver_schema is None:
+        if isinstance(self.dataflowSpec, RefineryDataflowSpec) and self.refinery_schema is None:
             return None
 
         struct_schema = None
-        if isinstance(self.dataflowSpec, BronzeDataflowSpec) and self.schema_json is not None:
+        if isinstance(self.dataflowSpec, LandingDataflowSpec) and self.schema_json is not None:
             struct_schema = StructType.fromJson(self.schema_json)
-        elif isinstance(self.dataflowSpec, SilverDataflowSpec):
-            struct_schema = self.silver_schema
+        elif isinstance(self.dataflowSpec, RefineryDataflowSpec):
+            struct_schema = self.refinery_schema
 
         if struct_schema is None:
             return None
@@ -761,38 +1111,134 @@ class DataflowPipeline:
     @staticmethod
     def invoke_dlt_pipeline(spark,
                             layer,
-                            bronze_custom_transform_func: Callable = None,
-                            silver_custom_transform_func: Callable = None,
-                            bronze_next_snapshot_and_version: Callable = None,
-                            silver_next_snapshot_and_version: Callable = None):
+                            landing_custom_transform_func: Callable = None,
+                            refinery_custom_transform_func: Callable = None,
+                            treasury_custom_transform_func: Callable = None,
+                            landing_next_snapshot_and_version: Callable = None,
+                            refinery_next_snapshot_and_version: Callable = None):
         """Invoke dlt pipeline will launch dlt with given dataflowspec.
 
         Args:
-            spark (_type_): _description_
-            layer (_type_): _description_
+            spark: SparkSession
+            layer: Layer name (landing, refinery, treasury, landing_refinery, landing_refinery_treasury, etc.)
+            landing_custom_transform_func: Custom transform function for landing layer
+            refinery_custom_transform_func: Custom transform function for refinery layer
+            treasury_custom_transform_func: Custom transform function for treasury layer
+            landing_next_snapshot_and_version: Snapshot version function for landing layer
+            refinery_next_snapshot_and_version: Snapshot version function for refinery layer
         """
 
         dataflowspec_list = None
-        if "bronze" == layer.lower():
-            dataflowspec_list = DataflowSpecUtils.get_bronze_dataflow_spec(spark)
+        if "landing" == layer.lower():
+            dataflowspec_list = DataflowSpecUtils.get_landing_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
             DataflowPipeline._launch_dlt_flow(
-                spark, "bronze", dataflowspec_list, bronze_custom_transform_func, bronze_next_snapshot_and_version
+                spark, "landing", dataflowspec_list, landing_custom_transform_func, landing_next_snapshot_and_version
             )
-        elif "silver" == layer.lower():
-            dataflowspec_list = DataflowSpecUtils.get_silver_dataflow_spec(spark)
+        elif "refinery" == layer.lower():
+            dataflowspec_list = DataflowSpecUtils.get_refinery_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
             DataflowPipeline._launch_dlt_flow(
-                spark, "silver", dataflowspec_list, silver_custom_transform_func, silver_next_snapshot_and_version
+                spark, "refinery", dataflowspec_list, refinery_custom_transform_func, refinery_next_snapshot_and_version
             )
-        elif "bronze_silver" == layer.lower():
-            bronze_dataflowspec_list = DataflowSpecUtils.get_bronze_dataflow_spec(spark)
+        elif "treasury" == layer.lower():
+            dataflowspec_list = DataflowSpecUtils.get_treasury_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
             DataflowPipeline._launch_dlt_flow(
-                spark, "bronze", bronze_dataflowspec_list, bronze_custom_transform_func,
-                bronze_next_snapshot_and_version
+                spark, "treasury", dataflowspec_list, treasury_custom_transform_func, None
             )
-            silver_dataflowspec_list = DataflowSpecUtils.get_silver_dataflow_spec(spark)
+        elif "landing_refinery" == layer.lower():
+            landing_dataflowspec_list = DataflowSpecUtils.get_landing_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
             DataflowPipeline._launch_dlt_flow(
-                spark, "silver", silver_dataflowspec_list, silver_custom_transform_func,
-                silver_next_snapshot_and_version
+                spark, "landing", landing_dataflowspec_list, landing_custom_transform_func,
+                landing_next_snapshot_and_version
+            )
+            refinery_dataflowspec_list = DataflowSpecUtils.get_refinery_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
+            DataflowPipeline._launch_dlt_flow(
+                spark, "refinery", refinery_dataflowspec_list, refinery_custom_transform_func,
+                refinery_next_snapshot_and_version
+            )
+        elif "refinery_treasury" == layer.lower():
+            refinery_dataflowspec_list = DataflowSpecUtils.get_refinery_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
+            DataflowPipeline._launch_dlt_flow(
+                spark, "refinery", refinery_dataflowspec_list, refinery_custom_transform_func,
+                refinery_next_snapshot_and_version
+            )
+            treasury_dataflowspec_list = DataflowSpecUtils.get_treasury_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
+            DataflowPipeline._launch_dlt_flow(
+                spark, "treasury", treasury_dataflowspec_list, treasury_custom_transform_func, None
+            )
+        elif "landing_refinery_treasury" == layer.lower():
+            landing_dataflowspec_list = DataflowSpecUtils.get_landing_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
+            DataflowPipeline._launch_dlt_flow(
+                spark, "landing", landing_dataflowspec_list, landing_custom_transform_func,
+                landing_next_snapshot_and_version
+            )
+            refinery_dataflowspec_list = DataflowSpecUtils.get_refinery_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
+            DataflowPipeline._launch_dlt_flow(
+                spark, "refinery", refinery_dataflowspec_list, refinery_custom_transform_func,
+                refinery_next_snapshot_and_version
+            )
+            treasury_dataflowspec_list = DataflowSpecUtils.get_treasury_dataflow_spec(spark)
+            # DISABLED: Pre-create tables - DLT manages its own tables
+            # Table pre-creation causes conflicts with DLT table management
+            # uc_enabled = spark.conf.get("spark.databricks.unityCatalog.enabled", "false").lower() == "true"
+            # # table_creator = TablePreCreator(spark, uc_enabled)
+            # # for spec in dataflowspec_list:
+            # #     table_creator.ensure_table_exists(spec, layer)
+            DataflowPipeline._launch_dlt_flow(
+                spark, "treasury", treasury_dataflowspec_list, treasury_custom_transform_func, None
             )
 
     @staticmethod
@@ -810,18 +1256,27 @@ class DataflowPipeline:
                 qrt_cl_str = f"{qrt_cl}_" if qrt_cl is not None else ''
                 qrt_db = dataflowSpec.quarantineTargetDetails['database'].replace('.', '_')
                 qrt_table = dataflowSpec.quarantineTargetDetails['table']
+                # Include dataFlowId to make quarantine view name unique
+                qrt_data_flow_id = str(dataflowSpec.dataFlowId).replace('-', '_').replace('.', '_')
                 quarantine_input_view_name = (
-                    f"{qrt_cl_str}{qrt_db}_{qrt_table}"
+                    f"{qrt_cl_str}{qrt_db}_{qrt_table}_{qrt_data_flow_id}"
                     f"_{layer}_quarantine_inputview"
                 )
                 quarantine_input_view_name = quarantine_input_view_name.replace(".", "").lower()
             else:
                 logger.info("quarantine_input_view_name set to None")
+            # Skip dataflowSpecs with None database (flows without this layer)
+            if dataflowSpec.targetDetails.get('database') is None:
+                logger.info(f"Skipping {layer} layer for dataFlowId={dataflowSpec.dataFlowId} (no database configured)")
+                continue
+
             target_cl = dataflowSpec.targetDetails.get('catalog', None)
             target_cl_str = f"{target_cl}_" if target_cl is not None else ''
             target_db = dataflowSpec.targetDetails['database'].replace('.', '_')
             target_table = dataflowSpec.targetDetails['table']
-            target_view_name = f"{target_cl_str}{target_db}_{target_table}_{layer}_inputview"
+            # Include dataFlowId to make view name unique when multiple flows target the same table
+            data_flow_id = str(dataflowSpec.dataFlowId).replace('-', '_').replace('.', '_')
+            target_view_name = f"{target_cl_str}{target_db}_{target_table}_{data_flow_id}_{layer}_inputview"
             target_view_name = target_view_name.replace(".", "").lower()
             dlt_data_flow = DataflowPipeline(
                 spark,

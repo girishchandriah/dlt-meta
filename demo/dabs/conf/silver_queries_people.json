@@ -1,6 +1,6 @@
 [
     {
-        "target_table": "people_silver",
+        "target_table": "people_refinery",
         "select_exp": [
             "id",
             "md5(concat_ws('-',firstName, middleName, lastName,gender,birthDate,ssn)) as row_id",
@@ -16,7 +16,7 @@
         ]
     },
     {
-        "target_table": "people_silver_sal_above_50K",
+        "target_table": "people_refinery_sal_above_50K",
         "select_exp": [
             "id",
             "md5(concat_ws('-',firstName, middleName, lastName,gender,birthDate,ssn)) as row_id",
@@ -31,7 +31,7 @@
         "where_clause": ["salary > 50000"]
     },
     {
-        "target_table": "people_silver_sal_below_50K",
+        "target_table": "people_refinery_sal_below_50K",
         "select_exp": [
             "id",
             "md5(concat_ws('-',firstName, middleName, lastName,gender,birthDate,ssn)) as row_id",

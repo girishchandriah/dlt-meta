@@ -1,0 +1,38 @@
+{
+  "data_flow_id": "3001",
+  "data_flow_group": "streaming_events",
+  "source_system": "kafka_nonprod",
+  "source_format": "kafka",
+
+  "source_details": {
+    "subscribe": "payment-events",
+    "kafka.bootstrap.servers": "kafka-1:9093,kafka-2:9093,kafka-3:9093",
+    "kafka.security.protocol": "SASL_SSL",
+    "kafka.sasl.mechanism": "SCRAM-SHA-256",
+    "kafka.sasl.jaas.config": "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"{{secrets/kafka_secrets/username}}\" password=\"{{secrets/kafka_secrets/password}}\";",
+    "kafka.ssl.ca.location": "/Volumes/dataservices_nonprod/landing_nonprod/shared_resources/kafka_ssl/ca-cert.pem"
+  },
+
+  "landing_reader_options": {
+    "startingOffsets": "latest",
+    "maxOffsetsPerTrigger": "100000",
+    "kafka.request.timeout.ms": "60000",
+    "kafka.session.timeout.ms": "60000"
+  },
+
+  "landing_catalog_nonprod": "dataservices_nonprod",
+  "landing_database_nonprod": "landing_events",
+  "landing_table": "kafka_payment_events",
+  "landing_table_comment": "Landing: Deserialized payment events with Avro transformation",
+
+  "landing_transformation_json_nonprod": "/Volumes/dataservices_nonprod/landing_nonprod/dlt_meta/transformations/kafka_ng/landing_avro_deserialize.yaml",
+
+  "landing_partition_columns": "payment_date",
+
+  "refinery_catalog_nonprod": "dataservices_nonprod",
+  "refinery_database_nonprod": "refinery_events",
+  "refinery_table": "payment_events_cleaned",
+  "refinery_table_comment": "Refinery: Cleaned and validated payment events",
+
+  "refinery_transformation_json_nonprod": "/Volumes/dataservices_nonprod/landing_nonprod/dlt_meta/transformations/kafka_ng/refinery_clean_payments.yaml"
+}

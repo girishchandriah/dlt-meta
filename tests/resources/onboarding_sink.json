@@ -18,39 +18,39 @@
                 }
             }
         },
-        "bronze_database_dev": "bronze",
-        "bronze_database_staging": "bronze",
-        "bronze_database_prd": "bronze",
-        "bronze_table": "customers_cdc",
-        "bronze_reader_options": {
+        "landing_database_dev": "landing",
+        "landing_database_staging": "landing",
+        "landing_database_prd": "landing",
+        "landing_table": "customers_cdc",
+        "landing_reader_options": {
             "cloudFiles.format": "json",
             "cloudFiles.inferColumnTypes": "true",
             "cloudFiles.rescuedDataColumn": "_rescued_data"
         },
-        "bronze_table_path_dev": "tests/resources/delta/customers",
-        "bronze_table_properties": {
+        "landing_table_path_dev": "tests/resources/delta/customers",
+        "landing_table_properties": {
             "pipelines.autoOptimize.managed": "false",
             "pipelines.reset.allowed": "false"
         },
-        "bronze_sinks":[{
-            "name": "bronze_sink1",
+        "landing_sinks":[{
+            "name": "landing_sink1",
             "format": "delta",
             "options": {
-                "tablename": "bronze.customers_cdc"
+                "tablename": "landing.customers_cdc"
             }
         },
-        {"name": "bronze_sink2",
+        {"name": "landing_sink2",
         "format": "delta",
         "options": {
-            "tablename": "bronze.customers_cdc"
+            "tablename": "landing.customers_cdc"
         }
         }
         ],
-        "silver_database_dev": "silver",
-        "silver_database_staging": "silver",
-        "silver_database_prd": "silver",
-        "silver_table": "customers",
-        "silver_cdc_apply_changes": {
+        "refinery_database_dev": "refinery",
+        "refinery_database_staging": "refinery",
+        "refinery_database_prd": "refinery",
+        "refinery_table": "customers",
+        "refinery_cdc_apply_changes": {
             "keys": [
                 "id"
             ],
@@ -63,23 +63,23 @@
                 "_rescued_data"
             ]
         },
-        "silver_table_path_dev": "tests/resources/data/silver/customers",
-        "silver_table_properties": {
+        "refinery_table_path_dev": "tests/resources/data/refinery/customers",
+        "refinery_table_properties": {
             "pipelines.autoOptimize.managed": "false",
             "pipelines.reset.allowed": "false",
             "pipelines.autoOptimize.zOrderCols": "id,email"
         },
-        "silver_transformation_json_dev": "tests/resources/silver_transformations.json",
-        "silver_data_quality_expectations_json_dev": "tests/resources/dqe/customers/silver_data_quality_expectations.json",
-        "silver_sinks":[{
-            "name": "silver_sink",
+        "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
+        "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/refinery_data_quality_expectations.json",
+        "refinery_sinks":[{
+            "name": "refinery_sink",
             "format": "delta",
             "options": {
-                "tablename": "silver.customers_cdc"
+                "tablename": "refinery.customers_cdc"
             }
         } ,
         {
-            "name": "silver_customer_sink",
+            "name": "refinery_customer_sink",
             "format": "kafka",
             "options": {
                 "kafka_sink_servers_secret_scope_name":"kafka_sink_servers_secret_scope_name",

@@ -1,0 +1,62 @@
+target_table: pfocusst_dsn_st_trans_dl1_dlt
+transformation_name: Sales Order Transaction Refinery Transformation
+description: "Step 4: Complex transformation from landing to refinery with business logic for DSN sales order transactions"
+sql_query: |
+            with tmp as (select * from source_204-intermediate where sales_ord_id is not null)
+            select
+            s.pfocusst_dsn_st_trans_dl_id,
+            s.sales_ord_id,
+            s.system,
+            s.facility_fee,
+            s.acctdate,
+            s.mimic_flg,
+            s.tkt_transfer_rcvd_flg,
+            s.tkt_transfer_surrender_flg,
+            s.firstqual,
+            s.distance_charge,
+            s.tkt_transfer_sent_flg,
+            s.resale_status_nm,
+            s.print_optype,
+            s.serchg,
+            s.expmopname,
+            s.vcode,
+            s.exchangee_fee,
+            s.last_run_id,
+            s.ser_chrg_tax,
+            s.tsale,
+            s.vflag as vflag,
+            s.vdate,
+            s._account,
+            s.set_tax,
+            s.vaxevid,
+            s.price_level,
+            s.tqty,
+            s.seatloc,
+            s.ticket_value,
+            s.ser_chrg_tax2,
+            s.expmop,
+            s.trnum,
+            s.num_stypes,
+            s.void_used_opr_cd,
+            s.pflag,
+            s.price_level_name,
+            s.tran_optype,
+            s.last_batch_id,
+            s.pdate,
+            s.void_optype,
+            s.acmode,
+            s.pcode,
+            case when t.host_sys_cd is not null and trim(upper(s.vflag))='T' then s.vdate else s.tdate end as tdate,
+            s.tcode,
+            s.init_run_id,
+            s.processed,
+            s.landing_insert_ts
+            from
+            tmp s
+            left outer join dataservices_nonprod.treasury_teradata_base_nonprod.pfocusdb_sales_ord_tran_dlt t
+            on trim(upper(s.system)) = trim(upper(t.host_sys_cd))
+            and s._account = t.host_vax_acct_num
+            and s.acctdate = t.host_acct_create_dt
+            and s.vaxevid = t.event_id
+            and s.trnum = t.sales_ord_tran_id
+            and s.tdate = t.sales_ord_tran_dt

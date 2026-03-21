@@ -1,10 +1,10 @@
-# Bronze and Silver DLT Meta Pipelines for People Data
+# landing and refinery DLT Meta Pipelines for People Data
 resources:
   pipelines:
-    pipeline_bronze_people:
+    pipeline_landing_people:
       name: People - R2B Pipeline1
       catalog: ${var.${bundle.target}_catalog_name}
-      schema: ${var.bronze_schema}
+      schema: ${var.landing_schema}
       development: ${var.${bundle.target}_development_enabled}
       photon: ${var.photon_enabled}
       serverless: ${var.serverless_enabled}
@@ -13,16 +13,16 @@ resources:
             path: ${workspace.file_path}/notebooks/init_dlt_meta_pipeline
 
       configuration:
-        layer: bronze
+        layer: landing
         dummy_param: ${var.dummy_param}       
-        bronze.dataflowspecTable: ${var.${bundle.target}_catalog_name}.${var.dlt_meta_schema}.${var.bronze_dataflowspecTable}
-        bronze.group: my_people
+        landing.dataflowspecTable: ${var.${bundle.target}_catalog_name}.${var.dlt_meta_schema}.${var.landing_dataflowspecTable}
+        landing.group: my_people
         bundle.sourcePath: ${workspace.file_path}/notebooks
 
-    pipeline_silver_people:
+    pipeline_refinery_people:
       name: People - B2S Pipeline1
       catalog: ${var.${bundle.target}_catalog_name}
-      schema: ${var.silver_schema}
+      schema: ${var.refinery_schema}
       development: ${var.${bundle.target}_development_enabled}
       photon: ${var.photon_enabled}
       serverless: ${var.serverless_enabled}
@@ -31,9 +31,9 @@ resources:
             path: ${workspace.file_path}/notebooks/init_dlt_meta_pipeline
 
       configuration:
-        layer: silver
+        layer: refinery
         dummy_param: ""
-        silver.dataflowspecTable: ${var.${bundle.target}_catalog_name}.${var.dlt_meta_schema}.${var.silver_dataflowspecTable}
-        silver.group: my_people
+        refinery.dataflowspecTable: ${var.${bundle.target}_catalog_name}.${var.dlt_meta_schema}.${var.refinery_dataflowspecTable}
+        refinery.group: my_people
         bundle.sourcePath: ${workspace.file_path}/notebooks
         

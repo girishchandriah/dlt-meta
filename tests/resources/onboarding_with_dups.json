@@ -9,22 +9,22 @@
             "source_table": "CUSTOMERS",
             "source_path_dev": "tests/resources/data/customers"
         },
-        "bronze_database_dev": "bronze",
-        "bronze_database_staging": "bronze",
-        "bronze_database_prd": "bronze",
-        "bronze_table": "customers_cdc",
-        "bronze_reader_options": {
+        "landing_database_dev": "landing",
+        "landing_database_staging": "landing",
+        "landing_database_prd": "landing",
+        "landing_table": "customers_cdc",
+        "landing_reader_options": {
             "cloudFiles.format": "json",
             "cloudFiles.inferColumnTypes": "true",
             "cloudFiles.rescuedDataColumn": "_rescued_data"
         },
-        "bronze_table_path_dev": "tests/resources/delta/customers",
-        "bronze_data_quality_expectations_json_dev": "tests/resources/dqe/customers/bronze_data_quality_expectations.json",
-        "silver_database_dev": "silver",
-        "silver_database_staging": "silver",
-        "silver_database_prd": "silver",
-        "silver_table": "customers",
-        "silver_cdc_apply_changes": {
+        "landing_table_path_dev": "tests/resources/delta/customers",
+        "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/landing_data_quality_expectations.json",
+        "refinery_database_dev": "refinery",
+        "refinery_database_staging": "refinery",
+        "refinery_database_prd": "refinery",
+        "refinery_table": "customers",
+        "refinery_cdc_apply_changes": {
             "keys": [
                 "id"
             ],
@@ -37,9 +37,9 @@
                 "_rescued_data"
             ]
         },
-        "silver_table_path_dev": "tests/resources/data/silver/customers",
-        "silver_transformation_json_dev": "tests/resources/silver_transformations.json",
-        "silver_data_quality_expectations_json_dev": "tests/resources/dqe/customers/silver_data_quality_expectations.json"
+        "refinery_table_path_dev": "tests/resources/data/refinery/customers",
+        "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
+        "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/refinery_data_quality_expectations.json"
 
     },
     {
@@ -52,21 +52,21 @@
             "source_table": "CUSTOMERS",
             "source_path_dev": "tests/resources/data/customers"
         },
-        "bronze_database_dev": "bronze",
-        "bronze_database_staging": "bronze",
-        "bronze_database_prd": "bronze",
-        "bronze_table": "customers_cdc",
-        "bronze_reader_options": {
+        "landing_database_dev": "landing",
+        "landing_database_staging": "landing",
+        "landing_database_prd": "landing",
+        "landing_table": "customers_cdc",
+        "landing_reader_options": {
             "cloudFiles.format": "json",
             "cloudFiles.inferColumnTypes": "true",
             "cloudFiles.rescuedDataColumn": "_rescued_data"
         },
-        "bronze_partition_columns": "",
-        "bronze_table_path_dev": "tests/resources/delta/customers",
-        "bronze_data_quality_expectations_json_dev": "tests/resources/dqe/customers/bronze_data_quality_expectations.json",
-        "silver_database_dev": "silver",
-        "silver_table": "customers",
-        "silver_cdc_apply_changes": {
+        "landing_partition_columns": "",
+        "landing_table_path_dev": "tests/resources/delta/customers",
+        "landing_data_quality_expectations_json_dev": "tests/resources/dqe/customers/landing_data_quality_expectations.json",
+        "refinery_database_dev": "refinery",
+        "refinery_table": "customers",
+        "refinery_cdc_apply_changes": {
             "keys": [
                 "id"
             ],
@@ -79,8 +79,8 @@
                 "_rescued_data"
             ]
         },
-        "silver_table_path_dev": "tests/resources/data/silver/customers",
-        "silver_transformation_json_dev": "tests/resources/silver_transformations.json",
-        "silver_data_quality_expectations_json_dev": "tests/resources/dqe/customers/silver_data_quality_expectations.json"
+        "refinery_table_path_dev": "tests/resources/data/refinery/customers",
+        "refinery_transformation_json_dev": "tests/resources/refinery_transformations.json",
+        "refinery_data_quality_expectations_json_dev": "tests/resources/dqe/customers/refinery_data_quality_expectations.json"
     }
 ]

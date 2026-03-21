@@ -50,42 +50,42 @@ class DLTFrameworkTestCase(unittest.TestCase):
         self.onboarding_json_dups = "tests/resources/onboarding_with_dups.json"
         self.onboarding_missing_keys_file = "tests/resources/onboarding_missing_keys.json"
         self.onboarding_type2_json_file = "tests/resources/onboarding_ac_type2.json"
-        self.onboarding_bronze_type2_json_file = "tests/resources/onboarding_ac_bronze_type2.json"
+        self.onboarding_landing_type2_json_file = "tests/resources/onboarding_ac_landing_type2.json"
         self.onboarding_append_flow_json_file = "tests/resources/onboarding_append_flow.json"
-        self.onboarding_silver_fanout_json_file = "tests/resources/onboarding_silverfanout.json"
+        self.onboarding_refinery_fanout_json_file = "tests/resources/onboarding_refineryfanout.json"
         self.onboarding_sink_json_file = "tests/resources/onboarding_sink.json"
         self.onboarding_multiple_partitions_file = "tests/resources/onboarding_multiple_partitions.json"
         self.onboarding_apply_changes_from_snapshot_json_file = (
             "tests/resources/onboarding_applychanges_from_snapshot.json"
         )
-        self.onboarding_silver_apply_changes_from_snapshot_json_file = (
-            "tests/resources/onboarding_silver_acfs.json"
+        self.onboarding_refinery_apply_changes_from_snapshot_json_file = (
+            "tests/resources/onboarding_refinery_acfs.json"
         )
         self.onboarding_apply_changes_from_snapshot_json__error_file = (
             "tests/resources/onboarding_applychanges_from_snapshot_error.json"
         )
         self.deltaPipelinesMetaStoreOps.drop_database("ravi_dlt_demo")
         self.deltaPipelinesMetaStoreOps.create_database("ravi_dlt_demo", "Unittest")
-        self.onboarding_bronze_silver_params_map = {
+        self.onboarding_landing_refinery_params_map = {
             "onboarding_file_path": self.onboarding_json_file,
             "database": "ravi_dlt_demo",
             "env": "dev",
-            "bronze_dataflowspec_table": "bronze_dataflowspec_cdc",
-            "bronze_dataflowspec_path": self.onboarding_spec_paths + "/bronze",
-            "silver_dataflowspec_table": "silver_dataflowspec_cdc",
-            "silver_dataflowspec_path": self.onboarding_spec_paths + "/silver",
+            "landing_dataflowspec_table": "landing_dataflowspec_cdc",
+            "landing_dataflowspec_path": self.onboarding_spec_paths + "/landing",
+            "refinery_dataflowspec_table": "refinery_dataflowspec_cdc",
+            "refinery_dataflowspec_path": self.onboarding_spec_paths + "/refinery",
             "overwrite": "True",
             "version": "v1",
             "import_author": "Ravi"
         }
-        self.onboarding_bronze_silver_params_uc_map = {
+        self.onboarding_landing_refinery_params_uc_map = {
             "onboarding_file_path": self.onboarding_json_file,
             "database": "ravi_dlt_demo",
             "env": "dev",
-            "bronze_dataflowspec_table": "bronze_dataflowspec_cdc",
-            "bronze_dataflowspec_path": self.onboarding_spec_paths + "/bronze",
-            "silver_dataflowspec_table": "silver_dataflowspec_cdc",
-            "silver_dataflowspec_path": self.onboarding_spec_paths + "/silver",
+            "landing_dataflowspec_table": "landing_dataflowspec_cdc",
+            "landing_dataflowspec_path": self.onboarding_spec_paths + "/landing",
+            "refinery_dataflowspec_table": "refinery_dataflowspec_cdc",
+            "refinery_dataflowspec_path": self.onboarding_spec_paths + "/refinery",
             "overwrite": "True",
             "version": "v1",
             "import_author": "Ravi",

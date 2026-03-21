@@ -11,8 +11,8 @@ dbutils.widgets.text("table_column_count","", "table_column_count")
 dbutils.widgets.text("table_data_rows_count","", "table_data_rows_count")
 dbutils.widgets.text("dlt_meta_schema","", "dlt_meta_schema")
 dbutils.widgets.text("uc_catalog_name","", "uc_catalog_name")
-dbutils.widgets.text("bronze_schema","", "bronze_schema")
-dbutils.widgets.text("silver_schema","", "bronze_schema")
+dbutils.widgets.text("landing_schema","", "landing_schema")
+dbutils.widgets.text("refinery_schema","", "landing_schema")
 
 
 
@@ -22,8 +22,8 @@ table_data_rows_count = int(dbutils.widgets.get("table_data_rows_count"))
 table_count = int(dbutils.widgets.get("table_count"))
 dlt_meta_schema = dbutils.widgets.get("dlt_meta_schema")
 uc_catalog_name = dbutils.widgets.get("uc_catalog_name")
-bronze_schema = dbutils.widgets.get("bronze_schema")
-silver_schema = dbutils.widgets.get("silver_schema")
+landing_schema = dbutils.widgets.get("landing_schema")
+refinery_schema = dbutils.widgets.get("refinery_schema")
 
 # COMMAND ----------
 
@@ -62,16 +62,16 @@ def generate_onboarding_file(spark, base_input_path, table_count, dlt_meta_schem
         "source_system",
         "source_format",
         "source_details",
-        "bronze_database_prod",
-        "bronze_table",
-        "bronze_reader_options",
-        "bronze_data_quality_expectations_json_prod",
-        "bronze_database_quarantine_prod",
-        "bronze_quarantine_table",
-        "silver_database_prod",
-        "silver_table",
-        "silver_transformation_json_prod",
-        "silver_data_quality_expectations_json_prod"
+        "landing_database_prod",
+        "landing_table",
+        "landing_reader_options",
+        "landing_data_quality_expectations_json_prod",
+        "landing_database_quarantine_prod",
+        "landing_quarantine_table",
+        "refinery_database_prod",
+        "refinery_table",
+        "refinery_transformation_json_prod",
+        "refinery_data_quality_expectations_json_prod"
     ]
 
     data_flow_spec_schema = StructType(
@@ -81,20 +81,20 @@ def generate_onboarding_file(spark, base_input_path, table_count, dlt_meta_schem
             StructField("source_system", StringType(), True),
             StructField("source_format", StringType(), True),
             StructField("source_details", MapType(StringType(), StringType(), True), True),
-            StructField("bronze_database_prod", StringType(), True),
-            StructField("bronze_table", StringType(), True),
+            StructField("landing_database_prod", StringType(), True),
+            StructField("landing_table", StringType(), True),
             StructField(
-                "bronze_reader_options",
+                "landing_reader_options",
                 MapType(StringType(), StringType(), True),
                 True,
             ),
-            StructField("bronze_data_quality_expectations_json_prod", StringType(), True),
-            StructField("bronze_database_quarantine_prod", StringType(), True),
-            StructField("bronze_quarantine_table", StringType(), True),
-            StructField("silver_database_prod", StringType(), True),
-            StructField("silver_table", StringType(), True),
-            StructField("silver_transformation_json_prod", StringType(), True),
-            StructField("silver_data_quality_expectations_json_prod", StringType(), True)
+            StructField("landing_data_quality_expectations_json_prod", StringType(), True),
+            StructField("landing_database_quarantine_prod", StringType(), True),
+            StructField("landing_quarantine_table", StringType(), True),
+            StructField("refinery_database_prod", StringType(), True),
+            StructField("refinery_table", StringType(), True),
+            StructField("refinery_transformation_json_prod", StringType(), True),
+            StructField("refinery_data_quality_expectations_json_prod", StringType(), True)
         ]
     )
     dbfs_path = base_input_path#f"{base_input_path}/resources/data/input"
@@ -107,36 +107,36 @@ def generate_onboarding_file(spark, base_input_path, table_count, dlt_meta_schem
         source_format = "cloudFiles"
         input_path = base_input_path+"/resources/data/input/table_{}"
         source_details = {"source_database": "demo", "source_table": f"{table_name}", "source_path_prod":input_path.format(row_id)}
-        bronze_database_prod = f"{uc_catalog_name}.{bronze_schema}"
-        bronze_table = f"{table_name}"
-        bronze_reader_options = {
+        landing_database_prod = f"{uc_catalog_name}.{landing_schema}"
+        landing_table = f"{table_name}"
+        landing_reader_options = {
             "cloudFiles.format": "csv",
             "cloudFiles.rescuedDataColumn": "_rescued_data",
             "header": "true"
         }
-        bronze_data_quality_expectations_json_prod = f"{dbfs_path}/conf/dqe/dqe.json"
-        bronze_database_quarantine_prod = f"{uc_catalog_name}.{bronze_schema}"
-        bronze_quarantine_table = f"{table_name}_quarantine"
-        silver_database_prod = f"{uc_catalog_name}.{silver_schema}"
-        silver_table = f"{table_name}"
-        silver_transformation_json_prod = f"{dbfs_path}/conf/silver_transformations.json"
-        silver_data_quality_expectations_json_prod = f"{dbfs_path}/conf/dqe/silver_dqe.json"
+        landing_data_quality_expectations_json_prod = f"{dbfs_path}/conf/dqe/dqe.json"
+        landing_database_quarantine_prod = f"{uc_catalog_name}.{landing_schema}"
+        landing_quarantine_table = f"{table_name}_quarantine"
+        refinery_database_prod = f"{uc_catalog_name}.{refinery_schema}"
+        refinery_table = f"{table_name}"
+        refinery_transformation_json_prod = f"{dbfs_path}/conf/refinery_transformations.json"
+        refinery_data_quality_expectations_json_prod = f"{dbfs_path}/conf/dqe/refinery_dqe.json"
         onboarding_row = (
             data_flow_id,
             data_flow_group,
             source_system,
             source_format,
             source_details,
-            bronze_database_prod,
-            bronze_table,
-            bronze_reader_options,
-            bronze_data_quality_expectations_json_prod,
-            bronze_database_quarantine_prod,
-            bronze_quarantine_table,
-            silver_database_prod,
-            silver_table,
-            silver_transformation_json_prod,
-            silver_data_quality_expectations_json_prod
+            landing_database_prod,
+            landing_table,
+            landing_reader_options,
+            landing_data_quality_expectations_json_prod,
+            landing_database_quarantine_prod,
+            landing_quarantine_table,
+            refinery_database_prod,
+            refinery_table,
+            refinery_transformation_json_prod,
+            refinery_data_quality_expectations_json_prod
         )
         data.append(onboarding_row)
 
@@ -151,13 +151,13 @@ def generate_onboarding_file(spark, base_input_path, table_count, dlt_meta_schem
         dbutils.fs.cp(ff.path,f"{base_input_path}/conf/onboarding.json")
         break
     dbutils.fs.rm(f"{base_input_path}/conf/onboarding_auto.txt",True)
-    spark.sql(f"CREATE DATABASE IF NOT EXISTS {bronze_database_prod} COMMENT '{bronze_database_prod}'")
-    spark.sql(f"CREATE DATABASE IF NOT EXISTS {silver_database_prod} COMMENT '{silver_database_prod}'")
+    spark.sql(f"CREATE DATABASE IF NOT EXISTS {landing_database_prod} COMMENT '{landing_database_prod}'")
+    spark.sql(f"CREATE DATABASE IF NOT EXISTS {refinery_database_prod} COMMENT '{refinery_database_prod}'")
     spark.sql(f"CREATE DATABASE IF NOT EXISTS {dlt_meta_schema} COMMENT '{dlt_meta_schema}'")
 
 
 
-def generate_silver_transformation_json(spark, base_input_path, table_count):
+def generate_refinery_transformation_json(spark, base_input_path, table_count):
     st_columns = ["target_table", "select_exp"]
     st_schema = StructType(
         [
@@ -175,20 +175,20 @@ def generate_silver_transformation_json(spark, base_input_path, table_count):
         line = (target_table, select_exp)
         data.append(line)
     
-    silver_transformations_rows_df = spark.createDataFrame(data, st_schema).toDF(*st_columns)
-    silver_transformations_rows_df.show()
-    silver_transformations_rows_df.coalesce(1).write.mode("overwrite").json(
-        f"{base_input_path}/conf/silver_transformations_auto.json"
+    refinery_transformations_rows_df = spark.createDataFrame(data, st_schema).toDF(*st_columns)
+    refinery_transformations_rows_df.show()
+    refinery_transformations_rows_df.coalesce(1).write.mode("overwrite").json(
+        f"{base_input_path}/conf/refinery_transformations_auto.json"
     )
-    (silver_transformations_rows_df.agg(to_json(collect_list(struct([col(col_name) for col_name in st_schema.fieldNames()])))).alias("d")
-     .coalesce(1).write.mode("overwrite").text(f"{base_input_path}/conf/silver_transformations_auto.txt")    
+    (refinery_transformations_rows_df.agg(to_json(collect_list(struct([col(col_name) for col_name in st_schema.fieldNames()])))).alias("d")
+     .coalesce(1).write.mode("overwrite").text(f"{base_input_path}/conf/refinery_transformations_auto.txt")    
     )    
-    files_list = dbutils.fs.ls(f"{base_input_path}/conf/silver_transformations_auto.txt")
+    files_list = dbutils.fs.ls(f"{base_input_path}/conf/refinery_transformations_auto.txt")
     for ff in files_list:
       if ff.path.endswith(".txt"):
-        dbutils.fs.cp(ff.path,f"{base_input_path}/conf/silver_transformations.json")
+        dbutils.fs.cp(ff.path,f"{base_input_path}/conf/refinery_transformations.json")
         break
-    dbutils.fs.rm(f"{base_input_path}/conf/silver_transformations_auto.txt",True)
+    dbutils.fs.rm(f"{base_input_path}/conf/refinery_transformations_auto.txt",True)
 
 def generate_dqe_json(base_input_path):
   dqe_json = """{
@@ -201,12 +201,12 @@ def generate_dqe_json(base_input_path):
               }
           }"""
   dbutils.fs.put(f"{base_input_path}/conf/dqe/dqe.json", dqe_json, True)
-  silver_dqe_json = """{
+  refinery_dqe_json = """{
               "expect_or_drop": {
                   "valid_product_id": "id IS NOT NULL AND id>0"
               }
           }"""
-  dbutils.fs.put(f"{base_input_path}/conf/dqe/silver_dqe.json", dqe_json, True)  
+  dbutils.fs.put(f"{base_input_path}/conf/dqe/refinery_dqe.json", dqe_json, True)  
 
 
 # COMMAND ----------
@@ -218,5 +218,5 @@ generate_table_data(spark, base_input_path, table_column_count, table_data_rows_
 
 # DBTITLE 1,Generates Onboarding files
 generate_onboarding_file(spark, base_input_path, table_count, dlt_meta_schema)
-generate_silver_transformation_json(spark, base_input_path, table_count)
+generate_refinery_transformation_json(spark, base_input_path, table_count)
 generate_dqe_json(base_input_path)

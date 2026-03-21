@@ -1,0 +1,10 @@
+[
+  {
+    "target_table": "customers",
+    "sql_query": "SELECT address, email, firstname, id, lastname, operation_date, operation, _rescued_data FROM source_1"
+  },
+  {
+    "target_table": "transactions",
+    "sql_query": "SELECT id, customer_id, amount, item_count, operation_date, operation, _rescued_data FROM source_2"
+  }
+]

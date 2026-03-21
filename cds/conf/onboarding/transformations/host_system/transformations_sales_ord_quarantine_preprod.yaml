@@ -1,0 +1,90 @@
+target_table: pfocusst_dsn_st_trans_quarantine_dlt_v2
+transformation_name: Sales Order Transaction Quarantine - No Sales Order ID (Refinery Layer)
+description: "Quarantine transformation: Captures records from landing that don't have a matching sales_ord_id. These records are quarantined in refinery layer for data quality review before they can proceed to treasury."
+sql_query: |
+  -- Apply same refinery transformations as combined treasury
+  with q_extract as (
+    select
+      case
+        when f.system = 'AU1' then 'AUS'
+        when f.system = 'LON' then 'UK1'
+        when f.system = 'INT' then 'UK2'
+        else upper(f.system)
+      end as system,
+      if(
+        substring(f.accountdate FROM -2) >
+        (select int(value) from dataservices_preprod.refinery_preprod.jobs_configurations where key='century_year'),
+        add_months(to_date(f.accountdate,'M/d/yy'), -1200),
+        to_date(f.accountdate, 'M/d/yy')
+      ) as acctdate,
+      f.vaxacct as _account,
+      f.vaxevid as vaxevid,
+      f.transnum as trnum,
+      if(
+        substring(f.transdate FROM -2) >
+        (select int(value) from dataservices_preprod.refinery_preprod.jobs_configurations where key='century_year'),
+        add_months(to_date(f.transdate,'M/d/yy'), -1200),
+        to_date(f.transdate, 'M/d/yy')
+      ) as tdate,
+      f.transopcode as tcode,
+      trim(upper(f.voidflag)) as vflag,
+      f.totaldollars as tsale,
+      f.tickets as tqty,
+      f.ticketvalue as ticket_value,
+      f.servicedollars as serchg,
+      f.tax as set_tax,
+      f.servicetax as ser_chrg_tax,
+      f.servicetax2 as ser_chrg_tax2,
+      f.zonecharge as distance_charge,
+      f.facilityfee as facility_fee,
+      f.exchangefee as exchangee_fee,
+      f.pricelevelid as price_level,
+      f.pricelevelname as price_level_name,
+      f.seattypes as num_stypes,
+      f.acmode as acmode
+    from source_205 f
+  ),
+
+  -- Try to get sales_ord_id
+  enriched_data as (
+    select
+      q.*,
+      o.sales_ord_id,
+      current_timestamp() as quarantine_ts,
+      'NO_SALES_ORD_ID' as quarantine_reason
+    from q_extract q
+    left join dataservices_preprod.treasury_teradata_base_preprod.pfocusdb_sales_ord o
+      on trim(upper(q.system)) = trim(upper(o.host_sys_cd))
+      and q.acctdate = o.host_acct_create_dt
+      and q._account = o.host_vax_acct_num
+  )
+
+  -- Select ONLY records WITHOUT sales_ord_id
+  select
+    uuid() as quarantine_id,
+    system as host_sys_cd,
+    _account as host_vax_acct_num,
+    acctdate as host_acct_create_dt,
+    vaxevid as event_id,
+    trnum as sales_ord_tran_id,
+    tdate as sales_ord_tran_dt,
+    tcode as tran_opr_cd,
+    vflag as tran_void_flg,
+    coalesce(tsale, 0) as tran_amt,
+    coalesce(tqty, 0) as tickets_purchased_qty,
+    coalesce(ticket_value, 0) as trans_face_val_amt,
+    coalesce(serchg, 0) as trans_service_charge_amt,
+    coalesce(set_tax, 0) as trans_set_tax_amt,
+    coalesce(ser_chrg_tax, 0) as trans_service_tax_amt,
+    coalesce(ser_chrg_tax2, 0) as trans_service_tax_2_amt,
+    coalesce(distance_charge, 0) as trans_zone_charge_amt,
+    coalesce(facility_fee, 0) as trans_fac_fee_amt,
+    coalesce(exchangee_fee, 0) as trans_exch_fee_amt,
+    price_level as price_level_id,
+    price_level_name as price_level_nm,
+    num_stypes as tkt_type_cnt,
+    acmode as acct_mode_cd,
+    quarantine_reason,
+    quarantine_ts
+  from enriched_data
+  where sales_ord_id is null  -- Only quarantine records without sales_ord_id

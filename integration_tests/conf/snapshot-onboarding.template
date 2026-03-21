@@ -11,25 +11,25 @@
       "source_table": "source_products_delta",
       "source_database":"{source_database}"
    },      
-   "bronze_database_it": "{uc_catalog_name}.{bronze_schema}",
-   "bronze_table": "products",
-   "bronze_apply_changes_from_snapshot": {
+   "landing_database_it": "{uc_catalog_name}.{landing_schema}",
+   "landing_table": "products",
+   "landing_apply_changes_from_snapshot": {
    "keys": [
       "product_id"
    ],
    "scd_type": "2"
    },
-   "silver_catalog_it": "{uc_catalog_name}",
-   "silver_database_it": "{silver_schema}",
-   "silver_table": "products",
-   "silver_table_comment": "products silver table",
-   "silver_apply_changes_from_snapshot":{
+   "refinery_catalog_it": "{uc_catalog_name}",
+   "refinery_database_it": "{refinery_schema}",
+   "refinery_table": "products",
+   "refinery_table_comment": "products refinery table",
+   "refinery_apply_changes_from_snapshot":{
        "keys": [
          "product_id"
       ],
       "scd_type": "2"
    },   
-   "silver_transformation_json_it": "{uc_volume_path}/integration_tests/conf/silver_transformations_snapshot.json"
+   "refinery_transformation_json_it": "{uc_volume_path}/integration_tests/conf/refinery_transformations_snapshot.json"
 },
 {
          "data_flow_id": "202",
@@ -40,26 +40,26 @@
            "source_path_it": "{uc_volume_path}/integration_tests/resources/data/snapshots/stores/LOAD_",
            "snapshot_format": "csv"
         },
-         "bronze_reader_options": {
+         "landing_reader_options": {
             "header": "true"
          },          
-        "bronze_database_it": "{uc_catalog_name}.{bronze_schema}",
-        "bronze_table": "stores",
-        "bronze_apply_changes_from_snapshot": {
+        "landing_database_it": "{uc_catalog_name}.{landing_schema}",
+        "landing_table": "stores",
+        "landing_apply_changes_from_snapshot": {
          "keys": [
             "store_id"
          ],
          "scd_type": "1"
       },
-   "silver_catalog_it": "{uc_catalog_name}",
-   "silver_database_it": "{silver_schema}",
-   "silver_table": "stores",
-   "silver_apply_changes_from_snapshot":{
+   "refinery_catalog_it": "{uc_catalog_name}",
+   "refinery_database_it": "{refinery_schema}",
+   "refinery_table": "stores",
+   "refinery_apply_changes_from_snapshot":{
        "keys": [
          "store_id"
       ],
       "scd_type": "1"
    },
-   "silver_transformation_json_it": "{uc_volume_path}/integration_tests/conf/silver_transformations_snapshot.json"
+   "refinery_transformation_json_it": "{uc_volume_path}/integration_tests/conf/refinery_transformations_snapshot.json"
 }
   ]
